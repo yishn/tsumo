@@ -37,8 +37,7 @@ export class AppComponent extends Component("app") {
           body {
             font-family: "Alegreya", "KaiTi", serif;
             background-color: rgba(0, 0, 0, 0.2);
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100dvh;
             cursor: default;
             user-select: none;
           }
@@ -49,7 +48,7 @@ export class AppComponent extends Component("app") {
             display: flex;
             flex-direction: column;
             gap: .2em;
-            margin-top: 3em;
+            margin-top: env(safe-area-inset-top);
           }
         `}</Style>
       </>
