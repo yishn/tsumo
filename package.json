@@ -1,0 +1,28 @@
+{
+  "name": "mj",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./dist/backend/main.js",
+  "author": "Yichuan Shen",
+  "license": "MIT",
+  "scripts": {
+    "start": "serve",
+    "build-frontend": "rollup -c ./rollup.config.js"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "sinho": "^0.1.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-swc": "^0.3.0",
+    "@swc/core": "^1.4.17",
+    "prettier": "^3.2.5",
+    "rollup": "^4.17.2",
+    "serve": "^14.2.3",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.5"
+  }
+}
