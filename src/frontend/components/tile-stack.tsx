@@ -1,6 +1,6 @@
 import { Component, Style, css, defineComponents } from "sinho";
 
-export class TileStackComponent extends Component("tile-stack") {
+export class TileStack extends Component("tile-stack") {
   render() {
     return (
       <>
@@ -20,4 +20,4 @@ export class TileStackComponent extends Component("tile-stack") {
   }
 }
 
-defineComponents("mj-", TileStackComponent);
+defineComponents("mj-", TileStack);

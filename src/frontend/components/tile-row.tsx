@@ -1,6 +1,6 @@
 import { Component, Style, css, defineComponents } from "sinho";
 
-export class TileRowComponent extends Component("tile-row") {
+export class TileRow extends Component("tile-row") {
   render() {
     return (
       <>
@@ -11,7 +11,6 @@ export class TileRowComponent extends Component("tile-row") {
             display: flex;
             gap: 0.2em;
             flex-wrap: wrap;
-            padding: 1em;
           }
         `}</Style>
       </>
@@ -19,4 +18,4 @@ export class TileRowComponent extends Component("tile-row") {
   }
 }
 
-defineComponents("mj-", TileRowComponent);
+defineComponents("mj-", TileRow);

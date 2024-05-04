@@ -20,14 +20,14 @@ import { playTileSound } from "../sounds.ts";
 
 const transitionDuration = 200;
 
-export class TileComponent extends Component("tile", {
+class TileComponent extends Component("tile", {
   suit: prop<TileSuit>(undefined, {
     attribute: (val) => val.toLowerCase() as TileSuit,
   }),
   rank: prop<number>(undefined, { attribute: Number }),
   back: prop<boolean>(false, { attribute: () => true }),
-  selected: prop<boolean>(false, { attribute: () => true }),
-  highlighted: prop<boolean>(false, { attribute: () => true }),
+  highlight: prop<boolean>(false, { attribute: () => true }),
+  glow: prop<boolean>(false, { attribute: () => true }),
 }) {
   getTile(): Tile | null {
     const suit = this.props.suit();
@@ -78,8 +78,8 @@ export class TileComponent extends Component("tile", {
               numeric: tile()?.numeric,
               honor: tile()?.honor,
               back: actualBack(),
-              selected: this.props.selected(),
-              highlighted: this.props.highlighted(),
+              highlight: this.props.highlight(),
+              glow: this.props.glow(),
             })
           }
           style={{
@@ -88,7 +88,9 @@ export class TileComponent extends Component("tile", {
           }}
         >
           <If condition={actualBack}></If>
-          <ElseIf condition={() => tile() == null}>?</ElseIf>
+          <ElseIf condition={() => tile() == null}>
+            <div part="rank">?</div>
+          </ElseIf>
           <ElseIf condition={() => tile()!.numeric}>
             <div part="rank">{() => tile()?.rank}</div>
             <div part="suit">
@@ -146,11 +148,11 @@ export class TileComponent extends Component("tile", {
             --tile-back-color: #35de7b;
             --tile-back-border-color: #12bb25;
             --tile-back-light-color: #7eecba;
-            --tile-face-selected-color: #fdffbe;
-            --tile-face-selected-border-color: #e9d883;
-            --tile-face-selected-light-color: #feffeb;
-            --tile-highlighted-color: rgba(233, 216, 131, 0.5);
-            --tile-highlighted-glow-color: rgba(233, 216, 131, 0.9);
+            --tile-face-highlight-color: #fdffbe;
+            --tile-face-highlight-border-color: #e9d883;
+            --tile-face-highlight-light-color: #feffeb;
+            --tile-glow-color: rgba(233, 216, 131, 0.5);
+            --tile-glow-pulse-color: rgba(233, 216, 131, 0.9);
             --tile-red: #d4353a;
             --tile-green: #12bb25;
             --tile-blue: #113ea7;
@@ -173,16 +175,16 @@ export class TileComponent extends Component("tile", {
             overflow: hidden;
             transition: transform ${transitionDuration / 1000}s;
           }
-          [part="tile"].selected {
+          [part="tile"].highlight {
             transform: translateY(-0.3em);
-            --tile-face-color: var(--tile-face-selected-color);
-            --tile-face-border-color: var(--tile-face-selected-border-color);
-            --tile-face-light-color: var(--tile-face-selected-light-color);
+            --tile-face-color: var(--tile-face-highlight-color);
+            --tile-face-border-color: var(--tile-face-highlight-border-color);
+            --tile-face-light-color: var(--tile-face-highlight-light-color);
           }
-          @keyframes highlighted-glow {
+          @keyframes glow-pulse {
             from {
               box-shadow:
-                var(--tile-highlighted-glow-color) 0 0 0.3em 0.5em,
+                var(--tile-glow-pulse-color) 0 0 0.3em 0.5em,
                 var(--tile-face-border-color) 0 var(--tile-depth),
                 var(--tile-back-border-color) 0
                   calc(var(--tile-back-depth) + var(--tile-depth)),
@@ -190,15 +192,15 @@ export class TileComponent extends Component("tile", {
             }
             to {
               box-shadow:
-                var(--tile-highlighted-color) 0 0 0.3em 0.3em,
+                var(--tile-glow-color) 0 0 0.3em 0.3em,
                 var(--tile-face-border-color) 0 var(--tile-depth),
                 var(--tile-back-border-color) 0
                   calc(var(--tile-back-depth) + var(--tile-depth)),
                 var(--tile-shadow);
             }
           }
-          [part="tile"].highlighted {
-            animation: 1s linear 0s infinite alternate-reverse highlighted-glow;
+          [part="tile"].glow {
+            animation: 1s linear 0s infinite alternate-reverse glow-pulse;
           }
           [part="tile"].back {
             border-color: var(--tile-back-color);
@@ -230,6 +232,10 @@ export class TileComponent extends Component("tile", {
           }
           [part="rank"].blue {
             color: var(--tile-blue);
+          }
+          .unknown [part="rank"] {
+            font-size: 1.8em;
+            font-weight: bold;
           }
           .dragon [part="rank"] {
             font-size: 2em;
@@ -273,3 +279,5 @@ export class TileComponent extends Component("tile", {
 }
 
 defineComponents("mj-", TileComponent);
+
+export { TileComponent as Tile };
