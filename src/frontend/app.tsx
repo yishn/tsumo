@@ -1,50 +1,24 @@
-import { Component, For, Style, css, defineComponents } from "sinho";
-import { Tile, TileSuit } from "../core/tile.ts";
-import { TileRowComponent } from "./components/tile-row.tsx";
-import { TileComponent } from "./components/tile.tsx";
-import { TileStackComponent } from "./components/tile-stack.tsx";
+import { Component, Style, css, defineComponents } from "sinho";
+import { PlayerRowComponent } from "./components/player-row.tsx";
 
 export class AppComponent extends Component("app") {
   render() {
     return (
       <>
-        <div class="container">
-          <TileRowComponent>
-            <For
-              each={[TileSuit.Wind, TileSuit.Dragon].flatMap((suit) =>
-                [...Array(suit === TileSuit.Wind ? 4 : 3)].map(
-                  (_, i) => new Tile(suit, i + 1)
-                )
-              )}
-            >
-              {(tile) => (
-                <TileComponent
-                  suit={() => tile().suit}
-                  rank={() => tile().rank}
-                />
-              )}
-            </For>
-
-            <For each={[TileSuit.Bamboo, TileSuit.Circle, TileSuit.Myriad]}>
-              {(suit) => (
-                <TileStackComponent>
-                  <For
-                    each={() =>
-                      [...Array(3)].map((_, i) => new Tile(suit(), i + 4))
-                    }
-                  >
-                    {(tile) => (
-                      <TileComponent
-                        suit={() => tile().suit}
-                        rank={() => tile().rank}
-                      />
-                    )}
-                  </For>
-                </TileStackComponent>
-              )}
-            </For>
-            <TileComponent back suit={TileSuit.Dragon} rank={3} />
-          </TileRowComponent>
+        <div part="players">
+          <PlayerRowComponent
+            name="East"
+            avatar="./assets/avatars/monkey.png"
+          />
+          <PlayerRowComponent name="South" avatar="./assets/avatars/boar.png" />
+          <PlayerRowComponent
+            name="West"
+            avatar="./assets/avatars/dog.png"
+          />
+          <PlayerRowComponent
+            name="north"
+            avatar="./assets/avatars/dragon.png"
+          />
         </div>
 
         <Style light>{css`
@@ -63,11 +37,19 @@ export class AppComponent extends Component("app") {
           body {
             font-family: "Alegreya", "KaiTi", serif;
             background-color: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(0.5em);
             height: 100vh;
             overflow: hidden;
             cursor: default;
             user-select: none;
+          }
+        `}</Style>
+
+        <Style>{css`
+          [part="players"] {
+            display: flex;
+            flex-direction: column;
+            gap: .2em;
+            margin-top: 3em;
           }
         `}</Style>
       </>

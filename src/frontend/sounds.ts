@@ -1,3 +1,3 @@
 export function playTileSound() {
-  new Audio("./assets/tile.mp3").play();
+  new Audio("./assets/sounds/tile.mp3").play();
 }
