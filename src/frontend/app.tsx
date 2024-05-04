@@ -10,7 +10,7 @@ export class AppComponent extends Component("app") {
     return (
       <>
         <div part="players">
-          <PlayerRow name="East" avatar="./assets/avatars/monkey.png">
+          <PlayerRow name="East" avatar="./assets/avatars/monkey.png" gold={50}>
             <TileRow slot="discards">
               <Tile suit={TileSuit.Bamboo} rank={1} />
               <Tile suit={TileSuit.Circle} rank={9} />
@@ -26,7 +26,7 @@ export class AppComponent extends Component("app") {
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="South" avatar="./assets/avatars/boar.png">
+          <PlayerRow name="South" avatar="./assets/avatars/boar.png" gold={50}>
             <TileRow slot="discards">
               <TileStack>
                 <Tile suit={TileSuit.Myriad} rank={3} />
@@ -39,7 +39,7 @@ export class AppComponent extends Component("app") {
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="West" avatar="./assets/avatars/dog.png">
+          <PlayerRow name="West" avatar="./assets/avatars/dog.png" gold={50}>
             <TileRow slot="discards">
               <Tile suit={TileSuit.Myriad} rank={1} />
               <TileStack>
@@ -54,7 +54,7 @@ export class AppComponent extends Component("app") {
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="North" avatar="./assets/avatars/dragon.png">
+          <PlayerRow name="North" avatar="./assets/avatars/dragon.png" gold={50}>
             <TileRow slot="discards">
               <Tile />
             </TileRow>
@@ -80,6 +80,7 @@ export class AppComponent extends Component("app") {
 
           body {
             font-family: "Alegreya", "KaiTi", serif;
+            font-size: 1.1em;
             background-color: rgba(0, 0, 0, 0.2);
             min-height: 100dvh;
             cursor: default;

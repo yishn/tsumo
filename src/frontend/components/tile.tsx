@@ -254,8 +254,8 @@ class TileComponent extends Component("tile", {
           }
           [part="suit"] svg {
             display: block;
-            max-width: 70%;
-            max-height: 70%;
+            width: 70%;
+            height: 70%;
           }
           .bamboo [part="suit"] svg {
             fill: var(--tile-green);

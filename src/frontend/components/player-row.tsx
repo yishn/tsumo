@@ -3,6 +3,7 @@ import { Component, Style, css, defineComponents, prop } from "sinho";
 export class PlayerRow extends Component("player-row", {
   name: prop<string>(""),
   avatar: prop<string>("./assets/avatars/monkey.png"),
+  gold: prop<number>(0),
 }) {
   render() {
     return (
@@ -10,6 +11,9 @@ export class PlayerRow extends Component("player-row", {
         <div part="player">
           <div part="player-name">{this.props.name}</div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
+          <div part="gold">
+            <img src="./assets/coin.png" alt="Gold" /> ×{this.props.gold}
+          </div>
         </div>
 
         <div part="tiles">
@@ -26,10 +30,10 @@ export class PlayerRow extends Component("player-row", {
             backdrop-filter: blur(0.5em);
             padding: 0.5em;
             padding-right: 0;
+            color: white;
           }
 
           [part="player-name"] {
-            color: white;
             font-weight: bold;
             text-align: center;
           }
@@ -38,6 +42,15 @@ export class PlayerRow extends Component("player-row", {
             display: block;
             border-radius: 50%;
             width: 5em;
+          }
+
+          [part="gold"] {
+            margin-top: .5em;
+            text-align: center;
+          }
+          [part="gold"] img {
+            height: 0.8em;
+            vertical-align: middle;
           }
 
           [part="tiles"] {
