@@ -1,3 +1,3 @@
-import { App } from "./app.tsx";
+import { AppComponent } from "./app.tsx";
 
-document.body.append(new App());
+document.body.append(new AppComponent());

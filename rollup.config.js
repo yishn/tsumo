@@ -1,5 +1,6 @@
 import swc from "@rollup/plugin-swc";
 import alias from "@rollup/plugin-alias";
+import svgr from "@svgr/rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 
 export default {
@@ -17,6 +18,13 @@ export default {
         { find: "sinho", replacement: "sinho/min" },
         { find: "sinho/jsx-runtime", replacement: "sinho/min/jsx-runtime" },
       ],
+    }),
+    svgr({
+      jsxRuntime: "automatic",
+      babel: false,
+      svgo: false,
+      prettier: false,
+      svgProps: { role: "img" },
     }),
     swc({
       swc: {
