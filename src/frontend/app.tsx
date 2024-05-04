@@ -16,7 +16,7 @@ export class AppComponent extends Component("app") {
             avatar="./assets/avatars/dog.png"
           />
           <PlayerRowComponent
-            name="north"
+            name="North"
             avatar="./assets/avatars/dragon.png"
           />
         </div>
