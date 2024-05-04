@@ -6,13 +6,19 @@ import {
   css,
   defineComponents,
   prop,
+  useEffect,
   useMemo,
+  useSignal,
 } from "sinho";
 import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/tile.ts";
 import BambooIcon from "../../../assets/bamboo.svg";
 import CircleIcon from "../../../assets/circle.svg";
 import WindIcon from "../../../assets/wind.svg";
+import { useAnimation } from "../animation.ts";
+import { playTileSound } from "../sounds.ts";
+
+const transitionDuration = 200;
 
 export class TileComponent extends Component("tile", {
   suit: prop<TileSuit>(undefined, {
@@ -40,6 +46,25 @@ export class TileComponent extends Component("tile", {
 
   render() {
     const tile = useMemo(() => this.getTile());
+    const [actualBack, setActualBack] = useSignal(this.props.back());
+    const [backAnimationInProgress, startBackAnimation] =
+      useAnimation(transitionDuration);
+
+    let firstRender = true;
+
+    useEffect(() => {
+      const back = this.props.back();
+
+      if (!firstRender) {
+        (async () => {
+          await startBackAnimation();
+          setActualBack(back);
+          setTimeout(() => playTileSound(), transitionDuration);
+        })();
+      }
+
+      firstRender = false;
+    });
 
     return (
       <>
@@ -50,11 +75,15 @@ export class TileComponent extends Component("tile", {
               unknown: tile() == null,
               numeric: tile()?.numeric,
               honor: tile()?.honor,
-              back: this.props.back(),
+              back: actualBack(),
             })
           }
+          style={{
+            transform: () =>
+              !backAnimationInProgress() ? "none" : "translateY(-1em)",
+          }}
         >
-          <If condition={this.props.back}></If>
+          <If condition={actualBack}></If>
           <ElseIf condition={() => tile() == null}>?</ElseIf>
           <ElseIf condition={() => tile()!.numeric}>
             <div part="rank">{() => tile()?.rank}</div>
@@ -101,7 +130,12 @@ export class TileComponent extends Component("tile", {
         <Style>{css`
           :host {
             display: inline-block;
-            --tile-text-color: #00331d;
+            --tile-width: 2.5em;
+            --tile-height: calc(var(--tile-width) * 1.25);
+            --tile-depth: 0.5em;
+            --tile-back-depth: 0.3em;
+            --tile-shadow: rgba(0, 51, 29, 0.5) 0 0.5em 0.5em;
+            --tile-text-color: rgb(0, 51, 29);
             --tile-face-color: #edf4ee;
             --tile-face-border-color: #d3d7d4;
             --tile-face-light-color: #f8fcf9;
@@ -114,30 +148,30 @@ export class TileComponent extends Component("tile", {
           }
 
           [part="tile"] {
-            --tile-width: 2.5em;
-            --tile-height: calc(var(--tile-width) * 1.25);
             display: flex;
             flex-direction: column;
-            border: 3px solid var(--tile-face-color);
-            border-bottom-color: var(--tile-face-border-color);
+            border: 0.15em solid var(--tile-face-color);
             border-top-color: var(--tile-face-light-color);
             border-radius: 0.3em;
             box-shadow:
-              var(--tile-face-border-color) 0 -0.5em,
-              var(--tile-back-border-color) 0 -0.8em;
-            margin-top: 0.8em;
+              var(--tile-face-border-color) 0 var(--tile-depth),
+              var(--tile-back-border-color) 0
+                calc(var(--tile-back-depth) + var(--tile-depth)),
+              var(--tile-shadow);
             width: var(--tile-width);
             height: var(--tile-height);
             background-color: var(--tile-face-color);
             overflow: hidden;
+            transition: transform ${transitionDuration / 1000}s;
           }
           [part="tile"].back {
             border-color: var(--tile-back-color);
             border-top-color: var(--tile-back-light-color);
-            border-bottom-color: var(--tile-back-border-color);
             box-shadow:
-              var(--tile-back-border-color) 0 -0.3em,
-              var(--tile-face-border-color) 0 -0.8em;
+              var(--tile-back-border-color) 0 var(--tile-back-depth),
+              var(--tile-face-border-color) 0
+                calc(var(--tile-back-depth) + var(--tile-depth)),
+              var(--tile-shadow);
             background-color: var(--tile-back-color);
           }
 
