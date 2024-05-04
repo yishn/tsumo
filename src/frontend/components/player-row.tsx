@@ -27,9 +27,11 @@ export class PlayerRow extends Component("player-row", {
             align-items: flex-start;
             gap: 1em;
             background-color: rgba(0, 0, 0, 0.5);
+            -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
             padding: 0.5em;
-            padding-right: 0;
+            padding-left: max(0.5em, env(safe-area-inset-left));
+            padding-right: env(safe-area-inset-left);
             color: white;
           }
 
@@ -41,11 +43,12 @@ export class PlayerRow extends Component("player-row", {
           [part="avatar"] {
             display: block;
             border-radius: 50%;
-            width: 5em;
+            width: 4.2em;
           }
 
           [part="gold"] {
-            margin-top: .5em;
+            font-size: 0.9em;
+            margin-top: 0.5em;
             text-align: center;
           }
           [part="gold"] img {
@@ -62,13 +65,12 @@ export class PlayerRow extends Component("player-row", {
 
           ::slotted([slot="discards"]) {
             margin-bottom: 1.3em;
-            font-size: 0.8em;
+            font-size: 0.9em;
           }
 
           ::slotted([slot="tiles"]) {
-            flex-wrap: nowrap;
             padding-bottom: 0.8em;
-            font-size: 0.4em;
+            font-size: 0.5em;
           }
         `}</Style>
       </>

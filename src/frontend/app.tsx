@@ -54,7 +54,11 @@ export class AppComponent extends Component("app") {
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="North" avatar="./assets/avatars/dragon.png" gold={50}>
+          <PlayerRow
+            name="North"
+            avatar="./assets/avatars/dragon.png"
+            gold={50}
+          >
             <TileRow slot="discards">
               <Tile />
             </TileRow>
@@ -93,7 +97,7 @@ export class AppComponent extends Component("app") {
             display: flex;
             flex-direction: column;
             gap: 0.2em;
-            margin-top: 0.5em;
+            padding-top: 0.5em;
           }
         `}</Style>
       </>
