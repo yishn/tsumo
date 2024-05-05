@@ -156,8 +156,8 @@ export class AppComponent extends Component("app") {
           }
           [part="self"] > mj-tile-row {
             align-self: center;
+            gap: 0;
             padding: 0.5em;
-            font-size: 0.94em;
           }
         `}</Style>
       </>

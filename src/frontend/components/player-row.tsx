@@ -114,6 +114,7 @@ export class PlayerRow extends Component("player-row", {
           }
 
           ::slotted([slot="tiles"]) {
+            gap: 0;
             padding-bottom: 0.8em;
             font-size: 0.5em;
           }
