@@ -1,5 +1,7 @@
 import { Component, For, Style, css, defineComponents } from "sinho";
 import { PlayerRow } from "./components/player-row.tsx";
+import { generateShuffledFullDeck } from "../core/game-state.ts";
+import { Tile as TileClass } from "../core/tile.ts";
 import { Tile } from "./components/tile.tsx";
 import { TileRow } from "./components/tile-row.tsx";
 import { TileSuit } from "../core/tile.ts";
@@ -10,7 +12,11 @@ export class AppComponent extends Component("app") {
     return (
       <>
         <div part="players">
-          <PlayerRow name="East" avatar="./assets/avatars/monkey.png" gold={50}>
+          <PlayerRow
+            name="East"
+            avatar="./assets/avatars/monkey.png"
+            score={50}
+          >
             <TileRow slot="discards">
               <Tile suit={TileSuit.Bamboo} rank={1} />
               <Tile suit={TileSuit.Circle} rank={9} />
@@ -23,10 +29,11 @@ export class AppComponent extends Component("app") {
             </TileRow>
 
             <TileRow slot="tiles">
-              <For each={[...Array(14)]}>{() => <Tile back />}</For>
+              <For each={[...Array(10)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="South" avatar="./assets/avatars/boar.png" gold={50}>
+
+          <PlayerRow name="South" avatar="./assets/avatars/boar.png" score={50}>
             <TileRow slot="discards">
               <TileStack>
                 <Tile suit={TileSuit.Myriad} rank={3} />
@@ -36,17 +43,13 @@ export class AppComponent extends Component("app") {
             </TileRow>
 
             <TileRow slot="tiles">
-              <For each={[...Array(14)]}>{() => <Tile back />}</For>
+              <For each={[...Array(11)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
-          <PlayerRow name="West" avatar="./assets/avatars/dog.png" gold={50}>
+
+          <PlayerRow name="West" avatar="./assets/avatars/dog.png" score={50}>
             <TileRow slot="discards">
               <Tile suit={TileSuit.Myriad} rank={1} />
-              <TileStack>
-                <Tile suit={TileSuit.Circle} rank={6} />
-                <Tile suit={TileSuit.Circle} rank={7} />
-                <Tile suit={TileSuit.Circle} rank={8} />
-              </TileStack>
               <Tile suit={TileSuit.Bamboo} rank={2} />
             </TileRow>
 
@@ -60,7 +63,7 @@ export class AppComponent extends Component("app") {
           <PlayerRow
             name="North"
             avatar="./assets/avatars/dragon.png"
-            gold={50}
+            score={50}
           >
             <TileRow slot="discards">
               <Tile />
@@ -69,23 +72,9 @@ export class AppComponent extends Component("app") {
 
           <TileRow>
             <For
-              each={[
-                TileSuit.Bamboo,
-                TileSuit.Circle,
-                TileSuit.Myriad,
-                TileSuit.Dragon,
-                TileSuit.Wind,
-              ].flatMap((suit) =>
-                [
-                  ...Array(
-                    suit === TileSuit.Dragon
-                      ? 3
-                      : suit === TileSuit.Wind
-                        ? 4
-                        : 2
-                  ),
-                ].map((_, i) => ({ suit, rank: i + 1 }))
-              )}
+              each={generateShuffledFullDeck()
+                .slice(0, 13)
+                .sort(TileClass.sort)}
             >
               {(item) => (
                 <Tile suit={() => item().suit} rank={() => item().rank} />
@@ -158,7 +147,6 @@ export class AppComponent extends Component("app") {
           [part="self"] > mj-tile-row {
             align-self: center;
             padding: 0.5em;
-            font-size: 0.9em;
           }
         `}</Style>
       </>

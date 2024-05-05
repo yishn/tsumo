@@ -12,7 +12,7 @@ export class TileStack extends Component("tile-stack") {
           }
 
           ::slotted(mj-tile:not(:first-child)) {
-            margin-left: -1.3em;
+            margin-left: -1.11em;
           }
         `}</Style>
       </>

@@ -44,7 +44,7 @@ const AnimatedCounter: FunctionalComponent<{
 export class PlayerRow extends Component("player-row", {
   name: prop<string>(""),
   avatar: prop<string>("./assets/avatars/monkey.png"),
-  gold: prop<number>(0, { attribute: Number }),
+  score: prop<number>(0, { attribute: Number }),
 }) {
   render() {
     return (
@@ -52,9 +52,9 @@ export class PlayerRow extends Component("player-row", {
         <div part="player">
           <div part="player-name">{this.props.name}</div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
-          <div part="gold">
-            <img src="./assets/coin.png" alt="Gold" /> ×
-            <AnimatedCounter value={this.props.gold} />
+          <div part="score">
+            <img src="./assets/coin.png" alt="Score" /> ×
+            <AnimatedCounter value={this.props.score} />
           </div>
         </div>
 
@@ -91,12 +91,12 @@ export class PlayerRow extends Component("player-row", {
             width: 4.2em;
           }
 
-          [part="gold"] {
+          [part="score"] {
             font-size: 0.9em;
             margin-top: 0.5em;
             text-align: center;
           }
-          [part="gold"] img {
+          [part="score"] img {
             height: 0.8em;
             vertical-align: middle;
           }

@@ -136,8 +136,8 @@ class TileComponent extends Component("tile", {
         <Style>{css`
           :host {
             display: inline-block;
-            --tile-width: 2.5em;
-            --tile-height: calc(var(--tile-width) * 1.25);
+            --tile-width: 2.15em;
+            --tile-height: calc(var(--tile-width) * 1.2);
             --tile-depth: 0.5em;
             --tile-back-depth: 0.3em;
             --tile-shadow: rgba(18, 32, 26, 0.5) 0 0.5em 0.5em;
@@ -242,7 +242,7 @@ class TileComponent extends Component("tile", {
             font-weight: bold;
           }
           .wind [part="rank"] {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: bold;
           }
 
@@ -265,12 +265,13 @@ class TileComponent extends Component("tile", {
           }
           .myriad [part="suit"] {
             color: var(--tile-red);
-            font-size: 1.4em;
+            font-size: 1.2em;
             line-height: 1;
             font-weight: bold;
           }
           .wind [part="suit"] svg {
             fill: var(--tile-text-color);
+            height: 1em;
           }
         `}</Style>
       </>
