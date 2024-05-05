@@ -7,40 +7,82 @@ import {
   defineComponents,
   prop,
   useEffect,
+  useRef,
   useSignal,
 } from "sinho";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
-  interval?: MaybeSignal<number | undefined>;
+  duration?: MaybeSignal<number | undefined>;
 }> = (props) => {
+  const elRef = useRef<HTMLSpanElement>();
+  const deltaRef = useRef<HTMLSpanElement>();
   const [value, setValue] = useSignal(MaybeSignal.get(props.value) ?? 0);
+  const [delta, setDelta] = useSignal(0);
+  const [showDelta, setShowDelta] = useSignal(false);
 
   useEffect(() => {
     const newValue = MaybeSignal.get(props.value) ?? 0;
-    const interval = MaybeSignal.peek(props.interval) ?? 10;
+    const delta = newValue - value.peek();
+    const sign = Math.sign(delta);
+    const interval =
+      (MaybeSignal.peek(props.duration) ?? 300) / Math.abs(delta);
+
     let intervalId: number | undefined;
+    let timeoutId: number | undefined;
 
     if (value.peek() !== newValue) {
-      const delta = Math.sign(newValue - value.peek());
+      setDelta(newValue - value.peek());
+      setShowDelta(true);
 
       intervalId = setInterval(() => {
         if (value.peek() === newValue) {
           clearInterval(intervalId);
         } else {
-          setValue((value) => value + delta);
+          setValue((value) => value + sign);
         }
       }, interval);
+
+      timeoutId = setTimeout(() => setShowDelta(false), 1000);
     }
 
     return () => {
       clearInterval(intervalId);
+      clearTimeout(timeoutId);
     };
   });
 
   return (
     <>
-      <span>{value}</span>
+      <span
+        ref={elRef}
+        style={{
+          position: "relative",
+          fontVariantNumeric: "tabular-nums"
+        }}
+      >
+        {value}
+
+        <span
+          ref={deltaRef}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "-1em",
+            color: () =>
+              delta() >= 0
+                ? "var(--animated-counter-positive)"
+                : "var(--animated-counter-negative)",
+            opacity: () => (showDelta() ? 1 : 0),
+            transform: () => (showDelta() ? undefined : "translateY(.5em)"),
+            transition: "opacity .2s, transform .2s",
+          }}
+        >
+          <> </>
+          {() => (delta() >= 0 ? "+" : "")}
+          {delta}
+        </span>
+      </span>
     </>
   );
 };
@@ -71,6 +113,8 @@ export class PlayerRow extends Component("player-row", {
 
         <Style>{css`
           :host {
+            --animated-counter-positive: #35de7b;
+            --animated-counter-negative: #ff8356;
             display: flex;
             align-items: flex-start;
             gap: 1em;
