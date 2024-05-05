@@ -29,7 +29,8 @@ export function generateShuffledFullDeck(): Tile[] {
 export class Phase {
   constructor(public state: GameState) {}
 
-  nextPhase<M extends Phase>(mode: new (state: GameState) => M): GameState<M> {
+  nextPhase<P extends Phase>(phase: new (state: GameState) => P): GameState<P> {
+    this.state.phase = new phase(this.state);
     return this.state;
   }
 }
@@ -139,6 +140,7 @@ export class EndActionPhase extends Phase {
     // TODO handle empty deck
     player.tiles.push(tile);
 
+    this.state.scoreKong(this.state.currentPlayerIndex);
     return this.nextPhase(EndActionPhase);
   }
 
@@ -163,6 +165,7 @@ export class EndActionPhase extends Phase {
     // TODO handle empty deck
     player.tiles.push(drawnTile);
 
+    this.state.scoreKong(this.state.currentPlayerIndex);
     return this.nextPhase(EndActionPhase);
   }
 
@@ -204,11 +207,13 @@ export class ReactionPhase extends Phase {
 
     this.state.currentPlayerIndex = playerIndex;
 
+    // Handle kongs
     if (tileIndex3 != null) {
       // Draw from the bottom of the deck
       const tile = this.state.shiftDeck()!;
       // TODO handle empty deck
-      this.state.currentPlayer.tiles.push(tile);
+      player.tiles.push(tile);
+      this.state.scoreKong(playerIndex);
     }
 
     return this.nextPhase(EndActionPhase);
@@ -354,5 +359,14 @@ export class GameState<P extends Phase = any> {
     }
 
     return win;
+  }
+
+  scoreKong(playerIndex: number): void {
+    for (let i = 0; i < this.players.length; i++) {
+      if (i === playerIndex) continue;
+
+      this.getPlayer(i).score -= 2;
+      this.getPlayer(playerIndex).score += 2;
+    }
   }
 }

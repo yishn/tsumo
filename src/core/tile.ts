@@ -94,9 +94,7 @@ export class Tile {
       if (Tile.equal(honorTiles[i], honorTiles[i - 1])) return false;
     }
 
-    const numericTiles = [...tiles]
-      .filter((tile) => tile.numeric)
-      .sort(Tile.sort);
+    const numericTiles = tiles.filter((tile) => tile.numeric).sort(Tile.sort);
 
     for (let i = 1; i < numericTiles.length - 1; i++) {
       if (
