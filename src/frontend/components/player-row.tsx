@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
   Component,
   FunctionalComponent,
+  If,
   MaybeSignal,
   Style,
   css,
@@ -12,6 +13,7 @@ import {
   useSignal,
 } from "sinho";
 import ScoreIcon from "../../../assets/score.svg";
+import DealerIcon from "../../../assets/dealer.svg";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
@@ -91,8 +93,8 @@ const AnimatedCounter: FunctionalComponent<{
 
 export class PlayerRow extends Component("player-row", {
   name: prop<string>("", { attribute: String }),
-  current: prop<boolean>(false, { attribute: Boolean }),
-  dealer: prop<boolean>(false, { attribute: Boolean }),
+  current: prop<boolean>(false, { attribute: () => true }),
+  dealer: prop<boolean>(false, { attribute: () => true }),
   avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
     attribute: String,
   }),
@@ -100,15 +102,22 @@ export class PlayerRow extends Component("player-row", {
 }) {
   render() {
     return (
-      <>
-        <div
-          part="player"
-          class={clsx({
-            current: this.props.current,
-            dealer: this.props.dealer,
-          })}
-        >
-          <div part="player-name">{this.props.name}</div>
+      <div
+        part="container"
+        class={() =>
+          clsx({
+            current: this.props.current(),
+            dealer: this.props.dealer(),
+          })
+        }
+      >
+        <div part="player">
+          <div part="player-name">
+            <If condition={this.props.dealer}>
+              <DealerIcon alt="Dealer" />{" "}
+            </If>
+            {this.props.name}
+          </div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
           <div part="score">
             <ScoreIcon alt="Score" /> ×
@@ -125,16 +134,22 @@ export class PlayerRow extends Component("player-row", {
           :host {
             --animated-counter-positive: #35de7b;
             --animated-counter-negative: #ff8356;
+            --player-row-background-color: rgba(0, 0, 0, 0.5);
+            display: block;
+            -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
+          }
+
+          [part="container"] {
             display: flex;
             align-items: flex-start;
             gap: 1em;
-            background-color: rgba(0, 0, 0, 0.5);
-            -webkit-backdrop-filter: blur(0.5em);
-            backdrop-filter: blur(0.5em);
+            background-color: var(--player-row-background-color);
             padding: 0.5em;
             padding-left: max(0.5em, env(safe-area-inset-left));
             padding-right: env(safe-area-inset-left);
             color: white;
+            transition: background-color 0.2s;
           }
 
           [part="player-name"] {
@@ -144,23 +159,34 @@ export class PlayerRow extends Component("player-row", {
             overflow: hidden;
             text-overflow: ellipsis;
           }
+          .dealer [part="player-name"] svg {
+            fill: #ee401d;
+            height: 0.8em;
+            width: 0.8em;
+            margin-bottom: -0.1em;
+          }
 
           [part="avatar"] {
             display: block;
             border-radius: 50%;
+            margin-top: 0.15em;
             width: 4.2em;
+            transition: box-shadow 0.2s;
+          }
+          .current [part="avatar"] {
+            box-shadow: #b68800 0 0 0 0.3em;
           }
 
           [part="score"] {
             font-size: 0.9em;
-            margin-top: 0.5em;
+            margin-top: 0.15em;
             text-align: center;
           }
           [part="score"] svg {
             fill: #ffbb00;
             height: 0.8em;
             width: 0.8em;
-            vertical-align: middle;
+            margin-bottom: -0.1em;
           }
 
           [part="tiles"] {
@@ -180,7 +206,7 @@ export class PlayerRow extends Component("player-row", {
             font-size: 0.5em;
           }
         `}</Style>
-      </>
+      </div>
     );
   }
 }

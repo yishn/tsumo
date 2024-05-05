@@ -21,6 +21,7 @@ export class AppComponent extends Component("app") {
         <div part="players">
           <PlayerRow
             name="East"
+            dealer
             avatar="./assets/avatars/monkey.png"
             score={50}
           >
@@ -74,6 +75,7 @@ export class AppComponent extends Component("app") {
         <div part="self">
           <PlayerRow
             name="North"
+            current
             avatar="./assets/avatars/dragon.png"
             score={50}
           >
@@ -157,7 +159,7 @@ export class AppComponent extends Component("app") {
             display: flex;
             flex-direction: column;
             gap: 0.2em;
-            padding: 0.2em 0;
+            padding-bottom: 0.2em;
             overflow: auto;
           }
 
@@ -171,7 +173,7 @@ export class AppComponent extends Component("app") {
             backdrop-filter: blur(0.5em);
           }
           [part="self"] > mj-player-row {
-            background-color: transparent;
+            --player-row-background-color: transparent;
             -webkit-backdrop-filter: unset;
             backdrop-filter: unset;
           }
