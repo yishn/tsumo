@@ -3,8 +3,6 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "sinho",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   }
 }

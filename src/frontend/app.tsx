@@ -104,6 +104,7 @@ export class AppComponent extends Component("app") {
           }
 
           html {
+            color-scheme: dark;
             background: url("./assets/bg.jpg") center / cover no-repeat fixed;
             overflow: hidden;
           }
@@ -156,8 +157,8 @@ export class AppComponent extends Component("app") {
           }
           [part="self"] > mj-tile-row {
             align-self: center;
-            gap: 0;
             padding: 0.5em;
+            font-size: 0.9em;
           }
         `}</Style>
       </>

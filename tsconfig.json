@@ -6,6 +6,8 @@
     "moduleResolution": "Bundler",
     "isolatedModules": true,
     "strict": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "lib": ["ES2022"]
   }
 }

@@ -8,7 +8,8 @@
   "license": "MIT",
   "scripts": {
     "start": "serve",
-    "build-frontend": "rollup -c ./rollup.config.js"
+    "typecheck": "tsc --project ./src/frontend/tsconfig.json",
+    "build-frontend": "rollup -c ./rollup.frontend.config.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
