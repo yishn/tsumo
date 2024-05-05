@@ -90,16 +90,11 @@ export class AppComponent extends Component("app") {
             >
               {(item, i) => (
                 <Tile
+                  glow={() => i() <= 1}
                   suit={() => item().suit}
                   rank={() => item().rank}
                   selected={() => selectedTileIndex() === i()}
-                  onclick={() => {
-                    if (selectedTileIndex() === i()) {
-                      setSelectedTileIndex(-1);
-                    } else {
-                      setSelectedTileIndex(i());
-                    }
-                  }}
+                  onclick={() => setSelectedTileIndex(i())}
                 />
               )}
             </For>
@@ -133,6 +128,7 @@ export class AppComponent extends Component("app") {
           html {
             color-scheme: dark;
             background: url("./assets/bg.jpg") center / cover no-repeat fixed;
+            padding-top: env(safe-area-inset-top);
             overflow: hidden;
             font-family: "Alegreya", "KaiTi", serif;
             font-size: 1.2em;
@@ -160,7 +156,6 @@ export class AppComponent extends Component("app") {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             gap: 0.2em;
             padding: 0.2em 0;
             overflow: auto;

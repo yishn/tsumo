@@ -11,6 +11,7 @@ import {
   useRef,
   useSignal,
 } from "sinho";
+import ScoreIcon from "../../../assets/score.svg";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
@@ -110,7 +111,7 @@ export class PlayerRow extends Component("player-row", {
           <div part="player-name">{this.props.name}</div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
           <div part="score">
-            <img src="./assets/coin.png" alt="Score" /> ×
+            <ScoreIcon alt="Score" /> ×
             <AnimatedCounter value={this.props.score} />
           </div>
         </div>
@@ -155,8 +156,10 @@ export class PlayerRow extends Component("player-row", {
             margin-top: 0.5em;
             text-align: center;
           }
-          [part="score"] img {
+          [part="score"] svg {
+            fill: #ffbb00;
             height: 0.8em;
+            width: 0.8em;
             vertical-align: middle;
           }
 
