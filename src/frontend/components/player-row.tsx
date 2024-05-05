@@ -1,9 +1,50 @@
-import { Component, Style, css, defineComponents, prop } from "sinho";
+import {
+  Component,
+  FunctionalComponent,
+  MaybeSignal,
+  Style,
+  css,
+  defineComponents,
+  prop,
+  useEffect,
+  useSignal,
+} from "sinho";
+
+const AnimatedCounter: FunctionalComponent<{
+  value?: MaybeSignal<number | undefined>;
+  interval?: MaybeSignal<number | undefined>;
+}> = (props) => {
+  const [value, setValue] = useSignal(MaybeSignal.get(props.value) ?? 0);
+
+  useEffect(() => {
+    const newValue = MaybeSignal.get(props.value) ?? 0;
+    const interval = MaybeSignal.peek(props.interval) ?? 10;
+    let intervalId: number | undefined;
+
+    if (value.peek() !== newValue) {
+      const delta = Math.sign(newValue - value.peek());
+
+      intervalId = setInterval(() => {
+        if (value.peek() === newValue) {
+          clearInterval(intervalId);
+        } else {
+          setValue((value) => value + delta);
+        }
+      }, interval);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  });
+
+  return <>{value}</>;
+};
 
 export class PlayerRow extends Component("player-row", {
   name: prop<string>(""),
   avatar: prop<string>("./assets/avatars/monkey.png"),
-  gold: prop<number>(0),
+  gold: prop<number>(0, { attribute: Number }),
 }) {
   render() {
     return (
@@ -12,7 +53,8 @@ export class PlayerRow extends Component("player-row", {
           <div part="player-name">{this.props.name}</div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
           <div part="gold">
-            <img src="./assets/coin.png" alt="Gold" /> ×{this.props.gold}
+            <img src="./assets/coin.png" alt="Gold" /> ×
+            <AnimatedCounter value={this.props.gold} />
           </div>
         </div>
 
@@ -36,8 +78,11 @@ export class PlayerRow extends Component("player-row", {
           }
 
           [part="player-name"] {
+            max-width: 4.2em;
             font-weight: bold;
             text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
 
           [part="avatar"] {

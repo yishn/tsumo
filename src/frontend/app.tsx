@@ -80,15 +80,18 @@ export class AppComponent extends Component("app") {
 
           html {
             background: url("./assets/bg.jpg") center / cover no-repeat fixed;
+            overflow: hidden;
           }
 
           body {
             font-family: "Alegreya", "KaiTi", serif;
-            font-size: 1.1em;
+            font-size: 1.2em;
             background-color: rgba(0, 0, 0, 0.2);
             min-height: 100dvh;
             cursor: default;
             user-select: none;
+            overflow: hidden;
+            white-space: nowrap;
           }
         `}</Style>
 
