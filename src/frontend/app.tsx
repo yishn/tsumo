@@ -54,6 +54,9 @@ export class AppComponent extends Component("app") {
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
+        </div>
+
+        <div part="self">
           <PlayerRow
             name="North"
             avatar="./assets/avatars/dragon.png"
@@ -62,11 +65,33 @@ export class AppComponent extends Component("app") {
             <TileRow slot="discards">
               <Tile />
             </TileRow>
-
-            <TileRow slot="tiles">
-              <For each={[...Array(14)]}>{() => <Tile back />}</For>
-            </TileRow>
           </PlayerRow>
+
+          <TileRow>
+            <For
+              each={[
+                TileSuit.Bamboo,
+                TileSuit.Circle,
+                TileSuit.Myriad,
+                TileSuit.Dragon,
+                TileSuit.Wind,
+              ].flatMap((suit) =>
+                [
+                  ...Array(
+                    suit === TileSuit.Dragon
+                      ? 3
+                      : suit === TileSuit.Wind
+                        ? 4
+                        : 2
+                  ),
+                ].map((_, i) => ({ suit, rank: i + 1 }))
+              )}
+            >
+              {(item) => (
+                <Tile suit={() => item().suit} rank={() => item().rank} />
+              )}
+            </For>
+          </TileRow>
         </div>
 
         <Style light>{css`
@@ -86,7 +111,6 @@ export class AppComponent extends Component("app") {
           body {
             font-family: "Alegreya", "KaiTi", serif;
             font-size: 1.2em;
-            background-color: rgba(0, 0, 0, 0.2);
             min-height: 100dvh;
             cursor: default;
             user-select: none;
@@ -96,11 +120,44 @@ export class AppComponent extends Component("app") {
         `}</Style>
 
         <Style>{css`
+          :host {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          }
+
           [part="players"] {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.2em;
-            padding-top: 0.5em;
+            padding: 0.2em 0;
+            overflow: auto;
+          }
+
+          [part="self"] {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding-bottom: 2em;
+            background-color: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
+          }
+          [part="self"] > mj-player-row {
+            background-color: transparent;
+            -webkit-backdrop-filter: unset;
+            backdrop-filter: unset;
+          }
+          [part="self"] > mj-tile-row {
+            align-self: center;
+            padding: 0.5em;
+            font-size: 0.94em;
           }
         `}</Style>
       </>
