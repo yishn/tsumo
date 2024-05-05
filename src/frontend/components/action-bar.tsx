@@ -1,12 +1,14 @@
 import { Component, Style, css, defineComponents, event, prop } from "sinho";
 
 export class ActionBarButton extends Component("action-bar-button", {
+  disabled: prop<boolean>(false, { attribute: () => true }),
   onButtonClick: event(MouseEvent),
 }) {
   render() {
     return (
       <>
         <button
+          disabled={this.props.disabled}
           onclick={(evt) => {
             evt.preventDefault();
             this.events.onButtonClick(evt);
@@ -21,8 +23,13 @@ export class ActionBarButton extends Component("action-bar-button", {
             padding: 0.2em;
             background: none;
             cursor: pointer;
+            touch-action: manipulation;
           }
-          button:active {
+          button:disabled {
+            cursor: not-allowed;
+            --action-bar-icon-color: var(--action-bar-icon-disabled-color);
+          }
+          button:not(:disabled):active {
             opacity: 0.5;
           }
 
@@ -47,6 +54,7 @@ export class ActionBar extends Component("action-bar") {
         <Style>{css`
           :host {
             --action-bar-icon-color: #35de7b;
+            --action-bar-icon-disabled-color: #808f85;
             display: flex;
             justify-content: center;
             gap: 2em;

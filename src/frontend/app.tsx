@@ -1,4 +1,4 @@
-import { Component, For, Style, css, defineComponents } from "sinho";
+import { Component, For, Style, css, defineComponents, useSignal } from "sinho";
 import { PlayerRow } from "./components/player-row.tsx";
 import { generateShuffledFullDeck } from "../core/game-state.ts";
 import { Tile as TileClass } from "../core/tile.ts";
@@ -14,6 +14,8 @@ import WinIcon from "../../assets/win.svg";
 
 export class AppComponent extends Component("app") {
   render() {
+    const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
+
     return (
       <>
         <div part="players">
@@ -76,7 +78,7 @@ export class AppComponent extends Component("app") {
             score={50}
           >
             <TileRow slot="discards">
-              <Tile />
+              <Tile suit={TileSuit.Wind} rank={2} />
             </TileRow>
           </PlayerRow>
 
@@ -86,12 +88,17 @@ export class AppComponent extends Component("app") {
                 .slice(0, 13)
                 .sort(TileClass.sort)}
             >
-              {(item) => (
+              {(item, i) => (
                 <Tile
                   suit={() => item().suit}
                   rank={() => item().rank}
-                  onclick={(evt) => {
-                    evt.currentTarget.selected = !evt.currentTarget.selected;
+                  selected={() => selectedTileIndex() === i()}
+                  onclick={() => {
+                    if (selectedTileIndex() === i()) {
+                      setSelectedTileIndex(-1);
+                    } else {
+                      setSelectedTileIndex(i());
+                    }
                   }}
                 />
               )}
@@ -108,7 +115,7 @@ export class AppComponent extends Component("app") {
             <ActionBarButton>
               <KongIcon alt="Kong" />
             </ActionBarButton>
-            <ActionBarButton>
+            <ActionBarButton disabled>
               <WinIcon alt="Win" />
             </ActionBarButton>
           </ActionBar>
@@ -130,7 +137,6 @@ export class AppComponent extends Component("app") {
             font-family: "Alegreya", "KaiTi", serif;
             font-size: 1.2em;
             cursor: default;
-            touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
             -webkit-user-drag: none;
@@ -154,6 +160,7 @@ export class AppComponent extends Component("app") {
             flex: 1;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             gap: 0.2em;
             padding: 0.2em 0;
             overflow: auto;
@@ -177,6 +184,10 @@ export class AppComponent extends Component("app") {
             align-self: center;
             padding: 0.5em;
             margin-bottom: 0.8em;
+          }
+          [part="self"] > mj-tile-row > mj-tile {
+            cursor: pointer;
+            touch-action: manipulation;
           }
         `}</Style>
       </>

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
   Component,
   FunctionalComponent,
@@ -58,7 +59,7 @@ const AnimatedCounter: FunctionalComponent<{
         ref={elRef}
         style={{
           position: "relative",
-          fontVariantNumeric: "tabular-nums"
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {value}
@@ -89,6 +90,8 @@ const AnimatedCounter: FunctionalComponent<{
 
 export class PlayerRow extends Component("player-row", {
   name: prop<string>("", { attribute: String }),
+  current: prop<boolean>(false, { attribute: Boolean }),
+  dealer: prop<boolean>(false, { attribute: Boolean }),
   avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
     attribute: String,
   }),
@@ -97,7 +100,13 @@ export class PlayerRow extends Component("player-row", {
   render() {
     return (
       <>
-        <div part="player">
+        <div
+          part="player"
+          class={clsx({
+            current: this.props.current,
+            dealer: this.props.dealer,
+          })}
+        >
           <div part="player-name">{this.props.name}</div>
           <img part="avatar" src={this.props.avatar} alt={this.props.name} />
           <div part="score">
