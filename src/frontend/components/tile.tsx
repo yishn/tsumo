@@ -26,6 +26,7 @@ class TileComponent extends Component("tile", {
   }),
   rank: prop<number>(undefined, { attribute: Number }),
   back: prop<boolean>(false, { attribute: () => true }),
+  selected: prop<boolean>(false, { attribute: () => true }),
   highlight: prop<boolean>(false, { attribute: () => true }),
   glow: prop<boolean>(false, { attribute: () => true }),
 }) {
@@ -78,6 +79,7 @@ class TileComponent extends Component("tile", {
               numeric: tile()?.numeric,
               honor: tile()?.honor,
               back: actualBack(),
+              selected: this.props.selected(),
               highlight: this.props.highlight(),
               glow: this.props.glow(),
             })
@@ -175,11 +177,14 @@ class TileComponent extends Component("tile", {
             overflow: hidden;
             transition: transform ${transitionDuration / 1000}s;
           }
-          [part="tile"].highlight {
-            transform: translateY(-0.3em);
+          [part="tile"].highlight,
+          [part="tile"].selected {
             --tile-face-color: var(--tile-face-highlight-color);
             --tile-face-border-color: var(--tile-face-highlight-border-color);
             --tile-face-light-color: var(--tile-face-highlight-light-color);
+          }
+          [part="tile"].selected {
+            transform: translateY(-0.3em);
           }
           @keyframes glow-pulse {
             from {

@@ -38,12 +38,18 @@ const AnimatedCounter: FunctionalComponent<{
     };
   });
 
-  return <>{value}</>;
+  return (
+    <>
+      <span>{value}</span>
+    </>
+  );
 };
 
 export class PlayerRow extends Component("player-row", {
-  name: prop<string>(""),
-  avatar: prop<string>("./assets/avatars/monkey.png"),
+  name: prop<string>("", { attribute: String }),
+  avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
+    attribute: String,
+  }),
   score: prop<number>(0, { attribute: Number }),
 }) {
   render() {
@@ -105,7 +111,6 @@ export class PlayerRow extends Component("player-row", {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
           }
 
           ::slotted([slot="discards"]) {

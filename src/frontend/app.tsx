@@ -6,6 +6,11 @@ import { Tile } from "./components/tile.tsx";
 import { TileRow } from "./components/tile-row.tsx";
 import { TileSuit } from "../core/tile.ts";
 import { TileStack } from "./components/tile-stack.tsx";
+import { ActionBar, ActionBarButton } from "./components/action-bar.tsx";
+import DrawIcon from "../../assets/draw.svg";
+import EatIcon from "../../assets/eat.svg";
+import KongIcon from "../../assets/kong.svg";
+import WinIcon from "../../assets/win.svg";
 
 export class AppComponent extends Component("app") {
   render() {
@@ -29,7 +34,7 @@ export class AppComponent extends Component("app") {
             </TileRow>
 
             <TileRow slot="tiles">
-              <For each={[...Array(10)]}>{() => <Tile back />}</For>
+              <For each={[...Array(11)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
 
@@ -40,17 +45,22 @@ export class AppComponent extends Component("app") {
                 <Tile suit={TileSuit.Myriad} rank={4} />
                 <Tile suit={TileSuit.Myriad} rank={5} />
               </TileStack>
+              <TileStack>
+                <Tile suit={TileSuit.Circle} rank={2} />
+                <Tile suit={TileSuit.Circle} rank={2} />
+                <Tile suit={TileSuit.Circle} rank={2} />
+              </TileStack>
             </TileRow>
 
             <TileRow slot="tiles">
-              <For each={[...Array(11)]}>{() => <Tile back />}</For>
+              <For each={[...Array(8)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
 
           <PlayerRow name="West" avatar="./assets/avatars/dog.png" score={50}>
             <TileRow slot="discards">
               <Tile suit={TileSuit.Myriad} rank={1} />
-              <Tile suit={TileSuit.Bamboo} rank={2} />
+              <Tile suit={TileSuit.Bamboo} rank={2} highlight />
             </TileRow>
 
             <TileRow slot="tiles">
@@ -77,10 +87,31 @@ export class AppComponent extends Component("app") {
                 .sort(TileClass.sort)}
             >
               {(item) => (
-                <Tile suit={() => item().suit} rank={() => item().rank} />
+                <Tile
+                  suit={() => item().suit}
+                  rank={() => item().rank}
+                  onclick={(evt) => {
+                    evt.currentTarget.selected = !evt.currentTarget.selected;
+                  }}
+                />
               )}
             </For>
           </TileRow>
+
+          <ActionBar>
+            <ActionBarButton>
+              <DrawIcon alt="Draw" />
+            </ActionBarButton>
+            <ActionBarButton>
+              <EatIcon alt="Eat" />
+            </ActionBarButton>
+            <ActionBarButton>
+              <KongIcon alt="Kong" />
+            </ActionBarButton>
+            <ActionBarButton>
+              <WinIcon alt="Win" />
+            </ActionBarButton>
+          </ActionBar>
         </div>
 
         <Style light>{css`
@@ -104,6 +135,8 @@ export class AppComponent extends Component("app") {
             min-height: 100dvh;
             cursor: default;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
             overflow: hidden;
             white-space: nowrap;
           }
@@ -134,7 +167,7 @@ export class AppComponent extends Component("app") {
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            padding-bottom: 2em;
+            padding-bottom: max(0.5em, env(safe-area-inset-bottom));
             background-color: rgba(0, 0, 0, 0.8);
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
@@ -147,6 +180,7 @@ export class AppComponent extends Component("app") {
           [part="self"] > mj-tile-row {
             align-self: center;
             padding: 0.5em;
+            margin-bottom: 0.8em;
           }
         `}</Style>
       </>
