@@ -143,7 +143,6 @@ export class PlayerRow extends Component("player-row", {
 
           [part="container"] {
             display: flex;
-            align-items: flex-start;
             gap: 1em;
             background-color: var(--player-row-background-color);
             padding: 0.5em;
@@ -227,6 +226,9 @@ export class PlayerRow extends Component("player-row", {
             gap: 0;
             padding-bottom: 0.8em;
             font-size: 0.5em;
+          }
+          .minimal ::slotted([slot="tiles"]) {
+            align-self: center;
           }
         `}</Style>
       </div>

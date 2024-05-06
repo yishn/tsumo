@@ -87,30 +87,30 @@ export class AppComponent extends Component("app") {
             <TileRow slot="discards">
               <Tile suit={TileSuit.Wind} rank={2} />
             </TileRow>
-          </PlayerRow>
 
-          <TileRow>
-            <For
-              each={generateShuffledFullDeck()
-                .slice(0, 13)
-                .sort(TileClass.sort)}
-            >
-              {(item, i) => (
-                <Tile
-                  glow={() => i() <= 1}
-                  suit={() => item().suit}
-                  rank={() => item().rank}
-                  selected={() => selectedTileIndex() === i()}
-                  onclick={() => {
-                    if (selectedTileIndex() !== i()) {
-                      playPopSound();
-                    }
-                    setSelectedTileIndex(i());
-                  }}
-                />
-              )}
-            </For>
-          </TileRow>
+            <TileRow slot="tiles">
+              <For
+                each={generateShuffledFullDeck()
+                  .slice(0, 13)
+                  .sort(TileClass.sort)}
+              >
+                {(item, i) => (
+                  <Tile
+                    glow={() => i() <= 1}
+                    suit={() => item().suit}
+                    rank={() => item().rank}
+                    selected={() => selectedTileIndex() === i()}
+                    onclick={() => {
+                      if (selectedTileIndex() !== i()) {
+                        playPopSound();
+                      }
+                      setSelectedTileIndex(i());
+                    }}
+                  />
+                )}
+              </For>
+            </TileRow>
+          </PlayerRow>
 
           <ActionBar>
             <ActionBarButton>
@@ -187,12 +187,13 @@ export class AppComponent extends Component("app") {
             -webkit-backdrop-filter: unset;
             backdrop-filter: unset;
           }
-          [part="self"] > mj-tile-row {
+          [part="self"] mj-tile-row[slot="tiles"] {
             align-self: center;
-            padding: 0.5em;
-            margin-bottom: 0.8em;
+            gap: 0.2em;
+            margin-bottom: 0.3em;
+            font-size: .9em;
           }
-          [part="self"] > mj-tile-row > mj-tile {
+          [part="self"] mj-tile-row[slot="tiles"] > mj-tile {
             cursor: pointer;
           }
         `}</Style>
