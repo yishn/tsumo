@@ -1,5 +1,6 @@
 export { default as BambooIcon } from "../../assets/bamboo.svg";
 export { default as CircleIcon } from "../../assets/circle.svg";
+export { default as FlowerIcon } from "../../assets/flower.svg";
 export { default as WindIcon } from "../../assets/wind.svg";
 
 export { default as ScoreIcon } from "../../assets/score.svg";

@@ -54,9 +54,9 @@ export class GamePage extends Component("game-page") {
                 <Tile suit={TileSuit.Myriad} rank={5} />
               </TileStack>
               <TileStack>
-                <Tile suit={TileSuit.Circle} rank={2} />
-                <Tile suit={TileSuit.Circle} rank={2} />
-                <Tile suit={TileSuit.Circle} rank={2} />
+                <Tile suit={TileSuit.Circle} rank={1} />
+                <Tile suit={TileSuit.Circle} rank={1} />
+                <Tile suit={TileSuit.Circle} rank={1} />
               </TileStack>
             </TileRow>
 

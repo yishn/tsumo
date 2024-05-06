@@ -1,5 +1,6 @@
 import {
   Component,
+  Else,
   ElseIf,
   If,
   Style,
@@ -14,7 +15,7 @@ import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/main.ts";
 import { useAnimation } from "../animation.ts";
 import { playTileSound } from "../sounds.ts";
-import { BambooIcon, CircleIcon, WindIcon } from "../assets.ts";
+import { BambooIcon, CircleIcon, FlowerIcon, WindIcon } from "../assets.ts";
 
 const transitionDuration = 200;
 
@@ -81,6 +82,7 @@ class TileComponent extends Component("tile", {
               highlight: this.props.highlight(),
               glow: this.props.glow(),
               sparrow: tile()?.rank === 1 && tile()?.suit === TileSuit.Bamboo,
+              flower: tile()?.rank === 1 && tile()?.suit === TileSuit.Circle,
             })
           }
           style={{
@@ -99,7 +101,12 @@ class TileComponent extends Component("tile", {
                 <BambooIcon alt="Bamboo" />
               </If>
               <ElseIf condition={() => tile()?.suit === TileSuit.Circle}>
-                <CircleIcon alt="Circle" />
+                <If condition={() => tile()?.rank !== 1}>
+                  <CircleIcon alt="Circle" />
+                </If>
+                <Else>
+                  <FlowerIcon alt="Circle" />
+                </Else>
               </ElseIf>
               <ElseIf condition={() => tile()?.suit === TileSuit.Myriad}>
                 萬
@@ -159,6 +166,10 @@ class TileComponent extends Component("tile", {
             display: inline-block;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+          }
+
+          svg {
+            overflow: visible;
           }
 
           [part="tile"] {
@@ -257,8 +268,9 @@ class TileComponent extends Component("tile", {
             font-size: 1.2em;
             font-weight: bold;
           }
-          .sparrow [part="rank"] {
-            position: relative;
+          .sparrow [part="rank"],
+          .flower [part="rank"] {
+            position: absolute;
             left: -9999em;
           }
 
@@ -276,8 +288,12 @@ class TileComponent extends Component("tile", {
           .bamboo [part="suit"] svg {
             fill: var(--tile-green);
           }
-          .circle [part="suit"] svg {
+          .circle:not(.flower) [part="suit"] svg {
             fill: var(--tile-blue);
+          }
+          .flower [part="suit"] svg {
+            width: 90%;
+            height: 90%;
           }
           .myriad [part="suit"] {
             color: var(--tile-red);
@@ -290,7 +306,7 @@ class TileComponent extends Component("tile", {
             height: 1em;
           }
           .sparrow [part="suit"] {
-            position: relative;
+            position: absolute;
             left: -9999em;
           }
         `}</Style>
