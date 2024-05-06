@@ -1,16 +1,8 @@
 export function prepareAudio(url: string): () => void {
-  let audioContext: AudioContext | undefined;
   const audio = new Audio(url);
+  audio.preload = "auto";
 
   return () => {
-    if (!audioContext) {
-      audioContext = new AudioContext();
-      audioContext
-        .createMediaElementSource(audio)
-        .connect(audioContext.destination);
-    }
-
-    audio.pause();
     audio.currentTime = 0;
     audio.play();
   };

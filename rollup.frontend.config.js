@@ -33,7 +33,6 @@ export default {
     }),
     swc({
       swc: {
-        minify: !isDev,
         jsc: {
           parser: {
             syntax: "typescript",
@@ -45,10 +44,6 @@ export default {
               runtime: "automatic",
               importSource: "sinho",
             },
-          },
-          minify: {
-            compress: true,
-            mangle: true,
           },
         },
       },
