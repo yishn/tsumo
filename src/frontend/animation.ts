@@ -9,7 +9,6 @@ export function useAnimation(
     inProgress,
     async () => {
       useBatch(() => setInProgress(true));
-      debugger;
       await new Promise((resolve) => setTimeout(resolve, duration));
       useBatch(() => setInProgress(false));
     },

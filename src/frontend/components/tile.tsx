@@ -12,11 +12,9 @@ import {
 } from "sinho";
 import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/main.ts";
-import BambooIcon from "../../../assets/bamboo.svg";
-import CircleIcon from "../../../assets/circle.svg";
-import WindIcon from "../../../assets/wind.svg";
 import { useAnimation } from "../animation.ts";
 import { playTileSound } from "../sounds.ts";
+import { BambooIcon, CircleIcon, WindIcon } from "../assets.ts";
 
 const transitionDuration = 200;
 

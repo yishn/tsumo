@@ -9,15 +9,11 @@ import { Tile } from "./components/tile.tsx";
 import { TileRow } from "./components/tile-row.tsx";
 import { TileStack } from "./components/tile-stack.tsx";
 import { ActionBar, ActionBarButton } from "./components/action-bar.tsx";
-import DrawIcon from "../../assets/draw.svg";
-import EatIcon from "../../assets/eat.svg";
-import KongIcon from "../../assets/kong.svg";
-import WinIcon from "../../assets/win.svg";
-import { useJSONWebSocket } from "./websocket.ts";
+import { DrawIcon, EatIcon, KongIcon, WinIcon } from "./assets.ts";
+import { playPopSound } from "./sounds.ts";
 
 export class AppComponent extends Component("app") {
   render() {
-    useJSONWebSocket("ws://localhost:8080", console.log);
     const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
 
     return (
@@ -100,7 +96,12 @@ export class AppComponent extends Component("app") {
                   suit={() => item().suit}
                   rank={() => item().rank}
                   selected={() => selectedTileIndex() === i()}
-                  onclick={() => setSelectedTileIndex(i())}
+                  onclick={() => {
+                    if (selectedTileIndex() !== i()) {
+                      playPopSound();
+                    }
+                    setSelectedTileIndex(i());
+                  }}
                 />
               )}
             </For>

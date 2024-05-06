@@ -12,8 +12,7 @@ import {
   useRef,
   useSignal,
 } from "sinho";
-import ScoreIcon from "../../../assets/score.svg";
-import DealerIcon from "../../../assets/dealer.svg";
+import { DealerIcon, ScoreIcon } from "../assets.ts";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
