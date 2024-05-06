@@ -1,10 +1,12 @@
+import "howler";
+
 export function prepareAudio(url: string): () => void {
-  const audio = new Audio(url);
-  audio.preload = "auto";
+  const sound = new Howl({
+    src: [url],
+  });
 
   return () => {
-    audio.currentTime = 0;
-    audio.play();
+    sound.play();
   };
 }
 
