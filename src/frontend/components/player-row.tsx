@@ -32,8 +32,8 @@ const AnimatedCounter: FunctionalComponent<{
     const interval =
       (MaybeSignal.peek(props.duration) ?? 300) / Math.abs(delta);
 
-    let intervalId: number | undefined;
-    let timeoutId: number | undefined;
+    let intervalId: NodeJS.Timeout | number | undefined;
+    let timeoutId: NodeJS.Timeout | number | undefined;
 
     if (value.peek() !== newValue) {
       setDelta(newValue - value.peek());

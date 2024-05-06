@@ -26,16 +26,32 @@ export function generateShuffledFullDeck(): Tile[] {
   );
 }
 
-export class Phase {
-  constructor(public state: GameState) {}
-
-  nextPhase<P extends Phase>(phase: new (state: GameState) => P): GameState<P> {
-    this.state.phase = new phase(this.state);
-    return this.state;
-  }
+export enum Phase {
+  Deal,
+  Action,
+  EndAction,
+  Reaction,
+  Score,
 }
 
-export class DealPhase extends Phase {
+export function PhaseBase(name: Phase) {
+  return class _PhaseBase {
+    name: Phase = name;
+
+    constructor(public state: GameState) {}
+
+    nextPhase<P extends _PhaseBase>(
+      phase: new (state: GameState) => P
+    ): GameState<P> {
+      this.state.phase = new phase(this.state);
+      return this.state;
+    }
+  };
+}
+
+export type PhaseBase = InstanceType<ReturnType<typeof PhaseBase>>;
+
+export class DealPhase extends PhaseBase(Phase.Deal) {
   deal(): GameState<ActionPhase> {
     this.state.deck = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDeck()!;
@@ -50,7 +66,7 @@ export class DealPhase extends Phase {
   }
 }
 
-export class ActionPhase extends Phase {
+export class ActionPhase extends PhaseBase(Phase.Action) {
   draw(): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
     const tile = this.state.popDeck();
@@ -100,7 +116,7 @@ export class ActionPhase extends Phase {
   }
 }
 
-export class EndActionPhase extends Phase {
+export class EndActionPhase extends PhaseBase(Phase.EndAction) {
   discard(tileIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
     const tile = player.removeTile(tileIndex);
@@ -178,7 +194,7 @@ export class EndActionPhase extends Phase {
   }
 }
 
-export class ReactionPhase extends Phase {
+export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   pongKong(
     playerIndex: number,
     tileIndex1: number,
@@ -235,7 +251,7 @@ export class ReactionPhase extends Phase {
   }
 }
 
-export class ScorePhase extends Phase {
+export class ScorePhase extends PhaseBase(Phase.Score) {
   score(): GameState<DealPhase> {
     const player = this.state.currentPlayer;
     player.score += 1;
@@ -253,7 +269,7 @@ export class ScorePhase extends Phase {
   }
 }
 
-export class GameState<P extends Phase = any> {
+export class GameState<P extends PhaseBase = any> {
   phase: P;
   deck: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());

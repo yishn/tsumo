@@ -11,7 +11,7 @@ import {
   useSignal,
 } from "sinho";
 import { clsx } from "clsx";
-import { Tile, TileSuit } from "../../core/tile.ts";
+import { Tile, TileSuit } from "../../core/main.ts";
 import BambooIcon from "../../../assets/bamboo.svg";
 import CircleIcon from "../../../assets/circle.svg";
 import WindIcon from "../../../assets/wind.svg";

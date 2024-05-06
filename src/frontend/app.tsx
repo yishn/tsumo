@@ -1,19 +1,23 @@
 import { Component, For, Style, css, defineComponents, useSignal } from "sinho";
 import { PlayerRow } from "./components/player-row.tsx";
-import { generateShuffledFullDeck } from "../core/game-state.ts";
-import { Tile as TileClass } from "../core/tile.ts";
+import {
+  TileSuit,
+  Tile as TileClass,
+  generateShuffledFullDeck,
+} from "../core/main.ts";
 import { Tile } from "./components/tile.tsx";
 import { TileRow } from "./components/tile-row.tsx";
-import { TileSuit } from "../core/tile.ts";
 import { TileStack } from "./components/tile-stack.tsx";
 import { ActionBar, ActionBarButton } from "./components/action-bar.tsx";
 import DrawIcon from "../../assets/draw.svg";
 import EatIcon from "../../assets/eat.svg";
 import KongIcon from "../../assets/kong.svg";
 import WinIcon from "../../assets/win.svg";
+import { useJSONWebSocket } from "./websocket.ts";
 
 export class AppComponent extends Component("app") {
   render() {
+    useJSONWebSocket("ws://localhost:8080", console.log);
     const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
 
     return (
