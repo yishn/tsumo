@@ -137,7 +137,6 @@ class TileComponent extends Component("tile", {
 
         <Style>{css`
           :host {
-            display: inline-block;
             --tile-width: 2.15em;
             --tile-height: calc(var(--tile-width) * 1.2);
             --tile-depth: 0.5em;
@@ -158,6 +157,9 @@ class TileComponent extends Component("tile", {
             --tile-red: #d4353a;
             --tile-green: #12bb25;
             --tile-blue: #113ea7;
+            display: inline-block;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
           }
 
           [part="tile"] {

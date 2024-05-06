@@ -17,4 +17,6 @@ wss.on("listening", () => {
 
 wss.on("connection", (ws) => {
   ws.on("error", console.error);
+
+  ws.send(JSON.stringify("Hello World!"));
 });

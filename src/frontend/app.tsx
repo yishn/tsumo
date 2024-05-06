@@ -188,7 +188,6 @@ export class AppComponent extends Component("app") {
           }
           [part="self"] > mj-tile-row > mj-tile {
             cursor: pointer;
-            touch-action: manipulation;
           }
         `}</Style>
       </>
