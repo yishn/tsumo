@@ -1,4 +1,4 @@
-import { Tile } from "./tile";
+import { Tile } from "./tile.ts";
 
 export class Player {
   tiles: Tile[] = [];
