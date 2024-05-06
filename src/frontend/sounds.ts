@@ -1,12 +1,22 @@
-import "howler";
+let ctx: AudioContext | undefined;
 
 export function prepareAudio(url: string): () => void {
-  const sound = new Howl({
-    src: [url],
-  });
+  const buffer = fetch(url).then((res) => res.arrayBuffer());
 
-  return () => {
-    sound.play();
+  let audioBuffer: AudioBuffer | undefined;
+
+  return async () => {
+    if (ctx == null) {
+      ctx = new AudioContext();
+    }
+    if (audioBuffer == null) {
+      audioBuffer = await ctx.decodeAudioData(await buffer);
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(ctx.destination);
+    source.start();
   };
 }
 
