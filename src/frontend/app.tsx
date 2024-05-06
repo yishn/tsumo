@@ -171,6 +171,10 @@ export class AppComponent extends Component("app") {
             gap: 0.2em;
             padding-bottom: 0.2em;
             overflow: auto;
+            scroll-snap-type: y proximity;
+          }
+          [part="players"] > mj-player-row {
+            scroll-snap-align: center;
           }
 
           [part="self"] {
@@ -191,7 +195,7 @@ export class AppComponent extends Component("app") {
             align-self: center;
             gap: 0.2em;
             margin-bottom: 0.3em;
-            font-size: .9em;
+            font-size: 0.9em;
           }
           [part="self"] mj-tile-row[slot="tiles"] > mj-tile {
             cursor: pointer;
