@@ -80,6 +80,7 @@ class TileComponent extends Component("tile", {
               selected: this.props.selected(),
               highlight: this.props.highlight(),
               glow: this.props.glow(),
+              sparrow: tile()?.rank === 1 && tile()?.suit === TileSuit.Bamboo,
             })
           }
           style={{
@@ -95,10 +96,10 @@ class TileComponent extends Component("tile", {
             <div part="rank">{() => tile()?.rank}</div>
             <div part="suit">
               <If condition={() => tile()?.suit === TileSuit.Bamboo}>
-                <BambooIcon />
+                <BambooIcon alt="Bamboo" />
               </If>
               <ElseIf condition={() => tile()?.suit === TileSuit.Circle}>
-                <CircleIcon />
+                <CircleIcon alt="Circle" />
               </ElseIf>
               <ElseIf condition={() => tile()?.suit === TileSuit.Myriad}>
                 萬
@@ -163,7 +164,7 @@ class TileComponent extends Component("tile", {
           [part="tile"] {
             display: flex;
             flex-direction: column;
-            border: 0.15em solid var(--tile-face-color);
+            border: 0.15em solid transparent;
             border-top-color: var(--tile-face-light-color);
             border-radius: 0.3em;
             box-shadow:
@@ -217,6 +218,12 @@ class TileComponent extends Component("tile", {
               var(--tile-shadow);
             background-color: var(--tile-back-color);
           }
+          [part="tile"].sparrow {
+            background-image: url("./assets/sparrow.png");
+            background-position: center calc(100% + 0.15em);
+            background-repeat: no-repeat;
+            background-size: auto calc(100% + 0.15em);
+          }
 
           [part="rank"] {
             flex: 1;
@@ -250,6 +257,10 @@ class TileComponent extends Component("tile", {
             font-size: 1.2em;
             font-weight: bold;
           }
+          .sparrow [part="rank"] {
+            position: relative;
+            left: -9999em;
+          }
 
           [part="suit"] {
             flex: 1;
@@ -277,6 +288,10 @@ class TileComponent extends Component("tile", {
           .wind [part="suit"] svg {
             fill: var(--tile-text-color);
             height: 1em;
+          }
+          .sparrow [part="suit"] {
+            position: relative;
+            left: -9999em;
           }
         `}</Style>
       </>

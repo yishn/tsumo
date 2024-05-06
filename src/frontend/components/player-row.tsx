@@ -193,8 +193,7 @@ export class PlayerRow extends Component("player-row", {
           }
           .minimal [part="avatar"] {
             order: -1;
-            height: 2em;
-            width: auto;
+            width: 2.2em;
           }
 
           [part="score"] {
