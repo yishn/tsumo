@@ -189,7 +189,7 @@ export class PlayerRow extends Component("player-row", {
             transition: box-shadow 0.2s;
           }
           .current [part="avatar"] {
-            box-shadow: #b68800 0 0 0 0.3em;
+            box-shadow: #e9d883 0 0 0 0.3em;
           }
           .minimal [part="avatar"] {
             order: -1;
