@@ -41,7 +41,12 @@ export class AppComponent extends Component("app") {
             </TileRow>
           </PlayerRow>
 
-          <PlayerRow name="South" avatar="./assets/avatars/boar.png" score={50}>
+          <PlayerRow
+            name="South"
+            current
+            avatar="./assets/avatars/boar.png"
+            score={50}
+          >
             <TileRow slot="discards">
               <TileStack>
                 <Tile suit={TileSuit.Myriad} rank={3} />
@@ -75,7 +80,7 @@ export class AppComponent extends Component("app") {
         <div part="self">
           <PlayerRow
             name="North"
-            current
+            minimal
             avatar="./assets/avatars/dragon.png"
             score={50}
           >

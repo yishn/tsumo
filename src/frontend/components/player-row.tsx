@@ -92,6 +92,7 @@ const AnimatedCounter: FunctionalComponent<{
 
 export class PlayerRow extends Component("player-row", {
   name: prop<string>("", { attribute: String }),
+  minimal: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
   avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
@@ -105,6 +106,7 @@ export class PlayerRow extends Component("player-row", {
         part="container"
         class={() =>
           clsx({
+            minimal: this.props.minimal(),
             current: this.props.current(),
             dealer: this.props.dealer(),
           })
@@ -150,6 +152,22 @@ export class PlayerRow extends Component("player-row", {
             color: white;
             transition: background-color 0.2s;
           }
+          [part="container"].minimal {
+            flex-direction: column;
+            gap: 0.7em;
+            padding-bottom: 0;
+          }
+
+          [part="player"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15em;
+          }
+          .minimal [part="player"] {
+            flex-direction: row;
+            gap: 0.5em;
+          }
 
           [part="player-name"] {
             max-width: 4.2em;
@@ -168,17 +186,20 @@ export class PlayerRow extends Component("player-row", {
           [part="avatar"] {
             display: block;
             border-radius: 50%;
-            margin-top: 0.15em;
             width: 4.2em;
             transition: box-shadow 0.2s;
           }
           .current [part="avatar"] {
             box-shadow: #b68800 0 0 0 0.3em;
           }
+          .minimal [part="avatar"] {
+            order: -1;
+            height: 2em;
+            width: auto;
+          }
 
           [part="score"] {
             font-size: 0.9em;
-            margin-top: 0.15em;
             text-align: center;
           }
           [part="score"] svg {
@@ -197,6 +218,9 @@ export class PlayerRow extends Component("player-row", {
           ::slotted([slot="discards"]) {
             margin-bottom: 1.3em;
             font-size: 0.9em;
+          }
+          .minimal ::slotted([slot="discards"]) {
+            font-size: 0.7em;
           }
 
           ::slotted([slot="tiles"]) {
