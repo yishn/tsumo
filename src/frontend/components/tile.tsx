@@ -15,7 +15,13 @@ import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/main.ts";
 import { useAnimation } from "../animation.ts";
 import { playTileSound } from "../sounds.ts";
-import { BambooIcon, CircleIcon, FlowerIcon, WindIcon } from "../assets.ts";
+import {
+  BambooIcon,
+  CircleIcon,
+  FlowerIcon,
+  WhiteIcon,
+  WindIcon,
+} from "../assets.ts";
 
 const transitionDuration = 200;
 
@@ -136,7 +142,12 @@ class TileComponent extends Component("tile", {
               part="rank"
               class={() => ["", "red", "green", "blue"][tile()?.rank ?? 0]}
             >
-              {() => ["?", "中", "發", "白"][tile()?.rank ?? 0]}
+              <If condition={() => tile()?.rank !== 3}>
+                <>{() => ["?", "中", "發"][tile()?.rank ?? 0]}</>
+              </If>
+              <Else>
+                <WhiteIcon class="white" alt="White" />
+              </Else>
             </div>
           </ElseIf>
         </div>
@@ -272,6 +283,11 @@ class TileComponent extends Component("tile", {
           .flower [part="rank"] {
             position: absolute;
             left: -9999em;
+          }
+          [part="rank"] .white {
+            stroke: var(--tile-blue);
+            width: 80%;
+            height: 80%;
           }
 
           [part="suit"] {
