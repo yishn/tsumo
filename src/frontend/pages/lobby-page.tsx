@@ -210,7 +210,7 @@ export class LobbyPage extends Component("lobby-page") {
             animation: 0.7s linear infinite alternate next-arrow-sway;
           }
           [part="avatar-chooser"] ::part(avatar) {
-            font-size: 3em;
+            --player-avatar-size: 12em;
           }
 
           [part="name-chooser"] input {

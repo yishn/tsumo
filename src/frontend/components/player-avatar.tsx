@@ -28,6 +28,7 @@ export class PlayerAvatar extends Component("player-avatar", {
 
         <Style>{css`
           :host {
+            --player-avatar-size: 4.2em;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -61,8 +62,8 @@ export class PlayerAvatar extends Component("player-avatar", {
           [part="avatar"] {
             background-color: rgba(0, 0, 0, 0.3);
             border-radius: 50%;
-            height: 4.2em;
-            width: 4.2em;
+            height: var(--player-avatar-size);
+            width: var(--player-avatar-size);
             transition:
               box-shadow 0.2s,
               background-image 0.2s;

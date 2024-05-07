@@ -182,7 +182,7 @@ export class PlayerRow extends Component("player-row", {
           }
           .minimal [part="player"] mj-player-avatar::part(avatar) {
             order: -1;
-            width: 2.2em;
+            --player-avatar-size: 2.2em;
           }
 
           [part="score"] {
