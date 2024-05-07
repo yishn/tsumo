@@ -35,6 +35,7 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="name"] {
+            padding: 0 0.4em;
             max-width: 4.2em;
             font-weight: bold;
             text-align: center;
@@ -44,11 +45,9 @@ export class PlayerAvatar extends Component("player-avatar", {
           @keyframes dealer-enter {
             from {
               transform: scale(2);
-              opacity: 0;
             }
             to {
               transform: scale(1);
-              opacity: 1;
             }
           }
           [part="name"] .dealer {

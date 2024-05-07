@@ -20,6 +20,7 @@ export class GamePage extends Component("game-page") {
       <>
         <div part="players">
           <PlayerRow
+            style={{ animationDelay: "0s" }}
             name="East"
             dealer
             avatar="./assets/avatars/monkey.png"
@@ -44,6 +45,7 @@ export class GamePage extends Component("game-page") {
           </PlayerRow>
 
           <PlayerRow
+            style={{ animationDelay: "0.1s" }}
             name="South"
             current
             avatar="./assets/avatars/boar.png"
@@ -67,7 +69,12 @@ export class GamePage extends Component("game-page") {
             </TileRow>
           </PlayerRow>
 
-          <PlayerRow name="West" avatar="./assets/avatars/dog.png" score={50}>
+          <PlayerRow
+            style={{ animationDelay: "0.2s" }}
+            name="West"
+            avatar="./assets/avatars/dog.png"
+            score={50}
+          >
             <TileRow slot="discards">
               <Tile suit={TileSuit.Myriad} rank={1} />
               <Tile suit={TileSuit.Bamboo} rank={2} highlight />
@@ -145,6 +152,16 @@ export class GamePage extends Component("game-page") {
             overflow: hidden;
           }
 
+          @keyframes enter-player {
+            from {
+              transform: translateY(1em);
+              opacity: 0;
+            }
+            to {
+              transform: none;
+              opacity: 1;
+            }
+          }
           [part="players"] {
             flex: 1;
             display: flex;
@@ -157,8 +174,17 @@ export class GamePage extends Component("game-page") {
           }
           [part="players"] > mj-player-row {
             scroll-snap-align: center;
+            animation: 0.5s enter-player both;
           }
 
+          @keyframes enter-self {
+            from {
+              transform: translateY(100%);
+            }
+            to {
+              transform: none;
+            }
+          }
           [part="self"] {
             display: flex;
             flex-direction: column;
@@ -167,6 +193,7 @@ export class GamePage extends Component("game-page") {
             background-color: rgba(0, 0, 0, 0.8);
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
+            animation: 0.5s enter-self;
           }
           [part="self"] > mj-player-row {
             --player-row-background-color: transparent;
