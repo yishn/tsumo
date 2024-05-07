@@ -59,6 +59,7 @@ class TileComponent extends Component("tile", {
   render() {
     const containerRef = useRef<HTMLDivElement>();
     const tile = useMemo(() => this.getTile());
+    const back = useMemo(this.props.back);
     const [actualBack, setActualBack] = useSignal(this.props.back());
     const [backTransitionInProgress, startBackTransition] =
       useTransition(containerRef);
@@ -66,18 +67,16 @@ class TileComponent extends Component("tile", {
     let firstRender = true;
 
     useEffect(() => {
-      const back = this.props.back();
-
       if (!firstRender) {
         (async () => {
           await startBackTransition();
-          setActualBack(back);
+          setActualBack(back());
           setTimeout(() => playTileSound(), transitionDuration * 0.8);
         })();
       }
 
       firstRender = false;
-    }, [this.props.back]);
+    }, [back]);
 
     return (
       <>

@@ -1,5 +1,6 @@
 import {
   Component,
+  For,
   Portal,
   Style,
   css,
@@ -28,28 +29,62 @@ const avatarList = [
 ] as const;
 
 export class LobbyPage extends Component("lobby-page") {
-  getAvatarUrl(avatar: string): string {
-    return `./assets/avatars/${avatar}.png`;
+  getAvatarUrl(avatar: number): string {
+    return `./assets/avatars/${avatarList[avatar % avatarList.length]}.png`;
   }
 
   render() {
+    const [remotePlayers, setRemotePlayers] = useSignal<
+      { id: string; name?: string; avatar?: number; dice?: number }[]
+    >([]);
     const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(
       Math.floor(Math.random() * avatarList.length)
     );
     const [ownName, setOwnName] = useSignal("");
+    const [dice, setDice] = useSignal<number>();
+
+    const canRollInitiative = () =>
+      ownName().trim() !== "" && remotePlayers().length === 3;
+
+    const status = () => {
+      if (ownName().trim() === "") {
+        return "Enter your name…";
+      } else if (remotePlayers().length < 3) {
+        return "Waiting for players…";
+      } else if (dice() == null) {
+        return "Tap on tile to roll for initiative…";
+      } else if (remotePlayers().some((player) => player.dice == null)) {
+        return "Waiting for other players to run for initiative…";
+      }
+
+      return "Starting game…";
+    };
 
     return (
       <>
         <Portal mount={document.head}>
-          {avatarList.map((avatar) => (
-            <link rel="prefetch" href={this.getAvatarUrl(avatar)} />
+          {avatarList.map((_, i) => (
+            <link rel="prefetch" href={this.getAvatarUrl(i)} />
           ))}
         </Portal>
 
         <div part="players">
-          <PlayerAvatar name="East" avatar="./assets/avatars/monkey.png" />
-          <PlayerAvatar name="South" avatar="./assets/avatars/boar.png" />
-          <PlayerAvatar name={"\u200b"} />
+          <For each={() => [...Array(3)]}>
+            {(_, i) => {
+              const player = () => remotePlayers()[i()];
+
+              return (
+                <PlayerAvatar
+                  name={() => player()?.name || "\u200b"}
+                  avatar={() =>
+                    player()?.avatar == null
+                      ? PlayerAvatar.emptyAvatar
+                      : this.getAvatarUrl(player().avatar!)
+                  }
+                />
+              );
+            }}
+          </For>
         </div>
 
         <div part="avatar-chooser">
@@ -63,9 +98,9 @@ export class LobbyPage extends Component("lobby-page") {
           >
             <LeftIcon />
           </ActionBarButton>
-          <PlayerAvatar
-            avatar={() => this.getAvatarUrl(avatarList[ownAvatarIndex()])}
-          />
+
+          <PlayerAvatar avatar={() => this.getAvatarUrl(ownAvatarIndex())} />
+
           <ActionBarButton
             class="next"
             onButtonClick={() => {
@@ -85,26 +120,31 @@ export class LobbyPage extends Component("lobby-page") {
           />
         </div>
 
-        <div part="status">Waiting for players…</div>
+        <div part="status">{status}</div>
 
         <div part="ready">
-          <Tile animateEnter back suit={TileSuit.Dragon} rank={2} />
+          <Tile
+            animateEnter
+            back={() => !canRollInitiative()}
+            suit={TileSuit.Dragon}
+            rank={2}
+          />
         </div>
 
         <Style>{css`
           :host {
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
             display: flex;
             flex-direction: column;
             justify-content: safe center;
             align-items: center;
             gap: 0.5em;
-            padding: 1em 0;
-            background-color: rgba(0, 0, 0, 0.2);
+            padding: 0.5em 0;
+            padding-bottom: env(safe-area-inset-bottom);
+            background: linear-gradient(
+              to bottom,
+              transparent,
+              rgba(0, 0, 0, 0.2) 5em
+            );
             backdrop-filter: blur(0.5em);
             -webkit-backdrop-filter: blur(0.5em);
             overflow: auto;
@@ -172,7 +212,13 @@ export class LobbyPage extends Component("lobby-page") {
           }
 
           [part="ready"] mj-tile {
-            cursor: pointer;
+            margin-bottom: 1em;
+          }
+        `}</Style>
+
+        <Style>{css`
+          [part="ready"] mj-tile {
+            cursor: ${canRollInitiative() ? "pointer" : "not-allowed"};
           }
         `}</Style>
       </>

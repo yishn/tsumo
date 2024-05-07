@@ -35,18 +35,36 @@ export class AppComponent extends Component("app") {
           html {
             --kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
             --heiti-font-stack: "Alegreya", "YaHei", "Heiti TC", serif;
+            width: 100dvw;
+            height: 100dvh;
             color-scheme: dark;
-            background: url("./assets/img/bg.jpg") center / cover no-repeat
-              fixed;
+            background:
+              linear-gradient(to bottom, #714634, transparent 5em),
+              url("./assets/img/bg.jpg") center / cover no-repeat fixed #714634;
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font-family: var(--heiti-font-stack);
-            font-size: 1.2em;
+            font: 1.2em var(--heiti-font-stack);
             cursor: default;
             user-select: none;
             -webkit-user-select: none;
             -webkit-user-drag: none;
             white-space: nowrap;
+          }
+        `}</Style>
+
+        <Style>{css`
+          :host {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100dvw;
+            height: 100dvh;
+            display: flex;
+            align-items: stretch;
+          }
+
+          :host > * {
+            flex: 1;
           }
         `}</Style>
       </>

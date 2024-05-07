@@ -10,6 +10,8 @@ export class PlayerAvatar extends Component("player-avatar", {
   current: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
 }) {
+  static emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>" as const;
+
   render() {
     return (
       <>
