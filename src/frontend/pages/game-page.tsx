@@ -157,7 +157,7 @@ export class GamePage extends Component("game-page") {
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-bottom: max(0.5em, env(safe-area-inset-bottom));
             background-color: rgba(0, 0, 0, 0.8);
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
@@ -169,6 +169,7 @@ export class GamePage extends Component("game-page") {
           }
           [part="self"] mj-tile-row[slot="tiles"] {
             align-self: center;
+            margin-bottom: 0.5em;
             font-size: 0.9em;
           }
           [part="self"] mj-tile-row[slot="tiles"] > mj-tile {

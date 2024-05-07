@@ -20,7 +20,7 @@ export class ActionBarButton extends Component("action-bar-button", {
         <Style>{css`
           button {
             border: none;
-            padding: 0.6em 0.2em;
+            padding: 0 0.2em;
             background: none;
             cursor: pointer;
             touch-action: manipulation;
