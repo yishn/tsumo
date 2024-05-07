@@ -2,7 +2,6 @@ import clsx from "clsx";
 import {
   Component,
   FunctionalComponent,
-  If,
   MaybeSignal,
   Style,
   css,
@@ -12,7 +11,8 @@ import {
   useRef,
   useSignal,
 } from "sinho";
-import { DealerIcon, ScoreIcon } from "../assets.ts";
+import { ScoreIcon } from "../assets.ts";
+import { PlayerAvatar } from "./player-avatar.tsx";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
@@ -118,13 +118,12 @@ export class PlayerRow extends Component("player-row", {
         }
       >
         <div part="player">
-          <div part="player-name">
-            <If condition={this.props.dealer}>
-              <DealerIcon class="dealer" alt="Dealer" />{" "}
-            </If>
-            {this.props.name}
-          </div>
-          <img part="avatar" src={this.props.avatar} alt={this.props.name} />
+          <PlayerAvatar
+            name={this.props.name}
+            avatar={this.props.avatar}
+            current={this.props.current}
+            dealer={this.props.dealer}
+          />
           <div part="score">
             <ScoreIcon alt="Score" /> ×
             <AnimatedCounter value={this.props.score} />
@@ -176,42 +175,12 @@ export class PlayerRow extends Component("player-row", {
             flex-direction: row;
             gap: 0.5em;
           }
-
-          [part="player-name"] {
-            max-width: 4.2em;
-            font-weight: bold;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
+          .minimal [part="player"] mj-player-avatar {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5em;
           }
-          @keyframes dealer-enter {
-            from {
-              transform: scale(2);
-              opacity: 0;
-            }
-            to {
-              transform: scale(1);
-              opacity: 1;
-            }
-          }
-          [part="player-name"] .dealer {
-            fill: #ee401d;
-            height: 0.8em;
-            width: 0.8em;
-            margin-bottom: -0.1em;
-            animation: 1s dealer-enter;
-          }
-
-          [part="avatar"] {
-            display: block;
-            border-radius: 50%;
-            width: 4.2em;
-            transition: box-shadow 0.2s;
-          }
-          .current [part="avatar"] {
-            box-shadow: #e9d883 0 0 0 0.3em;
-          }
-          .minimal [part="avatar"] {
+          .minimal [part="player"] mj-player-avatar::part(avatar) {
             order: -1;
             width: 2.2em;
           }
