@@ -288,7 +288,7 @@ class TileComponent extends Component("tile", {
           .bamboo [part="suit"] svg {
             fill: var(--tile-green);
           }
-          .circle:not(.flower) [part="suit"] svg {
+          .circle [part="suit"] svg {
             fill: var(--tile-blue);
           }
           .flower [part="suit"] svg {
