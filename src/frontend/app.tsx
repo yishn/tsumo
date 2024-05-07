@@ -17,11 +17,13 @@ export class AppComponent extends Component("app") {
           }
 
           html {
+            --kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
+            --heiti-font-stack: "Alegreya", "YaHei", "Heiti TC", serif;
             color-scheme: dark;
             background: url("./assets/img/bg.jpg") center / cover no-repeat fixed;
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font-family: "Alegreya", "KaiTi", serif;
+            font-family: var(--heiti-font-stack);
             font-size: 1.2em;
             cursor: default;
             user-select: none;

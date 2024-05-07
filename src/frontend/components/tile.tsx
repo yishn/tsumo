@@ -177,6 +177,7 @@ class TileComponent extends Component("tile", {
             display: inline-block;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            font-family: var(--kaiti-font-stack);
           }
 
           svg {
