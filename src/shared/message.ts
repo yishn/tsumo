@@ -5,23 +5,32 @@ export interface Heartbeat {
 
 export interface ServerMessage {
   heartbeat?: Heartbeat;
-  error?: {
-    msg: string;
-  };
   lobby?: {
-    players: {
-      name: string;
+    joined?: {
+      id: string;
       avatar: string;
-    }[];
+    };
+    playerInfo?: {
+      id: string;
+      name?: string;
+      avatar?: string;
+      dice?: number;
+    };
   };
 }
 
 export interface ClientMessage {
   heartbeat?: Heartbeat;
-  join?: {
-    user: string;
-    game: string;
-    name: string;
-    avatar: string;
+  lobby?: {
+    join?: {
+      secret: string;
+      game: string;
+    };
+    playerInfo?: {
+      secret: string;
+      name?: string;
+      avatar?: string;
+      ready?: boolean;
+    };
   };
 }
