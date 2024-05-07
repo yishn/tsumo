@@ -5,6 +5,7 @@ import {
   Style,
   css,
   defineComponents,
+  useEffect,
   useSignal,
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
@@ -12,6 +13,9 @@ import { ActionBarButton } from "../components/action-bar.tsx";
 import { LeftIcon, RightIcon } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
+import { globalWsHook } from "../websocket.ts";
+
+const SESSION = "test"; // TODO
 
 const avatarList = [
   "rat",
@@ -59,6 +63,19 @@ export class LobbyPage extends Component("lobby-page") {
 
       return "Starting game…";
     };
+
+    useEffect(() => {
+      if (globalWsHook.connected()) {
+        globalWsHook.send({
+          lobby: {
+            join: {
+              session: SESSION,
+              avatar: ownAvatarIndex(),
+            },
+          },
+        });
+      }
+    }, [globalWsHook.connected]);
 
     return (
       <>

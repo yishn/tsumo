@@ -5,10 +5,16 @@ export interface Heartbeat {
 
 export interface ServerMessage {
   heartbeat?: Heartbeat;
+  error?: {
+    message: string;
+  };
   lobby?: {
     joined?: {
       id: string;
-      avatar: number;
+      secret: string;
+    };
+    leave?: {
+      id: string;
     };
     playerInfo?: {
       id: string;
@@ -23,8 +29,9 @@ export interface ClientMessage {
   heartbeat?: Heartbeat;
   lobby?: {
     join?: {
-      secret: string;
-      game: string;
+      session: string;
+      secret?: string;
+      avatar: number;
     };
     playerInfo?: {
       secret: string;
