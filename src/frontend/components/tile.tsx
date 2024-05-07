@@ -244,7 +244,7 @@ class TileComponent extends Component("tile", {
             background-image: url("./assets/img/sparrow.png");
             background-position: center calc(100% + 0.15em);
             background-repeat: no-repeat;
-            background-size: auto calc(100% + 0.15em);
+            background-size: cover;
           }
 
           [part="rank"] {
