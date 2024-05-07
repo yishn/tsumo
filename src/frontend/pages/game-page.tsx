@@ -149,6 +149,7 @@ export class GamePage extends Component("game-page") {
             flex: 1;
             display: flex;
             flex-direction: column;
+            justify-content: safe center;
             gap: 0.2em;
             padding-bottom: 0.2em;
             overflow: auto;

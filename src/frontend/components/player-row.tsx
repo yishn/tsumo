@@ -20,7 +20,7 @@ const AnimatedCounter: FunctionalComponent<{
 }> = (props) => {
   const elRef = useRef<HTMLSpanElement>();
   const deltaRef = useRef<HTMLSpanElement>();
-  const [value, setValue] = useSignal(MaybeSignal.get(props.value) ?? 0);
+  const [value, setValue] = useSignal(0);
   const [delta, setDelta] = useSignal(0);
   const [showDelta, setShowDelta] = useSignal(false);
 
@@ -29,7 +29,7 @@ const AnimatedCounter: FunctionalComponent<{
     const delta = newValue - value.peek();
     const sign = Math.sign(delta);
     const interval =
-      (MaybeSignal.peek(props.duration) ?? 300) / Math.abs(delta);
+      (MaybeSignal.peek(props.duration) ?? 500) / Math.abs(delta);
 
     let intervalId: NodeJS.Timeout | number | undefined;
     let timeoutId: NodeJS.Timeout | number | undefined;
@@ -41,12 +41,11 @@ const AnimatedCounter: FunctionalComponent<{
       intervalId = setInterval(() => {
         if (value.peek() === newValue) {
           clearInterval(intervalId);
+          setShowDelta(false);
         } else {
           setValue((value) => value + sign);
         }
       }, interval);
-
-      timeoutId = setTimeout(() => setShowDelta(false), 1000);
     }
 
     return () => {
@@ -72,6 +71,12 @@ const AnimatedCounter: FunctionalComponent<{
             position: "absolute",
             left: 0,
             top: "-1em",
+            padding: "0 .2em",
+            marginLeft: "-.2em",
+            borderRadius: ".2em",
+            lineHeight: "1",
+            fontWeight: "bold",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
             color: () =>
               delta() >= 0
                 ? "var(--animated-counter-positive)"
