@@ -11,7 +11,7 @@ export class TileStack extends Component("tile-stack") {
             display: inline-flex;
           }
 
-          ::slotted(mj-tile:not(:first-child)) {
+          ::slotted(:not(:first-child)) {
             margin-left: -1.11em;
           }
         `}</Style>

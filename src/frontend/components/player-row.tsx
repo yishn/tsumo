@@ -115,7 +115,7 @@ export class PlayerRow extends Component("player-row", {
         <div part="player">
           <div part="player-name">
             <If condition={this.props.dealer}>
-              <DealerIcon alt="Dealer" />{" "}
+              <DealerIcon class="dealer" alt="Dealer" />{" "}
             </If>
             {this.props.name}
           </div>
@@ -179,11 +179,22 @@ export class PlayerRow extends Component("player-row", {
             overflow: hidden;
             text-overflow: ellipsis;
           }
-          .dealer [part="player-name"] svg {
+          @keyframes dealer-enter {
+            from {
+              transform: scale(2);
+              opacity: 0;
+            }
+            to {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          [part="player-name"] .dealer {
             fill: #ee401d;
             height: 0.8em;
             width: 0.8em;
             margin-bottom: -0.1em;
+            animation: 1s dealer-enter;
           }
 
           [part="avatar"] {

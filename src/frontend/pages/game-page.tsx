@@ -37,7 +37,9 @@ export class GamePage extends Component("game-page") {
             </TileRow>
 
             <TileRow slot="tiles" minimal>
-              <For each={[...Array(11)]}>{() => <Tile back />}</For>
+              <For each={[...Array(11)]}>
+                {() => <Tile back animateEnter />}
+              </For>
             </TileRow>
           </PlayerRow>
 
@@ -61,7 +63,7 @@ export class GamePage extends Component("game-page") {
             </TileRow>
 
             <TileRow slot="tiles" minimal>
-              <For each={[...Array(8)]}>{() => <Tile back />}</For>
+              <For each={[...Array(8)]}>{() => <Tile back animateEnter />}</For>
             </TileRow>
           </PlayerRow>
 
@@ -72,7 +74,9 @@ export class GamePage extends Component("game-page") {
             </TileRow>
 
             <TileRow slot="tiles" minimal>
-              <For each={[...Array(14)]}>{() => <Tile back />}</For>
+              <For each={[...Array(14)]}>
+                {() => <Tile back animateEnter />}
+              </For>
             </TileRow>
           </PlayerRow>
         </div>
@@ -96,6 +100,7 @@ export class GamePage extends Component("game-page") {
               >
                 {(item, i) => (
                   <Tile
+                    animateEnter
                     glow={() => i() <= 1}
                     suit={() => item().suit}
                     rank={() => item().rank}
