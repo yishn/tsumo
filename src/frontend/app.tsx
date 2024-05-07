@@ -1,11 +1,27 @@
-import { Component, Style, css, defineComponents } from "sinho";
+import {
+  Component,
+  ElseIf,
+  If,
+  Style,
+  css,
+  defineComponents,
+  useSignal,
+} from "sinho";
 import { GamePage } from "./pages/game-page.tsx";
+import { LobbyPage } from "./pages/lobby-page.tsx";
 
 export class AppComponent extends Component("app") {
   render() {
+    const [page, setPage] = useSignal<"lobby" | "game">("lobby");
+
     return (
       <>
-        <GamePage />
+        <If condition={() => page() === "lobby"}>
+          <LobbyPage />
+        </If>
+        <ElseIf condition={() => page() === "game"}>
+          <GamePage />
+        </ElseIf>
 
         <Style light>{css`
           ${() => ""}
@@ -20,7 +36,8 @@ export class AppComponent extends Component("app") {
             --kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
             --heiti-font-stack: "Alegreya", "YaHei", "Heiti TC", serif;
             color-scheme: dark;
-            background: url("./assets/img/bg.jpg") center / cover no-repeat fixed;
+            background: url("./assets/img/bg.jpg") center / cover no-repeat
+              fixed;
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
             font-family: var(--heiti-font-stack);

@@ -3,6 +3,7 @@ import {
   Else,
   ElseIf,
   If,
+  Portal,
   Style,
   css,
   defineComponents,
@@ -80,6 +81,10 @@ class TileComponent extends Component("tile", {
 
     return (
       <>
+        <Portal mount={document.head}>
+          <link rel="prefetch" href="./assets/img/sparrow.png" />
+        </Portal>
+
         <div
           ref={containerRef}
           part="tile"

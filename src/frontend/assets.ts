@@ -13,3 +13,5 @@ export { default as EatIcon } from "../../assets/icons/eat.svg";
 export { default as PongIcon } from "../../assets/icons/pong.svg";
 export { default as KongIcon } from "../../assets/icons/kong.svg";
 export { default as WinIcon } from "../../assets/icons/win.svg";
+export { default as LeftIcon } from "../../assets/icons/left.svg";
+export { default as RightIcon } from "../../assets/icons/right.svg";

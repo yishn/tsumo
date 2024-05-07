@@ -8,12 +8,12 @@ export interface ServerMessage {
   lobby?: {
     joined?: {
       id: string;
-      avatar: string;
+      avatar: number;
     };
     playerInfo?: {
       id: string;
       name?: string;
-      avatar?: string;
+      avatar?: number;
       dice?: number;
     };
   };
@@ -29,7 +29,7 @@ export interface ClientMessage {
     playerInfo?: {
       secret: string;
       name?: string;
-      avatar?: string;
+      avatar?: number;
       ready?: boolean;
     };
   };

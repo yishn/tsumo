@@ -19,11 +19,9 @@ export class PlayerAvatar extends Component("player-avatar", {
           </If>
           {this.props.name}
         </div>
-        <img
+        <div
           part="avatar"
           class={() => clsx({ current: this.props.current() })}
-          src={this.props.avatar}
-          alt={this.props.name}
         />
 
         <Style>{css`
@@ -59,13 +57,22 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="avatar"] {
-            display: block;
+            background-color: rgba(0, 0, 0, 0.3);
             border-radius: 50%;
+            height: 4.2em;
             width: 4.2em;
-            transition: box-shadow 0.2s;
+            transition:
+              box-shadow 0.2s,
+              background-image 0.2s;
           }
           [part="avatar"].current {
             box-shadow: #e9d883 0 0 0 0.3em;
+          }
+        `}</Style>
+
+        <Style>{css`
+          [part="avatar"] {
+            background: url(${this.props.avatar}) 0 0 / 100% 100%;
           }
         `}</Style>
       </>
