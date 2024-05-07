@@ -1,6 +1,8 @@
-import { Component, Style, css, defineComponents } from "sinho";
+import { Component, Style, css, defineComponents, prop } from "sinho";
 
-export class TileRow extends Component("tile-row") {
+export class TileRow extends Component("tile-row", {
+  minimal: prop<boolean>(false, { attribute: () => true }),
+}) {
   render() {
     return (
       <>
@@ -9,8 +11,9 @@ export class TileRow extends Component("tile-row") {
         <Style>{css`
           :host {
             display: flex;
-            gap: 0.2em;
+            gap: ${() => (this.props.minimal() ? 0 : "0.2em")};
             flex-wrap: wrap;
+            padding-bottom: 0.8em;
           }
         `}</Style>
       </>

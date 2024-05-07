@@ -36,7 +36,7 @@ export class GamePage extends Component("game-page") {
               </TileStack>
             </TileRow>
 
-            <TileRow slot="tiles">
+            <TileRow slot="tiles" minimal>
               <For each={[...Array(11)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
@@ -60,7 +60,7 @@ export class GamePage extends Component("game-page") {
               </TileStack>
             </TileRow>
 
-            <TileRow slot="tiles">
+            <TileRow slot="tiles" minimal>
               <For each={[...Array(8)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
@@ -71,7 +71,7 @@ export class GamePage extends Component("game-page") {
               <Tile suit={TileSuit.Bamboo} rank={2} highlight />
             </TileRow>
 
-            <TileRow slot="tiles">
+            <TileRow slot="tiles" minimal>
               <For each={[...Array(14)]}>{() => <Tile back />}</For>
             </TileRow>
           </PlayerRow>
@@ -157,7 +157,7 @@ export class GamePage extends Component("game-page") {
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            padding-bottom: max(0.5em, env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
             background-color: rgba(0, 0, 0, 0.8);
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
@@ -169,8 +169,6 @@ export class GamePage extends Component("game-page") {
           }
           [part="self"] mj-tile-row[slot="tiles"] {
             align-self: center;
-            gap: 0.2em;
-            margin-bottom: 0.3em;
             font-size: 0.9em;
           }
           [part="self"] mj-tile-row[slot="tiles"] > mj-tile {

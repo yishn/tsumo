@@ -218,7 +218,7 @@ export class PlayerRow extends Component("player-row", {
           }
 
           ::slotted([slot="discards"]) {
-            margin-bottom: 1.3em;
+            margin-bottom: 0.5em;
             font-size: 0.9em;
           }
           .minimal ::slotted([slot="discards"]) {
@@ -226,8 +226,6 @@ export class PlayerRow extends Component("player-row", {
           }
 
           ::slotted([slot="tiles"]) {
-            gap: 0;
-            padding-bottom: 0.8em;
             font-size: 0.5em;
           }
           .minimal ::slotted([slot="tiles"]) {
