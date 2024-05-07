@@ -132,6 +132,10 @@ export class PlayerRow extends Component("player-row", {
         </div>
 
         <Style>{css`
+          svg {
+            overflow: visible;
+          }
+
           :host {
             --animated-counter-positive: #35de7b;
             --animated-counter-negative: #ff8356;

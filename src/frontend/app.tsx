@@ -18,7 +18,7 @@ export class AppComponent extends Component("app") {
 
           html {
             color-scheme: dark;
-            background: url("./assets/bg.jpg") center / cover no-repeat fixed;
+            background: url("./assets/img/bg.jpg") center / cover no-repeat fixed;
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
             font-family: "Alegreya", "KaiTi", serif;

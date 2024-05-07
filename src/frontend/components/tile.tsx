@@ -230,7 +230,7 @@ class TileComponent extends Component("tile", {
             background-color: var(--tile-back-color);
           }
           [part="tile"].sparrow {
-            background-image: url("./assets/sparrow.png");
+            background-image: url("./assets/img/sparrow.png");
             background-position: center calc(100% + 0.15em);
             background-repeat: no-repeat;
             background-size: auto calc(100% + 0.15em);

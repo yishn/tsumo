@@ -38,6 +38,7 @@ export class ActionBarButton extends Component("action-bar-button", {
             stroke: var(--action-bar-icon-color);
             width: 1.8em;
             height: 1.8em;
+            overflow: visible;
           }
         `}</Style>
       </>
