@@ -1,18 +1,19 @@
 import { MaybeSignal, Signal, useEffect, useSignal } from "sinho";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
 
-export interface WebSocketHook<T> {
+export interface WebSocketHook<T, U> {
   connected: Signal<boolean>;
   error: Signal<Event | undefined>;
-  onMessage(handler: (evt: MessageEvent<T>) => void): void;
-  send(data: T): void;
+  onMessage(handler: (data: T) => void): void;
+  send(data: U): void;
+  close(): void;
 }
 
-export function useWebSocket<
-  T extends string | ArrayBufferLike | Blob | ArrayBufferView,
->(url: MaybeSignal<string | URL>): WebSocketHook<T> {
+export function useWebSocket<T, U>(
+  url: MaybeSignal<string | URL>
+): WebSocketHook<T, U> {
   let socket: WebSocket;
-  const onMessageHandlers: ((evt: MessageEvent<T>) => void)[] = [];
+  const onMessageHandlers: ((data: T) => void)[] = [];
   const [connected, setConnected] = useSignal(false);
   const [error, setError] = useSignal<Event>();
 
@@ -33,7 +34,7 @@ export function useWebSocket<
     });
 
     socket.addEventListener("message", (evt) => {
-      onMessageHandlers.forEach((handler) => handler(evt));
+      onMessageHandlers.forEach((handler) => handler(JSON.parse(evt.data)));
     });
 
     return () => {
@@ -44,39 +45,43 @@ export function useWebSocket<
   return {
     connected,
     error,
-    onMessage(handler) {
-      onMessageHandlers.push(handler);
-    },
-    send(data) {
-      socket.send(data);
-    },
+    onMessage: (handler) => onMessageHandlers.push(handler),
+    send: (data) => socket.send(JSON.stringify(data)),
+    close: () => socket.close(),
   };
 }
 
-export interface JSONWebSocketHook<T, U> {
-  connected: Signal<boolean>;
-  error: Signal<Event | undefined>;
-  onMessage(handler: (data: T) => void): void;
-  send(data: U): void;
-}
-
-export function useJSONWebSocket<T, U>(
-  url: MaybeSignal<string | URL>
-): JSONWebSocketHook<T, U> {
-  const hook = useWebSocket<string>(url);
-
-  return {
-    connected: hook.connected,
-    error: hook.error,
-    onMessage(handler) {
-      hook.onMessage((evt) => handler(JSON.parse(evt.data)));
-    },
-    send(data) {
-      hook.send(JSON.stringify(data));
-    },
-  };
-}
-
-export const globalWsHook = useJSONWebSocket<ServerMessage, ClientMessage>(
+export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(
   "ws://localhost:8080" // TODO
 );
+
+let heartbeatId = 0;
+let heartbeatTimeout: NodeJS.Timeout | number | undefined;
+
+const sendHeartbeat = () => {
+  globalWsHook.send({
+    heartbeat: {
+      id: heartbeatId++,
+      now: Date.now(),
+    },
+  });
+
+  clearTimeout(heartbeatTimeout);
+  heartbeatTimeout = setTimeout(() => {
+    globalWsHook.close();
+  }, 20000);
+
+  setTimeout(sendHeartbeat, 25000);
+};
+
+globalWsHook.onMessage((data) => {
+  if (data.heartbeat != null) {
+    clearTimeout(heartbeatTimeout);
+  }
+});
+
+useEffect(() => {
+  if (globalWsHook.connected()) {
+    sendHeartbeat();
+  }
+});
