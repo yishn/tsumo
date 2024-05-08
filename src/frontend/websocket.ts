@@ -4,7 +4,10 @@ import { ClientMessage, ServerMessage } from "../shared/message.ts";
 export interface WebSocketHook<T, U> {
   connected: Signal<boolean>;
   error: Signal<Event | undefined>;
-  onMessage(handler: (data: T) => void): void;
+  onMessage<V>(
+    path: (msg: T) => V,
+    handler: (data: Exclude<V, undefined>) => void
+  ): () => void;
   send(data: U): void;
   close(): void;
 }
@@ -13,7 +16,10 @@ export function useWebSocket<T, U>(
   url: MaybeSignal<string | URL>
 ): WebSocketHook<T, U> {
   let socket: WebSocket;
-  const onMessageHandlers: ((data: T) => void)[] = [];
+  const handlers: Set<{
+    path: (msg: T) => any;
+    handler: (data: any) => void;
+  }> = new Set();
   const [connected, setConnected] = useSignal(false);
   const [error, setError] = useSignal<Event>();
 
@@ -34,7 +40,15 @@ export function useWebSocket<T, U>(
     });
 
     socket.addEventListener("message", (evt) => {
-      onMessageHandlers.forEach((handler) => handler(JSON.parse(evt.data)));
+      const data = JSON.parse(evt.data);
+
+      for (const { path, handler } of handlers) {
+        const value = path(data);
+
+        if (value !== undefined) {
+          handler(value);
+        }
+      }
     });
 
     return () => {
@@ -45,14 +59,22 @@ export function useWebSocket<T, U>(
   return {
     connected,
     error,
-    onMessage: (handler) => onMessageHandlers.push(handler),
+    onMessage: (path, handler) => {
+      const entry = { path, handler };
+      handlers.add(entry);
+      return () => handlers.delete(entry);
+    },
     send: (data) => socket.send(JSON.stringify(data)),
-    close: () => socket.close(),
+    close: () => {
+      socket.close();
+    },
   };
 }
 
+const server = new URL(location.href).searchParams.get("server");
+
 export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(
-  "ws://localhost:8080" // TODO
+  server! // TODO
 );
 
 let heartbeatId = 0;
@@ -67,21 +89,39 @@ const sendHeartbeat = () => {
   });
 
   clearTimeout(heartbeatTimeout);
-  heartbeatTimeout = setTimeout(() => {
-    globalWsHook.close();
-  }, 20000);
-
-  setTimeout(sendHeartbeat, 25000);
+  heartbeatTimeout = setTimeout(() => globalWsHook.close(), 10000);
 };
 
-globalWsHook.onMessage((data) => {
-  if (data.heartbeat != null) {
-    clearTimeout(heartbeatTimeout);
+globalWsHook.onMessage(
+  (msg) => msg,
+  (data) => {
+    if (data.heartbeat != null) {
+      clearTimeout(heartbeatTimeout);
+    }
   }
-});
+);
+
+globalWsHook.onMessage(
+  (msg) => msg.error,
+  (data) => {
+    console.error("[Server]", data.message);
+    globalWsHook.close();
+  }
+);
+
+let connectedOnce = false;
 
 useEffect(() => {
+  let intervalId: NodeJS.Timeout | number | undefined;
+
   if (globalWsHook.connected()) {
-    sendHeartbeat();
+    connectedOnce = true;
+    intervalId = setInterval(sendHeartbeat, 15000);
+  } else if (connectedOnce) {
+    console.warn("[WebSocket] Connection lost");
   }
+
+  return () => {
+    clearTimeout(intervalId);
+  };
 });

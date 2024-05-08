@@ -14,6 +14,7 @@ import { LeftIcon, RightIcon } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { globalWsHook } from "../websocket.ts";
+import { useServerSignal } from "../server-signal.ts";
 
 const SESSION = "test"; // TODO
 
@@ -38,9 +39,8 @@ export class LobbyPage extends Component("lobby-page") {
   }
 
   render() {
-    const [remotePlayers, setRemotePlayers] = useSignal<
-      { id: string; name?: string; avatar?: number; dice?: number }[]
-    >([]);
+    const remotePlayers = useServerSignal((msg) => msg.lobby?.players);
+    const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
     const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(
       Math.floor(Math.random() * avatarList.length)
     );
@@ -48,16 +48,16 @@ export class LobbyPage extends Component("lobby-page") {
     const [dice, setDice] = useSignal<number>();
 
     const canRollInitiative = () =>
-      ownName().trim() !== "" && remotePlayers().length === 3;
+      ownName().trim() !== "" && remotePlayers()?.length === 4;
 
     const status = () => {
       if (ownName().trim() === "") {
         return "Enter your name…";
-      } else if (remotePlayers().length < 3) {
+      } else if (remotePlayers() == null || remotePlayers()!.length < 4) {
         return "Waiting for players…";
       } else if (dice() == null) {
         return "Tap on tile to roll for initiative…";
-      } else if (remotePlayers().some((player) => player.dice == null)) {
+      } else if (remotePlayers()?.some((player) => player.dice == null)) {
         return "Waiting for other players to run for initiative…";
       }
 
@@ -70,12 +70,28 @@ export class LobbyPage extends Component("lobby-page") {
           lobby: {
             join: {
               session: SESSION,
-              avatar: ownAvatarIndex(),
             },
           },
         });
       }
     }, [globalWsHook.connected]);
+
+    globalWsHook.onMessage(
+      (msg) => msg.lobby?.joined,
+      (data) => {
+        setOwnPlayerId(data.id);
+
+        globalWsHook.send({
+          lobby: {
+            playerInfo: {
+              secret: data.secret,
+              name: ownName(),
+              avatar: ownAvatarIndex(),
+            },
+          },
+        });
+      }
+    );
 
     return (
       <>
@@ -88,7 +104,10 @@ export class LobbyPage extends Component("lobby-page") {
         <div part="players">
           <For each={() => [...Array(3)]}>
             {(_, i) => {
-              const player = () => remotePlayers()[i()];
+              const player = () =>
+                remotePlayers()?.filter(
+                  (player) => player.id !== ownPlayerId()
+                )[i()];
 
               return (
                 <PlayerAvatar
@@ -96,7 +115,7 @@ export class LobbyPage extends Component("lobby-page") {
                   avatar={() =>
                     player()?.avatar == null
                       ? PlayerAvatar.emptyAvatar
-                      : this.getAvatarUrl(player().avatar!)
+                      : this.getAvatarUrl(player()!.avatar!)
                   }
                 />
               );

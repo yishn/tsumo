@@ -1,75 +1,70 @@
 import { WebSocket } from "ws";
 
 export interface Request<T, U, S> {
+  ws: WebSocket;
   session?: S;
   data: T;
-  ws: WebSocket;
   send(data: U): void;
   assignSession(session: S): void;
 }
 
+export interface CloseRequest<S> {
+  ws: WebSocket;
+  session?: S;
+}
+
 export class MessageHandler<T, U, S = any> {
   private sessionMap: WeakMap<WebSocket, S> = new WeakMap();
-  private handlers: {
-    [K in keyof T | "*"]?: ((
-      req: K extends "*"
-        ? Request<T, U, S>
-        : K extends keyof T
-          ? Request<NonNullable<T[K]>, U, S>
-          : never
-    ) => void)[];
-  } = {};
+  private messageHandlers: {
+    path: (msg: T) => any;
+    handler: (req: Request<any, U, S>) => void;
+  }[] = [];
+  private closeHandlers: ((req: CloseRequest<S>) => void)[] = [];
 
   getSession(ws: WebSocket): S | undefined {
     return this.sessionMap.get(ws);
   }
 
-  handle(ws: WebSocket, data: T): void {
-    for (const key in data) {
-      const genericHandlers = this.handlers["*"];
-      const handlers = this.handlers[key] as
-        | ((req: Request<NonNullable<T[keyof T]>, U, S>) => void)[]
-        | undefined;
+  handleMessage(ws: WebSocket, data: T): void {
+    for (const { path, handler } of this.messageHandlers) {
+      const value = path(data);
 
-      genericHandlers?.forEach((handler) =>
+      if (value !== undefined) {
         handler({
           session: this.sessionMap.get(ws),
-          data,
+          data: value,
           ws,
           send: (data) => ws.send(JSON.stringify(data)),
           assignSession: (session) => this.sessionMap.set(ws, session),
-        })
-      );
-
-      if (key !== "*" && data[key] != null) {
-        handlers?.forEach((handler) =>
-          handler({
-            session: this.sessionMap.get(ws),
-            data: data[key]!,
-            ws,
-            send: (data) => ws.send(JSON.stringify(data)),
-            assignSession: (session) => this.sessionMap.set(ws, session),
-          })
-        );
+        });
       }
     }
   }
 
-  register<K extends keyof T | "*">(
-    key: K,
-    handler: (
-      req: K extends "*"
-        ? Request<T, U, S>
-        : K extends keyof T
-          ? Request<NonNullable<T[K]>, U, S>
-          : never
-    ) => void
+  onMessage<V>(
+    path: (msg: T) => V,
+    handler: (req: Request<Exclude<V, undefined>, U, S>) => void
   ): void {
-    if (!this.handlers[key]) {
-      this.handlers[key] = [];
-    }
+    this.messageHandlers.push({
+      path,
+      handler,
+    });
+  }
 
-    this.handlers[key]!.push(handler);
+  handleClose(ws: WebSocket): void {
+    const session = this.sessionMap.get(ws);
+    this.sessionMap.delete(ws);
+
+    for (const handler of this.closeHandlers) {
+      handler({
+        ws,
+        session,
+      });
+    }
+  }
+
+  onClose(handler: (req: CloseRequest<S>) => void): void {
+    this.closeHandlers.push(handler);
   }
 
   send(ws: WebSocket, data: U): void {

@@ -20,7 +20,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "howler": "^2.2.4",
-    "sinho": "^0.1.0",
+    "sinho": "^0.1.1",
     "ws": "^8.17.0"
   },
   "devDependencies": {
@@ -30,7 +30,6 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@svgr/rollup": "^8.1.0",
     "@swc/core": "^1.4.17",
-    "@types/howler": "^2.2.11",
     "@types/ws": "^8.5.10",
     "concurrently": "^8.2.2",
     "prettier": "^3.2.5",

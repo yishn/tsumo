@@ -13,15 +13,12 @@ export interface ServerMessage {
       id: string;
       secret: string;
     };
-    leave?: {
-      id: string;
-    };
-    playerInfo?: {
+    players?: {
       id: string;
       name?: string;
-      avatar?: number;
+      avatar: number;
       dice?: number;
-    };
+    }[];
   };
 }
 
@@ -31,12 +28,11 @@ export interface ClientMessage {
     join?: {
       session: string;
       secret?: string;
-      avatar: number;
     };
     playerInfo?: {
       secret: string;
       name?: string;
-      avatar?: number;
+      avatar: number;
       ready?: boolean;
     };
   };
