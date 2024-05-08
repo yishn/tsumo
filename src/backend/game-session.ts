@@ -23,7 +23,6 @@ export class GameSession {
 
     clearTimeout(peer.aliveTimeout);
     peer.aliveTimeout = setTimeout(() => {
-      console.log("DEAD");
       peer.alive = false;
       peer.ws.terminate();
     }, 30000);

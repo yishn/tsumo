@@ -12,7 +12,7 @@ import { LobbyPage } from "./pages/lobby-page.tsx";
 
 export class AppComponent extends Component("app") {
   render() {
-    const [page, setPage] = useSignal<"lobby" | "game">("lobby");
+    const [page, setPage] = useSignal<"lobby" | "game">("game");
 
     return (
       <>

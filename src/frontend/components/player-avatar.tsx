@@ -36,11 +36,13 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="name"] {
+            box-sizing: border-box;
             padding: 0 0.4em;
             max-width: 4.2em;
             font-weight: bold;
             text-align: center;
-            overflow: hidden;
+            overflow-x: clip;
+            overflow-y: visible;
             text-overflow: ellipsis;
           }
           @keyframes dealer-enter {
