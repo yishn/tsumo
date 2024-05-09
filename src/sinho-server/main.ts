@@ -16,7 +16,7 @@ export interface ClientPropagationHook<T, U> {
     value: V
   ) => [Signal<V>, SignalSetter<V>];
 
-  useClientEvent: <V>(
+  onClientEvent: <V>(
     path: (msg: T) => V,
     handler: (evt: MessageEvent<V & ({} | null)>) => void
   ) => void;
@@ -69,7 +69,7 @@ export function useClientPropagation<T, U>(
       return [signal, setSignal];
     },
 
-    useClientEvent: (path, handler) => {
+    onClientEvent: (path, handler) => {
       useEffect(() => {
         const clientsValue = MaybeSignal.get(clients);
         const wsHandler = (evt: WsMessageEvent) => {

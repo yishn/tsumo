@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { uuid } from "../shared/utils.ts";
 import { useBatch, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
 import { useClientPropagation } from "../sinho-server/main.ts";
@@ -25,6 +25,9 @@ messageHandler.onMessage(
       session.mode() !== "lobby" &&
       (secret == null || !session.peers().has(secret))
     ) {
+      console.log(
+        `[GameSession] Peer tries to join session ${session.id} with invalid secret`
+      );
       req.send({
         error: {
           message: "Invalid secret",
@@ -35,6 +38,10 @@ messageHandler.onMessage(
     }
 
     if (session.peers().size >= 4) {
+      console.log(
+        `[GameSession] Peer tries to join already full session ${session.id}`
+      );
+
       req.send({
         error: {
           message: "Session is full",
@@ -46,10 +53,12 @@ messageHandler.onMessage(
 
     req.assignSession(session);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     if (secret == null) {
-      secret = crypto.randomUUID();
+      secret = uuid();
     }
+
+    console.log(`[GameSession] Peer ${id} joins session ${session.id}`);
 
     session.peers.set((peers) => {
       const result = new Map(peers);
@@ -76,6 +85,9 @@ messageHandler.onClose((req) => {
 
       for (const [secret, peer] of result) {
         if (peer.ws === req.ws) {
+          console.log(
+            `[GameSession] Peer ${peer.id} leaves session ${session.id}`
+          );
           result.delete(secret);
           break;
         }
@@ -87,9 +99,8 @@ messageHandler.onClose((req) => {
 
   if (session.peers().size === 0) {
     allGameSessions.delete(session.id);
+    session.destroy?.();
   }
-
-  session.destroy?.();
 });
 
 export class GameSession {
@@ -107,11 +118,18 @@ export class GameSession {
   destroy?: () => void;
 
   constructor(public id: string) {
-    [, this.destroy] = useSubscope(() => this.scope());
+    console.log(`[GameSession] Create session ${id}`);
+    [, this.destroy] = useSubscope(() => {
+      this.scope();
+
+      useEffect(() => () => {
+        console.log(`[GameSession] Destroy session ${id}`);
+      });
+    });
   }
 
   useHeartbeat() {
-    const { useClientEvent } = useClientPropagation<
+    const { onClientEvent: useClientEvent } = useClientPropagation<
       ClientMessage,
       ServerMessage
     >(this.clients);
@@ -151,10 +169,8 @@ export class GameSession {
   }
 
   scope(): void {
-    const { useClientSignal, useClientEvent } = useClientPropagation<
-      ClientMessage,
-      ServerMessage
-    >(this.clients);
+    const { useClientSignal, onClientEvent: useClientEvent } =
+      useClientPropagation<ClientMessage, ServerMessage>(this.clients);
 
     const [mode, setMode] = useClientSignal((msg) => msg.mode, this.mode());
     useEffect(() => setMode(this.mode()));

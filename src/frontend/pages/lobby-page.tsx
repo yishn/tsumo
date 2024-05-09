@@ -1,6 +1,7 @@
 import {
   Component,
   For,
+  If,
   Portal,
   Style,
   css,
@@ -104,10 +105,7 @@ export class LobbyPage extends Component("lobby-page", {
         </Portal>
 
         <div part="players">
-          <For
-            each={() => [...Array(3)].map((_, i) => remotePlayers()[i])}
-            key={(player, i) => player?.id ?? i}
-          >
+          <For each={remotePlayers} key={(player, i) => player?.id ?? i}>
             {(player) => (
               <PlayerAvatar
                 name={() => player()?.name || "\u200b"}
@@ -119,6 +117,10 @@ export class LobbyPage extends Component("lobby-page", {
               />
             )}
           </For>
+
+          <If condition={() => remotePlayers().length <= 0}>
+            <PlayerAvatar style={{ visibility: "hidden" }} name={"\u200b"} />
+          </If>
         </div>
 
         <div part="avatar-chooser">
@@ -166,14 +168,14 @@ export class LobbyPage extends Component("lobby-page", {
         </div>
 
         <Style>{css`
-          @keyframes blur-bg {
+          @keyframes page-enter {
             from {
-              backdrop-filter: initial;
-              -webkit-backdrop-filter: initial;
+              opacity: 0;
+              transform: translateY(1em);
             }
             to {
-              backdrop-filter: blur(0.5em);
-              -webkit-backdrop-filter: blur(0.5em);
+              opacity: 1;
+              transform: none;
             }
           }
           :host {
@@ -192,7 +194,7 @@ export class LobbyPage extends Component("lobby-page", {
             backdrop-filter: blur(0.5em);
             -webkit-backdrop-filter: blur(0.5em);
             overflow: auto;
-            animation: 2s both blur-bg;
+            animation: 0.5s backwards page-enter;
           }
 
           [part="players"] {
@@ -200,6 +202,19 @@ export class LobbyPage extends Component("lobby-page", {
             justify-content: center;
             gap: 1em;
             margin-bottom: 1em;
+          }
+          @keyframes player-slide-in {
+            from {
+              transform: translateX(0.5em);
+              opacity: 0;
+            }
+            to {
+              transform: none;
+              opacity: 1;
+            }
+          }
+          [part="players"] > * {
+            animation: 0.5s backwards player-slide-in;
           }
           [part="players"] ::part(avatar) {
             font-size: 1.2em;
