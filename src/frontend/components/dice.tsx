@@ -5,6 +5,7 @@ import {
   defineComponents,
   prop,
   useEffect,
+  useMemo,
   useSignal,
 } from "sinho";
 
@@ -12,7 +13,8 @@ export class Dice extends Component("dice", {
   face: prop<number>(1, { attribute: Number }),
 }) {
   render() {
-    const face = () => Math.max(1, Math.min(6, this.props.face()));
+    const facePropMemo = useMemo(this.props.face);
+    const face = () => Math.max(1, Math.min(6, facePropMemo()));
     const [multipliers, setMultipliers] = useSignal<[number, number]>([0, 0]);
 
     const rotateInfo: Partial<Record<number, [number, number, number]>> = {

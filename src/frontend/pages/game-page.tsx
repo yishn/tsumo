@@ -154,7 +154,6 @@ export class GamePage extends Component("game-page") {
             }
             to {
               transform: none;
-              opacity: 1;
             }
           }
           [part="players"] {

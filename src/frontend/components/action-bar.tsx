@@ -1,6 +1,7 @@
 import { Component, Style, css, defineComponents, event, prop } from "sinho";
 
 export class ActionBarButton extends Component("action-bar-button", {
+  tooltip: prop<string>(),
   disabled: prop<boolean>(false, { attribute: () => true }),
   onButtonClick: event(MouseEvent),
 }) {
@@ -8,6 +9,8 @@ export class ActionBarButton extends Component("action-bar-button", {
     return (
       <>
         <button
+          part="button"
+          title={this.props.tooltip}
           disabled={this.props.disabled}
           onclick={(evt) => {
             evt.preventDefault();

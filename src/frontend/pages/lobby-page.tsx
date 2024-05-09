@@ -1,5 +1,6 @@
 import {
   Component,
+  Else,
   For,
   If,
   Portal,
@@ -19,6 +20,7 @@ import { TileSuit } from "../../core/tile.ts";
 import { globalWsHook } from "../websocket.ts";
 import { SECRET } from "../global-state.ts";
 import { Dice } from "../components/dice.tsx";
+import clsx from "clsx";
 
 const avatarList = [
   "rat",
@@ -39,9 +41,9 @@ export class LobbyPage extends Component("lobby-page", {
   players: prop<
     {
       id: string;
-      name?: string | undefined;
+      name?: string;
       avatar: number;
-      dice?: number | undefined;
+      dice?: [number, number];
     }[]
   >(),
   ownPlayerId: prop<string>(),
@@ -63,18 +65,20 @@ export class LobbyPage extends Component("lobby-page", {
       Math.floor(Math.random() * avatarList.length)
     );
     const [ownName, setOwnName] = useSignal("");
-    const dice = () =>
+
+    const ownDice = () =>
       players()?.find((player) => player.id === ownPlayerId())?.dice;
 
     const canRollInitiative = () =>
       ownName().trim() !== "" && players()?.length === 4;
+    const [ready, setReady] = useSignal(ownDice() != null);
 
     const status = () => {
       if (ownName().trim() === "") {
         return "Enter your name…";
       } else if (players() == null || players()!.length < 4) {
         return "Waiting for players…";
-      } else if (dice() == null) {
+      } else if (ownDice() == null) {
         return "Tap on tile to roll for initiative…";
       } else if (players()?.some((player) => player.dice == null)) {
         return "Waiting for other players to run for initiative…";
@@ -92,6 +96,7 @@ export class LobbyPage extends Component("lobby-page", {
             secret: SECRET,
             name: ownName(),
             avatar: ownAvatarIndex(),
+            ready: ready(),
           },
         },
       });
@@ -126,10 +131,14 @@ export class LobbyPage extends Component("lobby-page", {
 
         <div part="avatar-chooser">
           <ActionBarButton
-            class="prev"
+            class={() => clsx("prev", { disabled: ready() })}
+            disabled={ready}
+            tooltip="Previous Avatar"
             onButtonClick={() => {
-              setOwnAvatarIndex(
-                (index) => (index - 1 + avatarList.length) % avatarList.length
+              setOwnAvatarIndex((index) =>
+                ready()
+                  ? index
+                  : (index - 1 + avatarList.length) % avatarList.length
               );
             }}
           >
@@ -139,9 +148,13 @@ export class LobbyPage extends Component("lobby-page", {
           <PlayerAvatar avatar={() => this.getAvatarUrl(ownAvatarIndex())} />
 
           <ActionBarButton
-            class="next"
+            class={() => clsx("next", { disabled: ready() })}
+            disabled={ready}
+            tooltip="Next Avatar"
             onButtonClick={() => {
-              setOwnAvatarIndex((index) => (index + 1) % avatarList.length);
+              setOwnAvatarIndex((index) =>
+                ready() ? index : (index + 1) % avatarList.length
+              );
             }}
           >
             <RightIcon />
@@ -151,6 +164,7 @@ export class LobbyPage extends Component("lobby-page", {
         <div part="name-chooser">
           <input
             type="text"
+            disabled={() => ready()}
             placeholder="Your name"
             value={ownName}
             oninput={(evt) => setOwnName(evt.currentTarget.value)}
@@ -161,16 +175,18 @@ export class LobbyPage extends Component("lobby-page", {
 
         <div part="ready">
           <Tile
+            class={() => clsx({ hide: ready() ? true : false })}
             animateEnter
-            back={() => !canRollInitiative()}
+            back={() => !canRollInitiative() && !ready()}
             suit={TileSuit.Dragon}
             rank={2}
+            onclick={() => canRollInitiative() && setReady(true)}
           />
         </div>
 
         <div part="dice">
-          <Dice face={3} />
-          <Dice face={5} />
+          <Dice face={() => ownDice()?.[0] ?? 7} />
+          <Dice face={() => ownDice()?.[1] ?? 7} />
         </div>
 
         <Style>{css`
@@ -180,7 +196,6 @@ export class LobbyPage extends Component("lobby-page", {
               transform: translateY(1em);
             }
             to {
-              opacity: 1;
               transform: none;
             }
           }
@@ -216,7 +231,6 @@ export class LobbyPage extends Component("lobby-page", {
             }
             to {
               transform: none;
-              opacity: 1;
             }
           }
           [part="players"] > * {
@@ -235,6 +249,8 @@ export class LobbyPage extends Component("lobby-page", {
           [part="avatar-chooser"] .prev,
           [part="avatar-chooser"] .next {
             --action-bar-icon-color: #ffd3a3;
+            --action-bar-icon-disabled-color: #d4ab8e;
+            transition: 0.2s opacity;
           }
           @keyframes prev-arrow-sway {
             from {
@@ -252,10 +268,10 @@ export class LobbyPage extends Component("lobby-page", {
               transform: translateX(0.5em);
             }
           }
-          [part="avatar-chooser"] .prev svg {
+          [part="avatar-chooser"] .prev:not(.disabled) svg {
             animation: 0.7s linear infinite alternate prev-arrow-sway;
           }
-          [part="avatar-chooser"] .next svg {
+          [part="avatar-chooser"] .next:not(.disabled) svg {
             animation: 0.7s linear infinite alternate next-arrow-sway;
           }
           [part="avatar-chooser"] ::part(avatar) {
@@ -271,6 +287,9 @@ export class LobbyPage extends Component("lobby-page", {
             font: 1.5em var(--heiti-font-stack);
             text-align: center;
           }
+          [part="name-chooser"] input:disabled {
+            cursor: not-allowed;
+          }
 
           [part="status"] {
             font-style: italic;
@@ -279,6 +298,10 @@ export class LobbyPage extends Component("lobby-page", {
 
           [part="ready"] mj-tile {
             margin-bottom: 1em;
+            transition: 0.2s opacity;
+          }
+          [part="ready"] mj-tile.hide {
+            opacity: 0;
           }
 
           [part="dice"] {
@@ -289,7 +312,12 @@ export class LobbyPage extends Component("lobby-page", {
 
         <Style>{css`
           [part="ready"] mj-tile {
-            cursor: ${() => (canRollInitiative() ? "pointer" : "not-allowed")};
+            cursor: ${() =>
+              ready()
+                ? "default"
+                : canRollInitiative()
+                  ? "pointer"
+                  : "not-allowed"};
           }
         `}</Style>
       </>

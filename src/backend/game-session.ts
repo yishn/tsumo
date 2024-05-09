@@ -197,11 +197,36 @@ export class GameSession {
           const playerCurrent = players.find((player) => player.id === id);
           if (id == null) return players;
 
-          const playerUpdate = {
+          const playerUpdate: (typeof players)[number] = {
             id,
             name: evt.data.name,
             avatar: evt.data.avatar,
           };
+
+          if (evt.data.ready && playerCurrent?.dice == null) {
+            const rollDice = () =>
+              [...Array(2)].map(() => Math.floor(Math.random() * 6) + 1) as [
+                number,
+                number,
+              ];
+            const diceSum = (dice: number[]) =>
+              dice.reduce((sum, n) => sum + n, 0);
+
+            while (true) {
+              const dice = rollDice();
+
+              if (
+                !players.some(
+                  (player) =>
+                    player.dice != null &&
+                    diceSum(player.dice) === diceSum(dice)
+                )
+              ) {
+                playerUpdate.dice = dice;
+                break;
+              }
+            }
+          }
 
           if (playerCurrent == null) {
             return [...players, playerUpdate];

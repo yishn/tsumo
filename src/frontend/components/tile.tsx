@@ -170,7 +170,6 @@ class TileComponent extends Component("tile", {
               }
               to {
                 transform: none;
-                opacity: 1;
               }
             }
 

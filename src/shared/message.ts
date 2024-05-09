@@ -13,7 +13,7 @@ export interface ServerMessage {
     id: string;
     name?: string;
     avatar: number;
-    dice?: number;
+    dice?: [number, number];
   }[];
   joined?: {
     id: string;
