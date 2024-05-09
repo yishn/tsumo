@@ -142,25 +142,22 @@ export class GameSession extends ClientPropagation<
       (evt) => {
         setPlayers((players) => {
           const id = this.peers.get(evt.data.secret)?.id;
-          const index = players.findIndex((player) => player.id === id);
+          const playerCurrent = players.find((player) => player.id === id);
           if (id == null) return players;
 
-          const player = {
+          const playerUpdate = {
             id,
             name: evt.data.name,
             avatar: evt.data.avatar,
-            alive: true,
           };
 
-          if (index < 0) {
-            return [...players, player];
+          if (playerCurrent == null) {
+            return [...players, playerUpdate];
           }
 
-          return [
-            ...players.slice(0, index),
-            { ...players[index], ...player },
-            ...players.slice(index + 1),
-          ];
+          return players.map((player) =>
+            player === playerCurrent ? { ...player, ...playerUpdate } : player
+          );
         });
       }
     );

@@ -1,5 +1,6 @@
 import { MaybeSignal, Signal, useEffect, useSignal } from "sinho";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
+import { SERVER } from "./global-state.ts";
 
 export interface WebSocketHook<T, U> {
   connected: Signal<boolean>;
@@ -22,6 +23,7 @@ export function useWebSocket<T, U>(
   }> = new Set();
   const [connected, setConnected] = useSignal(false);
   const [error, setError] = useSignal<Event>();
+  const queuedMessages: U[] = [];
 
   useEffect(() => {
     socket = new WebSocket(MaybeSignal.get(url));
@@ -29,6 +31,8 @@ export function useWebSocket<T, U>(
     socket.addEventListener("open", () => {
       setConnected(true);
       setError(undefined);
+
+      queuedMessages.length = 0;
     });
 
     socket.addEventListener("close", () => {
@@ -64,18 +68,20 @@ export function useWebSocket<T, U>(
       handlers.add(entry);
       return () => handlers.delete(entry);
     },
-    send: (data) => socket.send(JSON.stringify(data)),
+    send: (data) => {
+      if (connected()) {
+        socket.send(JSON.stringify(data));
+      } else {
+        queuedMessages.push(data);
+      }
+    },
     close: () => {
       socket.close();
     },
   };
 }
 
-const server = new URL(location.href).searchParams.get("server");
-
-export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(
-  server! // TODO
-);
+export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(SERVER!); // TODO
 
 let heartbeatId = 0;
 let heartbeatTimeout: NodeJS.Timeout | number | undefined;

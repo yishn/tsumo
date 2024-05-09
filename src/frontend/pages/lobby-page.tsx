@@ -15,8 +15,9 @@ import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { globalWsHook } from "../websocket.ts";
 import { useServerSignal } from "../server-signal.ts";
+import { SESSION } from "../global-state.ts";
 
-const SESSION = "test"; // TODO
+let SECRET: string = ""; //TODO
 
 const avatarList = [
   "rat",
@@ -45,7 +46,8 @@ export class LobbyPage extends Component("lobby-page") {
       Math.floor(Math.random() * avatarList.length)
     );
     const [ownName, setOwnName] = useSignal("");
-    const [dice, setDice] = useSignal<number>();
+    const dice = () =>
+      remotePlayers()?.find((player) => player.id === ownPlayerId())?.dice;
 
     const canRollInitiative = () =>
       ownName().trim() !== "" && remotePlayers()?.length === 4;
@@ -69,7 +71,7 @@ export class LobbyPage extends Component("lobby-page") {
         globalWsHook.send({
           lobby: {
             join: {
-              session: SESSION,
+              session: SESSION!, // TODO
             },
           },
         });
@@ -79,6 +81,7 @@ export class LobbyPage extends Component("lobby-page") {
     globalWsHook.onMessage(
       (msg) => msg.lobby?.joined,
       (data) => {
+        SECRET = data.secret;
         setOwnPlayerId(data.id);
 
         globalWsHook.send({
@@ -92,6 +95,20 @@ export class LobbyPage extends Component("lobby-page") {
         });
       }
     );
+
+    useEffect(() => {
+      if (ownPlayerId() == null) return;
+
+      globalWsHook.send({
+        lobby: {
+          playerInfo: {
+            secret: SECRET,
+            name: ownName(),
+            avatar: ownAvatarIndex(),
+          },
+        },
+      });
+    });
 
     return (
       <>
