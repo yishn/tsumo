@@ -8,27 +8,27 @@ export interface ServerMessage {
   error?: {
     message: string;
   };
-  lobby?: {
-    joined?: {
-      id: string;
-      secret: string;
-    };
-    players?: {
-      id: string;
-      name?: string;
-      avatar: number;
-      dice?: number;
-    }[];
+  mode?: "lobby" | "game";
+  players?: {
+    id: string;
+    name?: string;
+    avatar: number;
+    dice?: number;
+  }[];
+  joined?: {
+    id: string;
+    secret: string;
   };
+  lobby?: {};
 }
 
 export interface ClientMessage {
   heartbeat?: Heartbeat;
+  join?: {
+    session: string;
+    secret?: string;
+  };
   lobby?: {
-    join?: {
-      session: string;
-      secret?: string;
-    };
     playerInfo?: {
       secret: string;
       name?: string;

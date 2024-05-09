@@ -18,8 +18,8 @@ export interface ServerComponentProps {
 
 export interface ClientPropagationContext<T, U> {
   useClientSignal: <V>(
-    value: V,
-    embed: (value: V) => U
+    path: (msg: U) => V | undefined,
+    value: V
   ) => [Signal<V>, SignalSetter<V>];
 
   useClientEvent: <V>(
@@ -31,19 +31,47 @@ export interface ClientPropagationContext<T, U> {
 export abstract class ClientPropagation<T, U> {
   clients = useRef<WebSocket[]>([]);
   context: ClientPropagationContext<T, U>;
-  destroy: () => void;
+  destroy: () => void = () => {};
 
   constructor() {
     this.context = {
-      useClientSignal: (value, embed) => {
+      useClientSignal: (path, value) => {
         const [signal, setSignal] = useSignal(value);
 
+        let prevValue: any;
+        let prevClients: WebSocket[] = [];
+
         useEffect(() => {
-          const msg = embed(signal());
+          const msg = {} as U;
+          let assigneeObj: any = msg;
+          let assigneeKey: string | undefined;
+          const msgBuilder = new Proxy(
+            {},
+            {
+              get: (_, key) => {
+                if (assigneeKey != null) {
+                  assigneeObj = assigneeObj[assigneeKey] = {};
+                }
+                assigneeKey = key.toString();
+                return msgBuilder;
+              },
+            }
+          ) as U;
+
+          path(msgBuilder);
+
+          const value = signal();
+          if (assigneeKey == null) throw new Error("Invalid path");
+          assigneeObj[assigneeKey] = value;
 
           for (const ws of this.clients()) {
-            ws.send(JSON.stringify(msg));
+            if (prevValue !== value || !prevClients.includes(ws)) {
+              ws.send(JSON.stringify(msg));
+            }
           }
+
+          prevValue = value;
+          prevClients = this.clients();
         });
 
         return [signal, setSignal];
@@ -79,7 +107,9 @@ export abstract class ClientPropagation<T, U> {
       },
     };
 
-    [, this.destroy] = useSubscope(() => this.scope());
+    setImmediate(() => {
+      [, this.destroy] = useSubscope(() => this.scope());
+    });
   }
 
   abstract scope(): void;

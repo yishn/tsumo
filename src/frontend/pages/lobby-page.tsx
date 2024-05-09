@@ -5,7 +5,9 @@ import {
   Style,
   css,
   defineComponents,
+  prop,
   useEffect,
+  useMemo,
   useSignal,
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
@@ -14,10 +16,7 @@ import { LeftIcon, RightIcon } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { globalWsHook } from "../websocket.ts";
-import { useServerSignal } from "../server-signal.ts";
-import { SESSION } from "../global-state.ts";
-
-let SECRET: string = ""; //TODO
+import { SECRET } from "../global-state.ts";
 
 const avatarList = [
   "rat",
@@ -34,67 +33,53 @@ const avatarList = [
   "boar",
 ] as const;
 
-export class LobbyPage extends Component("lobby-page") {
+export class LobbyPage extends Component("lobby-page", {
+  players: prop<
+    {
+      id: string;
+      name?: string | undefined;
+      avatar: number;
+      dice?: number | undefined;
+    }[]
+  >(),
+  ownPlayerId: prop<string>(),
+}) {
   getAvatarUrl(avatar: number): string {
     return `./assets/avatars/${avatarList[avatar % avatarList.length]}.png`;
   }
 
   render() {
-    const remotePlayers = useServerSignal((msg) => msg.lobby?.players);
-    const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
+    const players = this.props.players;
+    const ownPlayerId = this.props.ownPlayerId;
+    const remotePlayers = useMemo(
+      () =>
+        players()?.filter((player) => player.id !== this.props.ownPlayerId()) ??
+        []
+    );
+
     const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(
       Math.floor(Math.random() * avatarList.length)
     );
     const [ownName, setOwnName] = useSignal("");
     const dice = () =>
-      remotePlayers()?.find((player) => player.id === ownPlayerId())?.dice;
+      players()?.find((player) => player.id === ownPlayerId())?.dice;
 
     const canRollInitiative = () =>
-      ownName().trim() !== "" && remotePlayers()?.length === 4;
+      ownName().trim() !== "" && players()?.length === 4;
 
     const status = () => {
       if (ownName().trim() === "") {
         return "Enter your name…";
-      } else if (remotePlayers() == null || remotePlayers()!.length < 4) {
+      } else if (players() == null || players()!.length < 4) {
         return "Waiting for players…";
       } else if (dice() == null) {
         return "Tap on tile to roll for initiative…";
-      } else if (remotePlayers()?.some((player) => player.dice == null)) {
+      } else if (players()?.some((player) => player.dice == null)) {
         return "Waiting for other players to run for initiative…";
       }
 
       return "Starting game…";
     };
-
-    useEffect(() => {
-      if (globalWsHook.connected()) {
-        globalWsHook.send({
-          lobby: {
-            join: {
-              session: SESSION!, // TODO
-            },
-          },
-        });
-      }
-    }, [globalWsHook.connected]);
-
-    globalWsHook.onMessage(
-      (msg) => msg.lobby?.joined,
-      (data) => {
-        SECRET = data.secret;
-        setOwnPlayerId(data.id);
-
-        globalWsHook.send({
-          lobby: {
-            playerInfo: {
-              secret: data.secret,
-              name: ownName(),
-              avatar: ownAvatarIndex(),
-            },
-          },
-        });
-      }
-    );
 
     useEffect(() => {
       if (ownPlayerId() == null) return;
@@ -119,24 +104,20 @@ export class LobbyPage extends Component("lobby-page") {
         </Portal>
 
         <div part="players">
-          <For each={() => [...Array(3)]}>
-            {(_, i) => {
-              const player = () =>
-                remotePlayers()?.filter(
-                  (player) => player.id !== ownPlayerId()
-                )[i()];
-
-              return (
-                <PlayerAvatar
-                  name={() => player()?.name || "\u200b"}
-                  avatar={() =>
-                    player()?.avatar == null
-                      ? PlayerAvatar.emptyAvatar
-                      : this.getAvatarUrl(player()!.avatar!)
-                  }
-                />
-              );
-            }}
+          <For
+            each={() => [...Array(3)].map((_, i) => remotePlayers()[i])}
+            key={(player, i) => player?.id ?? i}
+          >
+            {(player) => (
+              <PlayerAvatar
+                name={() => player()?.name || "\u200b"}
+                avatar={() =>
+                  player()?.avatar == null
+                    ? PlayerAvatar.emptyAvatar
+                    : this.getAvatarUrl(player()!.avatar!)
+                }
+              />
+            )}
           </For>
         </div>
 
@@ -185,6 +166,16 @@ export class LobbyPage extends Component("lobby-page") {
         </div>
 
         <Style>{css`
+          @keyframes blur-bg {
+            from {
+              backdrop-filter: initial;
+              -webkit-backdrop-filter: initial;
+            }
+            to {
+              backdrop-filter: blur(0.5em);
+              -webkit-backdrop-filter: blur(0.5em);
+            }
+          }
           :host {
             display: flex;
             flex-direction: column;
@@ -201,6 +192,7 @@ export class LobbyPage extends Component("lobby-page") {
             backdrop-filter: blur(0.5em);
             -webkit-backdrop-filter: blur(0.5em);
             overflow: auto;
+            animation: 2s both blur-bg;
           }
 
           [part="players"] {

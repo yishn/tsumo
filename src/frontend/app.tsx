@@ -5,21 +5,46 @@ import {
   Style,
   css,
   defineComponents,
+  useEffect,
   useSignal,
 } from "sinho";
 import { GamePage } from "./pages/game-page.tsx";
 import { LobbyPage } from "./pages/lobby-page.tsx";
+import { useServerSignal } from "./server-signal.ts";
+import { globalWsHook } from "./websocket.ts";
+import { SESSION, setSecret } from "./global-state.ts";
 
 export class AppComponent extends Component("app") {
   render() {
-    const [page, setPage] = useSignal<"lobby" | "game">("lobby");
+    const mode = useServerSignal((msg) => msg.mode);
+
+    const players = useServerSignal((msg) => msg.players);
+    const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
+
+    useEffect(() => {
+      if (globalWsHook.connected()) {
+        globalWsHook.send({
+          join: {
+            session: SESSION!, // TODO
+          },
+        });
+      }
+    }, [globalWsHook.connected]);
+
+    globalWsHook.onMessage(
+      (msg) => msg.joined,
+      (data) => {
+        setSecret(data.secret);
+        setOwnPlayerId(data.id);
+      }
+    );
 
     return (
       <>
-        <If condition={() => page() === "lobby"}>
-          <LobbyPage />
+        <If condition={() => mode() === "lobby"}>
+          <LobbyPage prop:players={players} prop:ownPlayerId={ownPlayerId} />
         </If>
-        <ElseIf condition={() => page() === "game"}>
+        <ElseIf condition={() => mode() === "game"}>
           <GamePage />
         </ElseIf>
 

@@ -1,6 +1,6 @@
 import { MaybeSignal, Signal, useEffect, useSignal } from "sinho";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
-import { SERVER } from "./global-state.ts";
+import { SERVER, SESSION } from "./global-state.ts";
 
 export interface WebSocketHook<T, U> {
   connected: Signal<boolean>;

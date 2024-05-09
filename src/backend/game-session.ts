@@ -1,12 +1,12 @@
 import crypto from "node:crypto";
-import { SignalSetter, useBatch } from "sinho";
+import { useBatch, useEffect } from "sinho";
 import { WebSocket } from "ws";
 import { ClientPropagation } from "../sinho-server/main.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
 import { allGameSessions, messageHandler } from "./global-state.ts";
 
 messageHandler.onMessage(
-  (msg) => msg.lobby?.join,
+  (msg) => msg.join,
   function join(req) {
     const data = req.data;
     if (data == null) return;
@@ -31,7 +31,7 @@ messageHandler.onMessage(
       return;
     }
 
-    if (session.peers.size >= 4) {
+    if (session.clients().length >= 4) {
       req.send({
         error: {
           message: "Session is full",
@@ -53,15 +53,33 @@ messageHandler.onMessage(
     session.peers.set(secret, { id, ws: req.ws });
 
     req.send({
-      lobby: {
-        joined: {
-          id,
-          secret,
-        },
+      joined: {
+        id,
+        secret,
       },
     });
   }
 );
+
+messageHandler.onClose((req) => {
+  const session = req.session;
+  if (session == null) return;
+
+  useBatch(() => {
+    session.clients.set((clients) => clients.filter((ws) => ws !== req.ws));
+
+    for (const [secret, peer] of session.peers) {
+      if (peer.ws === req.ws) {
+        session.peers.delete(secret);
+        break;
+      }
+    }
+  });
+
+  if (session.clients().length === 0) {
+    allGameSessions.delete(session.id);
+  }
+});
 
 export class GameSession extends ClientPropagation<
   ClientMessage,
@@ -79,12 +97,6 @@ export class GameSession extends ClientPropagation<
     super();
   }
 
-  getPlayerIdByWs(ws: WebSocket): string | undefined {
-    for (const peer of this.peers.values()) {
-      if (peer.ws === ws) return peer.id;
-    }
-  }
-
   useHeartbeat() {
     const aliveInfo = new WeakMap<
       WebSocket,
@@ -97,9 +109,6 @@ export class GameSession extends ClientPropagation<
     this.context.useClientEvent(
       (msg) => msg.heartbeat,
       (evt) => {
-        const playerId = this.getPlayerIdByWs(evt.target);
-        if (playerId == null) return;
-
         if (!aliveInfo.has(evt.target)) {
           aliveInfo.set(evt.target, { alive: true });
         }
@@ -126,14 +135,19 @@ export class GameSession extends ClientPropagation<
   scope(): void {
     const ctx = this.context;
 
-    const [players, setPlayers] = ctx.useClientSignal<
-      {
-        id: string;
-        name?: string;
-        avatar: number;
-        dice?: number;
-      }[]
-    >([], (players) => ({ lobby: { players } }));
+    const [mode, setMode] = ctx.useClientSignal((msg) => msg.mode, "lobby");
+
+    const [players, setPlayers] = ctx.useClientSignal((msg) => msg.players, []);
+
+    useEffect(() => {
+      setPlayers((players) => {
+        const peers = [...this.peers.values()];
+
+        return players.filter((player) =>
+          peers.some((peer) => peer.id === player.id)
+        );
+      });
+    }, [this.clients]);
 
     this.useHeartbeat();
 
@@ -160,25 +174,6 @@ export class GameSession extends ClientPropagation<
           );
         });
       }
-    );
-
-    messageHandler.onClose((req) =>
-      useBatch(() => {
-        if (req.session !== this) return;
-
-        this.clients.set((clients) => clients.filter((ws) => ws !== req.ws));
-
-        for (const [secret, peer] of this.peers) {
-          if (peer.ws === req.ws) {
-            this.peers.delete(secret);
-
-            setPlayers((players) =>
-              players.filter((player) => player.id !== peer.id)
-            );
-            break;
-          }
-        }
-      })
     );
   }
 }

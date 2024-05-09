@@ -43,6 +43,7 @@ export default {
             react: {
               runtime: "automatic",
               importSource: "sinho",
+              throwIfNamespace: false,
             },
           },
         },
