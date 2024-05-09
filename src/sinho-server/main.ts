@@ -4,19 +4,13 @@ import {
   SignalSetter,
   useBatch,
   useEffect,
-  useRef,
   useSignal,
-  useSubscope,
 } from "sinho";
 import WebSocket, { MessageEvent as WsMessageEvent } from "ws";
 
 export type MessageEvent<V> = Omit<WsMessageEvent, "data"> & { data: V };
 
-export interface ServerComponentProps {
-  clients: MaybeSignal<WebSocket[]>;
-}
-
-export interface ClientPropagationContext<T, U> {
+export interface ClientPropagationHook<T, U> {
   useClientSignal: <V>(
     path: (msg: U) => V | undefined,
     value: V
@@ -28,89 +22,80 @@ export interface ClientPropagationContext<T, U> {
   ) => void;
 }
 
-export abstract class ClientPropagation<T, U> {
-  clients = useRef<WebSocket[]>([]);
-  context: ClientPropagationContext<T, U>;
-  destroy: () => void = () => {};
+export function useClientPropagation<T, U>(
+  clients: MaybeSignal<WebSocket[]>
+): ClientPropagationHook<T, U> {
+  return {
+    useClientSignal: (path, value) => {
+      const [signal, setSignal] = useSignal(value);
 
-  constructor() {
-    this.context = {
-      useClientSignal: (path, value) => {
-        const [signal, setSignal] = useSignal(value);
+      let prevValue: any;
+      let prevClients: WebSocket[] = [];
 
-        let prevValue: any;
-        let prevClients: WebSocket[] = [];
-
-        useEffect(() => {
-          const msg = {} as U;
-          let assigneeObj: any = msg;
-          let assigneeKey: string | undefined;
-          const msgBuilder = new Proxy(
-            {},
-            {
-              get: (_, key) => {
-                if (assigneeKey != null) {
-                  assigneeObj = assigneeObj[assigneeKey] = {};
-                }
-                assigneeKey = key.toString();
-                return msgBuilder;
-              },
-            }
-          ) as U;
-
-          path(msgBuilder);
-
-          const value = signal();
-          if (assigneeKey == null) throw new Error("Invalid path");
-          assigneeObj[assigneeKey] = value;
-
-          for (const ws of this.clients()) {
-            if (prevValue !== value || !prevClients.includes(ws)) {
-              ws.send(JSON.stringify(msg));
-            }
+      useEffect(() => {
+        const msg = {} as U;
+        let assigneeObj: any = msg;
+        let assigneeKey: string | undefined;
+        const msgBuilder = new Proxy(
+          {},
+          {
+            get: (_, key) => {
+              if (assigneeKey != null) {
+                assigneeObj = assigneeObj[assigneeKey] = {};
+              }
+              assigneeKey = key.toString();
+              return msgBuilder;
+            },
           }
+        ) as U;
 
-          prevValue = value;
-          prevClients = this.clients();
-        });
+        path(msgBuilder);
+        if (assigneeKey == null) throw new Error("Invalid path");
 
-        return [signal, setSignal];
-      },
+        const clientsValue = MaybeSignal.get(clients);
+        const value = signal();
+        assigneeObj[assigneeKey] = value;
 
-      useClientEvent: (path, handler) => {
-        useEffect(() => {
-          const clients = this.clients();
-          const wsHandler = (evt: WsMessageEvent) => {
-            const msg = JSON.parse(evt.data.toString()) as T;
-            const data = path(msg);
-            if (data === undefined) return;
-
-            useBatch(() =>
-              handler({
-                type: evt.type,
-                target: evt.target,
-                data,
-              })
-            );
-          };
-
-          for (const ws of clients) {
-            ws.addEventListener("message", wsHandler);
+        for (const ws of clientsValue) {
+          if (prevValue !== value || !prevClients.includes(ws)) {
+            ws.send(JSON.stringify(msg));
           }
+        }
 
-          return () => {
-            for (const ws of clients) {
-              ws.removeEventListener("message", wsHandler);
-            }
-          };
-        });
-      },
-    };
+        prevValue = value;
+        prevClients = clientsValue;
+      });
 
-    setImmediate(() => {
-      [, this.destroy] = useSubscope(() => this.scope());
-    });
-  }
+      return [signal, setSignal];
+    },
 
-  abstract scope(): void;
+    useClientEvent: (path, handler) => {
+      useEffect(() => {
+        const clientsValue = MaybeSignal.get(clients);
+        const wsHandler = (evt: WsMessageEvent) => {
+          const msg = JSON.parse(evt.data.toString()) as T;
+          const data = path(msg);
+          if (data === undefined) return;
+
+          useBatch(() =>
+            handler({
+              type: evt.type,
+              target: evt.target,
+              data,
+            })
+          );
+        };
+
+        for (const ws of clientsValue) {
+          ws.addEventListener("message", wsHandler);
+        }
+
+        return () => {
+          for (const ws of clientsValue) {
+            ws.removeEventListener("message", wsHandler);
+          }
+        };
+      });
+    },
+  };
 }

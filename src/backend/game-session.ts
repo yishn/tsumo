@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
-import { useBatch, useEffect } from "sinho";
+import { useBatch, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
-import { ClientPropagation } from "../sinho-server/main.ts";
+import { useClientPropagation } from "../sinho-server/main.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
 import { allGameSessions, messageHandler } from "./global-state.ts";
 
@@ -21,7 +21,10 @@ messageHandler.onMessage(
     }
 
     let secret = data.secret;
-    if (secret != null && !session.peers.has(secret)) {
+    if (
+      session.mode() !== "lobby" &&
+      (secret == null || !session.peers().has(secret))
+    ) {
       req.send({
         error: {
           message: "Invalid secret",
@@ -31,7 +34,7 @@ messageHandler.onMessage(
       return;
     }
 
-    if (session.clients().length >= 4) {
+    if (session.peers().size >= 4) {
       req.send({
         error: {
           message: "Session is full",
@@ -43,14 +46,16 @@ messageHandler.onMessage(
 
     req.assignSession(session);
 
+    const id = crypto.randomUUID();
     if (secret == null) {
       secret = crypto.randomUUID();
     }
 
-    const id = crypto.randomUUID();
-
-    session.clients.set((clients) => [...clients, req.ws]);
-    session.peers.set(secret, { id, ws: req.ws });
+    session.peers.set((peers) => {
+      const result = new Map(peers);
+      result.set(secret, { id, ws: req.ws });
+      return result;
+    });
 
     req.send({
       joined: {
@@ -66,38 +71,51 @@ messageHandler.onClose((req) => {
   if (session == null) return;
 
   useBatch(() => {
-    session.clients.set((clients) => clients.filter((ws) => ws !== req.ws));
+    session.peers.set((peers) => {
+      const result = new Map(peers);
 
-    for (const [secret, peer] of session.peers) {
-      if (peer.ws === req.ws) {
-        session.peers.delete(secret);
-        break;
+      for (const [secret, peer] of result) {
+        if (peer.ws === req.ws) {
+          result.delete(secret);
+          break;
+        }
       }
-    }
+
+      return result;
+    });
   });
 
-  if (session.clients().length === 0) {
+  if (session.peers().size === 0) {
     allGameSessions.delete(session.id);
   }
+
+  session.destroy?.();
 });
 
-export class GameSession extends ClientPropagation<
-  ClientMessage,
-  ServerMessage
-> {
-  peers = new Map<
-    string,
-    {
-      id: string;
-      ws: WebSocket;
-    }
-  >();
+export class GameSession {
+  mode = useRef<"lobby" | "game">("lobby");
+  peers = useRef<
+    Map<
+      string,
+      {
+        id: string;
+        ws: WebSocket;
+      }
+    >
+  >(new Map());
+  clients = () => [...this.peers().values()].map((peer) => peer.ws);
+  destroy?: () => void;
 
   constructor(public id: string) {
-    super();
+    [, this.destroy] = useSubscope(() => this.scope());
   }
 
   useHeartbeat() {
+    const { useClientEvent } = useClientPropagation<
+      ClientMessage,
+      ServerMessage
+    >(this.clients);
+
     const aliveInfo = new WeakMap<
       WebSocket,
       {
@@ -106,7 +124,7 @@ export class GameSession extends ClientPropagation<
       }
     >();
 
-    this.context.useClientEvent(
+    useClientEvent(
       (msg) => msg.heartbeat,
       (evt) => {
         if (!aliveInfo.has(evt.target)) {
@@ -133,29 +151,33 @@ export class GameSession extends ClientPropagation<
   }
 
   scope(): void {
-    const ctx = this.context;
+    const { useClientSignal, useClientEvent } = useClientPropagation<
+      ClientMessage,
+      ServerMessage
+    >(this.clients);
 
-    const [mode, setMode] = ctx.useClientSignal((msg) => msg.mode, "lobby");
+    const [mode, setMode] = useClientSignal((msg) => msg.mode, this.mode());
+    useEffect(() => setMode(this.mode()));
 
-    const [players, setPlayers] = ctx.useClientSignal((msg) => msg.players, []);
+    const [players, setPlayers] = useClientSignal((msg) => msg.players, []);
 
     useEffect(() => {
       setPlayers((players) => {
-        const peers = [...this.peers.values()];
+        const peers = [...this.peers().values()];
 
         return players.filter((player) =>
           peers.some((peer) => peer.id === player.id)
         );
       });
-    }, [this.clients]);
+    });
 
     this.useHeartbeat();
 
-    ctx.useClientEvent(
+    useClientEvent(
       (msg) => msg.lobby?.playerInfo,
       (evt) => {
         setPlayers((players) => {
-          const id = this.peers.get(evt.data.secret)?.id;
+          const id = this.peers().get(evt.data.secret)?.id;
           const playerCurrent = players.find((player) => player.id === id);
           if (id == null) return players;
 
