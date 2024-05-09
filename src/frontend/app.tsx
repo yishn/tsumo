@@ -70,8 +70,8 @@ export class AppComponent extends Component("app") {
             overflow: hidden;
             font: 1.2em var(--heiti-font-stack);
             cursor: default;
-            user-select: none;
             -webkit-user-select: none;
+            user-select: none;
             -webkit-user-drag: none;
             white-space: nowrap;
           }

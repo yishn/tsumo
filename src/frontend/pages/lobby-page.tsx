@@ -18,6 +18,7 @@ import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { globalWsHook } from "../websocket.ts";
 import { SECRET } from "../global-state.ts";
+import { Dice } from "../components/dice.tsx";
 
 const avatarList = [
   "rat",
@@ -167,6 +168,11 @@ export class LobbyPage extends Component("lobby-page", {
           />
         </div>
 
+        <div part="dice">
+          <Dice face={3} />
+          <Dice face={5} />
+        </div>
+
         <Style>{css`
           @keyframes page-enter {
             from {
@@ -191,8 +197,8 @@ export class LobbyPage extends Component("lobby-page", {
               transparent,
               rgba(0, 0, 0, 0.2) 5em
             );
-            backdrop-filter: blur(0.5em);
             -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
             overflow: auto;
             animation: 0.5s backwards page-enter;
           }
@@ -274,11 +280,16 @@ export class LobbyPage extends Component("lobby-page", {
           [part="ready"] mj-tile {
             margin-bottom: 1em;
           }
+
+          [part="dice"] {
+            display: flex;
+            gap: 0.5em;
+          }
         `}</Style>
 
         <Style>{css`
           [part="ready"] mj-tile {
-            cursor: ${canRollInitiative() ? "pointer" : "not-allowed"};
+            cursor: ${() => (canRollInitiative() ? "pointer" : "not-allowed")};
           }
         `}</Style>
       </>
