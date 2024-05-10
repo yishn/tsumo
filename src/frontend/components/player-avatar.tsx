@@ -1,18 +1,47 @@
-import { Component, If, Style, css, defineComponents, prop } from "sinho";
+import {
+  Component,
+  If,
+  Style,
+  css,
+  defineComponents,
+  prop,
+  useEffect,
+  useRef,
+} from "sinho";
 import { DealerIcon } from "../assets.ts";
 import clsx from "clsx";
+import { Dice } from "./dice.tsx";
 
 export class PlayerAvatar extends Component("player-avatar", {
   name: prop<string>("", { attribute: String }),
   avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
     attribute: String,
   }),
+  dice: prop<[number, number]>(),
   current: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
 }) {
   static emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>" as const;
 
   render() {
+    const dice1 = useRef<Dice>();
+    const dice2 = useRef<Dice>();
+
+    let prevDice: [number, number] | undefined;
+
+    useEffect(() => {
+      const nextDice = this.props.dice();
+
+      if (prevDice == null && nextDice) {
+        if (nextDice) {
+          dice1()?.roll(nextDice[0]);
+          dice2()?.roll(nextDice[1]);
+        }
+
+        prevDice = nextDice;
+      }
+    });
+
     return (
       <>
         <div part="name">
@@ -23,8 +52,16 @@ export class PlayerAvatar extends Component("player-avatar", {
         </div>
         <div
           part="avatar"
-          class={() => clsx({ current: this.props.current() })}
-        />
+          class={() =>
+            clsx({
+              current: this.props.current(),
+              dice: this.props.dice() != null,
+            })
+          }
+        >
+          <Dice ref={dice1} face={6} />
+          <Dice ref={dice2} face={6} />
+        </div>
 
         <Style>{css`
           :host {
@@ -59,22 +96,39 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="avatar"] {
-            background-color: rgba(0, 0, 0, 0.3);
+            display: flex;
+            place-content: center;
+            place-items: center;
+            gap: calc(0.1 * var(--player-avatar-size));
             border-radius: 50%;
+            outline: 0em solid #e9d883;
             height: var(--player-avatar-size);
             width: var(--player-avatar-size);
             transition:
               box-shadow 0.2s,
-              background-image 0.2s;
+              outline-width 0.2s,
+              background 0.2s;
           }
           [part="avatar"].current {
-            box-shadow: #e9d883 0 0 0 0.3em;
+            outline-width: 0.3em;
+          }
+          [part="avatar"].dice {
+            box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+          }
+          [part="avatar"] mj-dice {
+            --dice-size: calc(0.25 * var(--player-avatar-size));
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+          [part="avatar"].dice mj-dice {
+            opacity: 1;
           }
         `}</Style>
 
         <Style>{css`
           [part="avatar"] {
-            background: url(${this.props.avatar}) 0 0 / 100% 100%;
+            background: rgba(0, 0, 0, 0.3) url(${this.props.avatar}) 0 0 / 100%
+              100%;
           }
         `}</Style>
       </>

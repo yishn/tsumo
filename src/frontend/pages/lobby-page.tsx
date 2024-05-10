@@ -67,26 +67,15 @@ export class LobbyPage extends Component("lobby-page", {
     );
     const [ownName, setOwnName] = useSignal("");
 
-    const dice1 = useRef<Dice>();
-    const dice2 = useRef<Dice>();
     const ownDice = () =>
       players()?.find((player) => player.id === ownPlayerId())?.dice;
-
-    let prevOwnDice: [number, number] | undefined;
-
-    useEffect(() => {
-      const nextOwnDice = ownDice();
-
-      if (prevOwnDice == null && nextOwnDice != null) {
-        dice1()?.roll(nextOwnDice[0]);
-        dice2()?.roll(nextOwnDice[1]);
-        prevOwnDice = nextOwnDice;
-      }
-    });
 
     const canRollInitiative = () =>
       ownName().trim() !== "" && players()?.length === 4;
     const [ready, setReady] = useSignal(ownDice() != null);
+
+    const everyoneReady = () =>
+      !!players()?.every((player) => player.dice != null);
 
     const status = () => {
       if (ownName().trim() === "") {
@@ -95,7 +84,7 @@ export class LobbyPage extends Component("lobby-page", {
         return "Waiting for players…";
       } else if (ownDice() == null) {
         return "Tap on tile to roll for initiative…";
-      } else if (players()?.some((player) => player.dice == null)) {
+      } else if (!everyoneReady()) {
         return "Waiting for other players to run for initiative…";
       }
 
@@ -135,6 +124,7 @@ export class LobbyPage extends Component("lobby-page", {
                     ? PlayerAvatar.emptyAvatar
                     : this.getAvatarUrl(player()!.avatar!)
                 }
+                dice={() => player()?.dice}
               />
             )}
           </For>
@@ -160,7 +150,10 @@ export class LobbyPage extends Component("lobby-page", {
             <LeftIcon />
           </ActionBarButton>
 
-          <PlayerAvatar avatar={() => this.getAvatarUrl(ownAvatarIndex())} />
+          <PlayerAvatar
+            avatar={() => this.getAvatarUrl(ownAvatarIndex())}
+            dice={ownDice}
+          />
 
           <ActionBarButton
             class={() => clsx("next", { disabled: ready() })}
@@ -197,11 +190,6 @@ export class LobbyPage extends Component("lobby-page", {
             rank={2}
             onclick={() => canRollInitiative() && setReady(true)}
           />
-        </div>
-
-        <div part="dice">
-          <Dice ref={dice1} face={6} />
-          <Dice ref={dice2} face={6} />
         </div>
 
         <Style>{css`
@@ -259,8 +247,8 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="avatar-chooser"] .prev,
           [part="avatar-chooser"] .next {
-            --action-bar-icon-color: #ffd3a3;
-            --action-bar-icon-disabled-color: #d4ab8e;
+            --action-bar-icon-color: rgb(255, 211, 163);
+            --action-bar-icon-disabled-color: rgb(255, 211, 163, 0.5);
             transition: opacity 0.2s;
           }
           @keyframes prev-arrow-sway {
@@ -307,11 +295,6 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="ready"] mj-tile.hide {
             opacity: 0;
-          }
-
-          [part="dice"] {
-            display: flex;
-            gap: 0.5em;
           }
         `}</Style>
 
