@@ -4,6 +4,7 @@ import {
   css,
   defineComponents,
   prop,
+  useBatch,
   useEffect,
   useMemo,
   useSignal,
@@ -11,10 +12,19 @@ import {
 
 export class Dice extends Component("dice", {
   face: prop<number>(1, { attribute: Number }),
+  _n: prop<number>(0),
 }) {
+  roll(face: number) {
+    useBatch(() => {
+      this.face = face;
+      this._n++;
+    });
+  }
+
   render() {
-    const facePropMemo = useMemo(this.props.face);
-    const face = () => Math.max(1, Math.min(6, facePropMemo()));
+    const face = useMemo(() =>
+      Math.round(Math.max(1, Math.min(6, this.props.face())))
+    );
     const [multipliers, setMultipliers] = useSignal<[number, number]>([0, 0]);
 
     const rotateInfo: Partial<Record<number, [number, number, number]>> = {
@@ -37,12 +47,12 @@ export class Dice extends Component("dice", {
     useEffect(() => {
       setMultipliers(
         (multipliers) =>
-          multipliers.map((n) => n + (Math.random() > 0.5 ? 1 : -1)) as [
+          multipliers.map((n) => n + (Math.random() > 0.5 ? 2 : -2)) as [
             number,
             number,
           ]
       );
-    }, [face]);
+    }, [face, this.props._n]);
 
     return (
       <>
@@ -62,7 +72,7 @@ export class Dice extends Component("dice", {
             --dice-dot-color: #113ea7;
             --dice-size: 1.8em;
             display: inline-block;
-            perspective: calc(3em);
+            perspective: calc(5em);
             box-shadow: black 0 0 calc(1 * var(--dice-size))
               calc(-0.2 * var(--dice-size));
           }
@@ -74,7 +84,7 @@ export class Dice extends Component("dice", {
             height: var(--dice-size);
             transform-origin: center center calc(-0.5 * var(--dice-size));
             transform-style: preserve-3d;
-            transition: transform 1.5s ease-out;
+            transition: transform 2s ease-out;
           }
 
           [part="face"] {
@@ -84,7 +94,7 @@ export class Dice extends Component("dice", {
             place-items: center;
             place-content: stretch;
             box-sizing: border-box;
-            border: calc(0.1 * var(--dice-size)) solid #d3d7d4;
+            border: calc(0.07 * var(--dice-size)) solid #d3d7d4;
             width: var(--dice-size);
             height: var(--dice-size);
             background-color: var(--dice-face-color);

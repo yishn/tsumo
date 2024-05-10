@@ -190,15 +190,6 @@ export class LobbyPage extends Component("lobby-page", {
         </div>
 
         <Style>{css`
-          @keyframes page-enter {
-            from {
-              opacity: 0;
-              transform: translateY(1em);
-            }
-            to {
-              transform: none;
-            }
-          }
           :host {
             display: flex;
             flex-direction: column;
@@ -207,15 +198,23 @@ export class LobbyPage extends Component("lobby-page", {
             gap: 0.5em;
             padding: 0.5em 0;
             padding-bottom: env(safe-area-inset-bottom);
-            background: linear-gradient(
-              to bottom,
-              transparent,
-              rgba(0, 0, 0, 0.2) 5em
-            );
-            -webkit-backdrop-filter: blur(0.5em);
-            backdrop-filter: blur(0.5em);
             overflow: auto;
-            animation: 0.5s backwards page-enter;
+          }
+          :host::before {
+            content: "";
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: -0.5em;
+            background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(0, 0, 0, 0.2) 5em
+              ),
+              var(--app-background);
+            filter: blur(0.5em);
+            z-index: -1;
           }
 
           [part="players"] {
@@ -284,7 +283,7 @@ export class LobbyPage extends Component("lobby-page", {
             border: none;
             margin-bottom: 1em;
             background-color: rgba(0, 0, 0, 0.7);
-            font: 1.5em var(--heiti-font-stack);
+            font: 1.5em var(--app-heiti-font-stack);
             text-align: center;
           }
           [part="name-chooser"] input:disabled {
