@@ -83,27 +83,26 @@ export function useWebSocket<T, U>(
 
 export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(SERVER!); // TODO
 
-let heartbeatId = 0;
-let heartbeatTimeout: NodeJS.Timeout | number | undefined;
-
-const sendHeartbeat = () => {
-  globalWsHook.send({
-    heartbeat: {
-      id: heartbeatId++,
-      now: Date.now(),
-    },
-  });
-
-  clearTimeout(heartbeatTimeout);
-  heartbeatTimeout = setTimeout(() => globalWsHook.close(), 10000);
-};
+let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
 
 globalWsHook.onMessage(
   (msg) => msg,
-  (data) => {
-    if (data.heartbeat != null) {
-      clearTimeout(heartbeatTimeout);
+  (msg) => {
+    clearTimeout(heartbeatTimeout);
+
+    if (msg.heartbeat != null) {
+      globalWsHook.send({
+        heartbeat: {
+          id: msg.heartbeat.id,
+          now: Date.now(),
+        },
+      });
     }
+
+    heartbeatTimeout = setTimeout(() => {
+      console.warn("[WebSocket] Server not responsive");
+      globalWsHook.close();
+    }, 30000);
   }
 );
 
@@ -114,20 +113,3 @@ globalWsHook.onMessage(
     globalWsHook.close();
   }
 );
-
-let connectedOnce = false;
-
-useEffect(() => {
-  let intervalId: NodeJS.Timeout | number | undefined;
-
-  if (globalWsHook.connected()) {
-    connectedOnce = true;
-    intervalId = setInterval(sendHeartbeat, 15000);
-  } else if (connectedOnce) {
-    console.warn("[WebSocket] Connection lost");
-  }
-
-  return () => {
-    clearTimeout(intervalId);
-  };
-});

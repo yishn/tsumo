@@ -1,5 +1,5 @@
 import { uuid } from "../shared/utils.ts";
-import { useBatch, useEffect, useRef, useSubscope } from "sinho";
+import { MaybeSignal, useBatch, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
 import { useClientPropagation } from "../sinho-server/main.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
@@ -103,6 +103,81 @@ messageHandler.onClose((req) => {
   }
 });
 
+function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
+  const { onClientEvent } = useClientPropagation<ClientMessage, ServerMessage>(
+    clients
+  );
+
+  const aliveInfo = new WeakMap<
+    WebSocket,
+    {
+      intervalId?: ReturnType<typeof setInterval>;
+      timeoutId?: ReturnType<typeof setTimeout>;
+    }
+  >();
+
+  let id = 0;
+  let prevClients: WebSocket[] = [];
+
+  useEffect(() => {
+    const nextClients = MaybeSignal.get(clients);
+
+    prevClients
+      .filter((ws) => !nextClients.includes(ws))
+      .forEach((ws) => {
+        const info = aliveInfo.get(ws);
+
+        if (info != null) {
+          clearInterval(info.intervalId!);
+          clearTimeout(info.timeoutId!);
+        }
+
+        aliveInfo.delete(ws);
+      });
+
+    for (const ws of nextClients) {
+      if (aliveInfo.has(ws)) continue;
+
+      const info: typeof aliveInfo extends WeakMap<infer _, infer V>
+        ? V
+        : never = {
+        intervalId: setInterval(() => {
+          messageHandler.send(ws, {
+            heartbeat: {
+              id: id++,
+              now: Date.now(),
+            },
+          });
+
+          info.timeoutId = setTimeout(() => {
+            const peerId = [
+              ...(messageHandler.getSession(ws)?.peers().values() ?? []),
+            ].find((peer) => peer.ws === ws)?.id;
+
+            if (peerId != null) {
+              console.warn(`[WebSocket] Peer ${peerId} is not responsive`);
+            }
+
+            ws.close();
+          }, 10000);
+        }, 20000),
+      };
+
+      aliveInfo.set(ws, info);
+    }
+  });
+
+  onClientEvent(
+    (msg) => msg,
+    (evt) => {
+      const info = aliveInfo.get(evt.target);
+      if (info == null) return;
+
+      clearTimeout(info.timeoutId);
+    }
+  );
+}
+
 export class GameSession {
   mode = useRef<"lobby" | "game">("lobby");
   peers = useRef<
@@ -128,49 +203,13 @@ export class GameSession {
     });
   }
 
-  useHeartbeat() {
-    const { onClientEvent: useClientEvent } = useClientPropagation<
+  scope(): void {
+    const { useClientSignal, onClientEvent } = useClientPropagation<
       ClientMessage,
       ServerMessage
     >(this.clients);
 
-    const aliveInfo = new WeakMap<
-      WebSocket,
-      {
-        alive: boolean;
-        timeoutId?: NodeJS.Timeout;
-      }
-    >();
-
-    useClientEvent(
-      (msg) => msg.heartbeat,
-      (evt) => {
-        if (!aliveInfo.has(evt.target)) {
-          aliveInfo.set(evt.target, { alive: true });
-        }
-
-        const info = aliveInfo.get(evt.target)!;
-        info.alive = true;
-
-        clearTimeout(info.timeoutId);
-        info.timeoutId = setTimeout(() => {
-          info.alive = false;
-          evt.target.terminate();
-        }, 30000);
-
-        messageHandler.send(evt.target, {
-          heartbeat: {
-            id: evt.data.id,
-            now: Date.now(),
-          },
-        });
-      }
-    );
-  }
-
-  scope(): void {
-    const { useClientSignal, onClientEvent: useClientEvent } =
-      useClientPropagation<ClientMessage, ServerMessage>(this.clients);
+    useHeartbeat(this.clients);
 
     const [mode, setMode] = useClientSignal((msg) => msg.mode, this.mode());
     useEffect(() => setMode(this.mode()));
@@ -187,9 +226,7 @@ export class GameSession {
       });
     });
 
-    this.useHeartbeat();
-
-    useClientEvent(
+    onClientEvent(
       (msg) => msg.lobby?.playerInfo,
       (evt) => {
         setPlayers((players) => {
