@@ -26,6 +26,7 @@ export function useTransition(
   element: MaybeSignal<HTMLElement | undefined>
 ): [inProgress: Signal<boolean>, start: () => Promise<void>] {
   const [inProgress, start] = useInProgress();
+  
   return [
     inProgress,
     async () => {

@@ -168,13 +168,10 @@ class TileComponent extends Component("tile", {
                 transform: translateX(1em);
                 opacity: 0;
               }
-              to {
-                transform: none;
-              }
             }
 
             :host {
-              animation: ${enterAnimationDuration}ms both enter-animation;
+              animation: ${enterAnimationDuration}ms backwards enter-animation;
             }
           `}</Style>
         </If>
@@ -204,7 +201,7 @@ class TileComponent extends Component("tile", {
             display: inline-block;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
-            font-family: var(--kaiti-font-stack);
+            font-family: var(--app-kaiti-font-stack);
           }
 
           svg {

@@ -51,6 +51,7 @@ export class AppComponent extends Component("app") {
         <Style light>{css`
           ${() => ""}
           @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap");
+          @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;1,900&display=swap");
 
           * {
             margin: 0;
@@ -58,17 +59,22 @@ export class AppComponent extends Component("app") {
           }
 
           html {
-            --kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
-            --heiti-font-stack: "Alegreya", "YaHei", "Heiti TC", serif;
+            --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
+            --app-heiti-font-stack: "Alegreya", "YaHei", "Heiti TC", serif;
+            --app-sansserif-font-stack: "Poppins", "YaHei", "Heiti TC", serif;
+            --app-background: linear-gradient(
+                to bottom,
+                #714634,
+                transparent 5em
+              ),
+              url("./assets/img/bg.jpg") center / cover no-repeat fixed #714634;
             width: 100dvw;
             height: 100dvh;
             color-scheme: dark;
-            background:
-              linear-gradient(to bottom, #714634, transparent 5em),
-              url("./assets/img/bg.jpg") center / cover no-repeat fixed #714634;
+            background: var(--app-background);
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font: 1.2em var(--heiti-font-stack);
+            font: 1.2em var(--app-heiti-font-stack);
             cursor: default;
             -webkit-user-select: none;
             user-select: none;

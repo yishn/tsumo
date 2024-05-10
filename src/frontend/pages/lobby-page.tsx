@@ -10,6 +10,7 @@ import {
   prop,
   useEffect,
   useMemo,
+  useRef,
   useSignal,
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
@@ -66,8 +67,22 @@ export class LobbyPage extends Component("lobby-page", {
     );
     const [ownName, setOwnName] = useSignal("");
 
+    const dice1 = useRef<Dice>();
+    const dice2 = useRef<Dice>();
     const ownDice = () =>
       players()?.find((player) => player.id === ownPlayerId())?.dice;
+
+    let prevOwnDice: [number, number] | undefined;
+
+    useEffect(() => {
+      const nextOwnDice = ownDice();
+
+      if (prevOwnDice == null && nextOwnDice != null) {
+        dice1()?.roll(nextOwnDice[0]);
+        dice2()?.roll(nextOwnDice[1]);
+        prevOwnDice = nextOwnDice;
+      }
+    });
 
     const canRollInitiative = () =>
       ownName().trim() !== "" && players()?.length === 4;
@@ -185,8 +200,8 @@ export class LobbyPage extends Component("lobby-page", {
         </div>
 
         <div part="dice">
-          <Dice face={() => ownDice()?.[0] ?? 7} />
-          <Dice face={() => ownDice()?.[1] ?? 7} />
+          <Dice ref={dice1} face={6} />
+          <Dice ref={dice2} face={6} />
         </div>
 
         <Style>{css`
@@ -228,9 +243,6 @@ export class LobbyPage extends Component("lobby-page", {
               transform: translateX(0.5em);
               opacity: 0;
             }
-            to {
-              transform: none;
-            }
           }
           [part="players"] > * {
             animation: 0.5s backwards player-slide-in;
@@ -249,20 +261,14 @@ export class LobbyPage extends Component("lobby-page", {
           [part="avatar-chooser"] .next {
             --action-bar-icon-color: #ffd3a3;
             --action-bar-icon-disabled-color: #d4ab8e;
-            transition: 0.2s opacity;
+            transition: opacity 0.2s;
           }
           @keyframes prev-arrow-sway {
-            from {
-              transform: none;
-            }
             to {
               transform: translateX(-0.5em);
             }
           }
           @keyframes next-arrow-sway {
-            from {
-              transform: none;
-            }
             to {
               transform: translateX(0.5em);
             }
@@ -297,7 +303,7 @@ export class LobbyPage extends Component("lobby-page", {
 
           [part="ready"] mj-tile {
             margin-bottom: 1em;
-            transition: 0.2s opacity;
+            transition: opacity 0.2s;
           }
           [part="ready"] mj-tile.hide {
             opacity: 0;

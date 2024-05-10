@@ -49,9 +49,6 @@ export class PlayerAvatar extends Component("player-avatar", {
             from {
               transform: scale(2);
             }
-            to {
-              transform: scale(1);
-            }
           }
           [part="name"] .dealer {
             fill: #ee401d;

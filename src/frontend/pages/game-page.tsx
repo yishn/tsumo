@@ -152,9 +152,6 @@ export class GamePage extends Component("game-page") {
               transform: translateY(1em);
               opacity: 0;
             }
-            to {
-              transform: none;
-            }
           }
           [part="players"] {
             flex: 1;
@@ -174,9 +171,6 @@ export class GamePage extends Component("game-page") {
           @keyframes enter-self {
             from {
               transform: translateY(100%);
-            }
-            to {
-              transform: none;
             }
           }
           [part="self"] {

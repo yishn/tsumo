@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "sinho": "^0.1.4",
+    "sinho": "^0.2.2",
     "ws": "^8.17.0"
   },
   "devDependencies": {
