@@ -9,9 +9,11 @@ import {
   useMemo,
   useSignal,
 } from "sinho";
+import { playDiceSound } from "../sounds.ts";
 
 export class Dice extends Component("dice", {
   face: prop<number>(1, { attribute: Number }),
+  sound: prop<boolean>(false, { attribute: () => true }),
   _n: prop<number>(0),
 }) {
   roll(face: number) {
@@ -25,6 +27,7 @@ export class Dice extends Component("dice", {
     const face = useMemo(() =>
       Math.round(Math.max(1, Math.min(6, this.props.face())))
     );
+    const _n = useMemo(this.props._n);
     const [multipliers, setMultipliers] = useSignal<[number, number]>([0, 0]);
 
     const rotateInfo: Partial<Record<number, [number, number, number]>> = {
@@ -44,15 +47,24 @@ export class Dice extends Component("dice", {
         )
         .join(" ");
 
+    let firstTime = true;
+
     useEffect(() => {
+      if (firstTime) {
+        firstTime = false;
+        return;
+      }
+
+      if (this.props.sound()) playDiceSound();
+
       setMultipliers(
         (multipliers) =>
-          multipliers.map((n) => n + (Math.random() > 0.5 ? 2 : -2)) as [
+          multipliers.map((n) => n + (Math.random() > 0.5 ? 1 : -1)) as [
             number,
             number,
           ]
       );
-    }, [face, this.props._n]);
+    }, [face, _n]);
 
     return (
       <>
@@ -84,7 +96,7 @@ export class Dice extends Component("dice", {
             height: var(--dice-size);
             transform-origin: center center calc(-0.5 * var(--dice-size));
             transform-style: preserve-3d;
-            transition: transform 2s ease-out;
+            transition: transform 0.8s ease-out;
           }
 
           [part="face"] {

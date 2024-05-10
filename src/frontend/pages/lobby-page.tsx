@@ -152,6 +152,7 @@ export class LobbyPage extends Component("lobby-page", {
 
           <PlayerAvatar
             avatar={() => this.getAvatarUrl(ownAvatarIndex())}
+            sound
             dice={ownDice}
           />
 

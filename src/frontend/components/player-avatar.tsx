@@ -18,6 +18,7 @@ export class PlayerAvatar extends Component("player-avatar", {
     attribute: String,
   }),
   dice: prop<[number, number]>(),
+  sound: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
 }) {
@@ -59,8 +60,8 @@ export class PlayerAvatar extends Component("player-avatar", {
             })
           }
         >
-          <Dice ref={dice1} face={6} />
-          <Dice ref={dice2} face={6} />
+          <Dice ref={dice1} face={6} sound={this.props.sound} />
+          <Dice ref={dice2} face={6} sound={this.props.sound} />
         </div>
 
         <Style>{css`
