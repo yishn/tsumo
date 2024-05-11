@@ -1,6 +1,7 @@
 import { WebSocketServer } from "ws";
-import { setAllClients } from "./global-state.ts";
+import { clientInfoMap, setAllClients } from "./global-state.ts";
 import "./game-session.ts";
+import { uuid } from "../shared/utils.ts";
 
 const port = 8080;
 
@@ -18,6 +19,7 @@ wss.on("connection", (ws) => {
     result.add(ws);
     return result;
   });
+  clientInfoMap.set(ws, {});
 
   ws.on("error", (err) => {
     console.error("[WebSocket]", err);

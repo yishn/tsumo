@@ -11,7 +11,7 @@ import {
 } from "sinho";
 import { GamePage } from "./pages/game-page.tsx";
 import { LobbyPage } from "./pages/lobby-page.tsx";
-import { SESSION, setSecret, webSocketHook } from "./global-state.ts";
+import { SECRET, SESSION, setSecret, webSocketHook } from "./global-state.ts";
 import { avatarList, getAvatarUrl } from "./assets.ts";
 
 export class AppComponent extends Component("app") {
@@ -26,6 +26,7 @@ export class AppComponent extends Component("app") {
         webSocketHook.sendMessage({
           join: {
             session: SESSION!, // TODO
+            secret: SECRET,
           },
         });
       }

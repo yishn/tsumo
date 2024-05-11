@@ -2,17 +2,10 @@ import { MaybeSignal, flushBatch, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
-import {
-  allClients,
-  allGameSessions,
-  clientSessionMap,
-} from "./global-state.ts";
+import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import { uuid } from "../shared/utils.ts";
 
-const useWebSockets = useWebSocketsTemplate<
-  ClientMessage,
-  ServerMessage
->;
+const useWebSockets = useWebSocketsTemplate<ClientMessage, ServerMessage>;
 
 const { onClientMessage, sendMessage } = useWebSockets(allClients);
 
@@ -20,8 +13,8 @@ onClientMessage(
   (msg) => msg.join,
   (evt) => {
     const data = evt.data;
-    if (data == null) return;
-    if (clientSessionMap.get(evt.target) != null) return;
+    const client = clientInfoMap.get(evt.target);
+    if (client == null || client.session != null) return;
 
     const sessionId = data.session;
     let session = allGameSessions.get(sessionId);
@@ -31,7 +24,22 @@ onClientMessage(
       allGameSessions.set(sessionId, session);
     }
 
+    if (session.mode() === "lobby" && session.peers().size >= 4) {
+      console.log(
+        `[GameSession] Peer tries to join already full session ${session.id}`
+      );
+
+      sendMessage(evt.target, {
+        error: {
+          message: "Session is full",
+        },
+      });
+      evt.target.close();
+      return;
+    }
+
     let secret = data.secret;
+
     if (
       session.mode() !== "lobby" &&
       (secret == null || !session.peers().has(secret))
@@ -48,26 +56,12 @@ onClientMessage(
       return;
     }
 
-    if (session.peers().size >= 4) {
-      console.log(
-        `[GameSession] Peer tries to join already full session ${session.id}`
-      );
+    client.session = session;
 
-      sendMessage(evt.target, {
-        error: {
-          message: "Session is full",
-        },
-      });
-      evt.target.close();
-      return;
-    }
-
-    clientSessionMap.set(evt.target, session);
-
-    const id = uuid();
-    if (secret == null) {
+    if (session.mode() === "lobby" || secret == null) {
       secret = uuid();
     }
+    const id = session.peers().get(secret)?.id ?? uuid();
 
     console.log(`[GameSession] Peer ${id} joins session ${session.id}`);
 
@@ -175,7 +169,7 @@ export class GameSession {
       }
     >
   >(new Map());
-  clients = () => new Set([...this.peers().values()].map((peer) => peer.ws));
+
   destroy?: () => void;
 
   constructor(public id: string) {
@@ -190,10 +184,13 @@ export class GameSession {
   }
 
   scope(): void {
-    const { useClientSignal, onClientMessage, onClientClose } =
-      useWebSockets(this.clients);
+    const clients = () =>
+      new Set([...this.peers().values()].map((peer) => peer.ws));
 
-    useHeartbeat(this.clients, this);
+    const { useClientSignal, onClientMessage, onClientClose } =
+      useWebSockets(clients);
+
+    useHeartbeat(clients, this);
 
     const [mode, setMode] = useClientSignal((msg) => msg.mode, "lobby");
     useEffect(() => this.mode.set(mode()));
@@ -278,23 +275,27 @@ export class GameSession {
     });
 
     onClientClose((evt) => {
-      this.peers.set((peers) => {
-        const result = new Map(peers);
+      if (this.mode() === "lobby") {
+        // Do not remove player mid-game; they might rejoin
 
-        for (const [secret, peer] of result) {
-          if (peer.ws === evt.target) {
-            console.log(
-              `[GameSession] Peer ${peer.id} leaves session ${this.id}`
-            );
-            result.delete(secret);
-            break;
+        this.peers.set((peers) => {
+          const result = new Map(peers);
+
+          for (const [secret, peer] of result) {
+            if (peer.ws === evt.target) {
+              console.log(
+                `[GameSession] Peer ${peer.id} leaves session ${this.id}`
+              );
+              result.delete(secret);
+              break;
+            }
           }
-        }
 
-        return result;
-      });
+          return result;
+        });
 
-      flushBatch();
+        flushBatch();
+      }
 
       if (this.peers().size === 0) {
         allGameSessions.delete(this.id);
