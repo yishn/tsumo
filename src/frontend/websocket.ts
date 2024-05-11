@@ -81,17 +81,17 @@ export function useWebSocket<T, U>(
   };
 }
 
-export const globalWsHook = useWebSocket<ServerMessage, ClientMessage>(SERVER!); // TODO
+export const messageHandler = useWebSocket<ServerMessage, ClientMessage>(SERVER!); // TODO
 
 let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
 
-globalWsHook.onMessage(
+messageHandler.onMessage(
   (msg) => msg,
   (msg) => {
     clearTimeout(heartbeatTimeout);
 
     if (msg.heartbeat != null) {
-      globalWsHook.send({
+      messageHandler.send({
         heartbeat: {
           id: msg.heartbeat.id,
           now: Date.now(),
@@ -101,15 +101,15 @@ globalWsHook.onMessage(
 
     heartbeatTimeout = setTimeout(() => {
       console.warn("[WebSocket] Server not responsive");
-      globalWsHook.close();
+      messageHandler.close();
     }, 30000);
   }
 );
 
-globalWsHook.onMessage(
+messageHandler.onMessage(
   (msg) => msg.error,
   (data) => {
     console.error("[Server]", data.message);
-    globalWsHook.close();
+    messageHandler.close();
   }
 );

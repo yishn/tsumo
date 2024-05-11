@@ -7,6 +7,7 @@ import {
   Style,
   css,
   defineComponents,
+  event,
   prop,
   useEffect,
   useMemo,
@@ -18,7 +19,7 @@ import { ActionBarButton } from "../components/action-bar.tsx";
 import { LeftIcon, RightIcon } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
-import { globalWsHook } from "../websocket.ts";
+import { messageHandler } from "../websocket.ts";
 import { SECRET } from "../global-state.ts";
 import { Dice } from "../components/dice.tsx";
 import clsx from "clsx";
@@ -69,32 +70,12 @@ export class LobbyPage extends Component("lobby-page", {
 
     const ownDice = () =>
       players()?.find((player) => player.id === ownPlayerId())?.dice;
-
-    const canRollInitiative = () =>
-      ownName().trim() !== "" && players()?.length === 4;
     const [ready, setReady] = useSignal(ownDice() != null);
-
-    const everyoneReady = () =>
-      !!players()?.every((player) => player.dice != null);
-
-    const status = () => {
-      if (ownName().trim() === "") {
-        return "Enter your name…";
-      } else if (players() == null || players()!.length < 4) {
-        return "Waiting for players…";
-      } else if (ownDice() == null) {
-        return "Tap on tile to roll for initiative…";
-      } else if (!everyoneReady()) {
-        return "Waiting for other players to run for initiative…";
-      }
-
-      return "Starting game…";
-    };
 
     useEffect(() => {
       if (ownPlayerId() == null) return;
 
-      globalWsHook.send({
+      messageHandler.send({
         lobby: {
           playerInfo: {
             secret: SECRET,
@@ -105,6 +86,60 @@ export class LobbyPage extends Component("lobby-page", {
         },
       });
     });
+
+    const canRollInitiative = () =>
+      ownName().trim() !== "" && players()?.length === 4;
+
+    const everyoneReady = () =>
+      players()?.length === 4 &&
+      !!players()?.every((player) => player.dice != null);
+
+    const startPlayerId = () =>
+      !everyoneReady()
+        ? undefined
+        : players()?.reduce((startPlayer, player) => {
+            if (player.dice == null) return startPlayer;
+            if (startPlayer.dice == null) return player;
+            if (
+              player.dice.reduce((sum, n) => sum + n) >
+              startPlayer.dice.reduce((sum, n) => sum + n)
+            )
+              return player;
+
+            return startPlayer;
+          });
+
+    const [countdown, setCountdown] = useSignal(3);
+
+    useEffect(() => {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      if (everyoneReady() && countdown() > 0) {
+        timeoutId = setTimeout(() => {
+          setCountdown((n) => n - 1);
+        }, 1000);
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    });
+
+    const status = () => {
+      if (ownName().trim() === "") {
+        return "Enter your name…";
+      } else if (players() == null || players()!.length < 4) {
+        return "Waiting for players…";
+      } else if (ownDice() == null) {
+        return "Tap on tile to roll for initiative…";
+      } else if (!everyoneReady()) {
+        return "Waiting for other players to roll for initiative…";
+      } else if (countdown() > 0) {
+        return `Starting game in ${countdown()}…`;
+      }
+
+      return `Starting game now…`;
+    };
 
     return (
       <>
@@ -119,6 +154,7 @@ export class LobbyPage extends Component("lobby-page", {
             {(player) => (
               <PlayerAvatar
                 name={() => player()?.name || "\u200b"}
+                current={() => player().id === startPlayerId()?.id}
                 avatar={() =>
                   player()?.avatar == null
                     ? PlayerAvatar.emptyAvatar
@@ -152,6 +188,7 @@ export class LobbyPage extends Component("lobby-page", {
 
           <PlayerAvatar
             avatar={() => this.getAvatarUrl(ownAvatarIndex())}
+            current={() => ownPlayerId() === startPlayerId()?.id}
             sound
             dice={ownDice}
           />

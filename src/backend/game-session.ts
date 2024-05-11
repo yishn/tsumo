@@ -211,8 +211,8 @@ export class GameSession {
 
     useHeartbeat(this.clients);
 
-    const [mode, setMode] = useClientSignal((msg) => msg.mode, this.mode());
-    useEffect(() => setMode(this.mode()));
+    const [mode, setMode] = useClientSignal((msg) => msg.mode, "lobby");
+    useEffect(() => this.mode.set(mode()));
 
     const [players, setPlayers] = useClientSignal((msg) => msg.players, []);
 
@@ -275,5 +275,22 @@ export class GameSession {
         });
       }
     );
+
+    useEffect(() => {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+
+      if (
+        players().length === 4 &&
+        players().every((player) => player.dice != null)
+      ) {
+        timeout = setTimeout(() => {
+          setMode("game");
+        }, 3000);
+      }
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    });
   }
 }

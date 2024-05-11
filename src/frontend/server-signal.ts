@@ -1,5 +1,5 @@
 import { useSignal, Signal, useEffect } from "sinho";
-import { globalWsHook } from "./websocket.ts";
+import { messageHandler } from "./websocket.ts";
 import { ServerMessage } from "../shared/message.ts";
 
 export function useServerSignal<T>(
@@ -8,7 +8,7 @@ export function useServerSignal<T>(
   const [signal, setSignal] = useSignal<T | undefined>();
 
   useEffect(() =>
-    globalWsHook.onMessage(path, (data) => {
+    messageHandler.onMessage(path, (data) => {
       setSignal(() => data);
     })
   );
