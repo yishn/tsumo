@@ -1,24 +1,22 @@
-let ctx: AudioContext | undefined;
+import { LazyCell } from "../shared/utils.ts";
+
+const audioContext = new LazyCell(async () => new AudioContext());
 
 export function prepareAudio(url: string): () => void {
   const buffer = fetch(url).then((res) => res.arrayBuffer());
+  const audioBuffer = audioContext
+    .get(false)
+    .then((ctx) => buffer.then((buffer) => ctx.decodeAudioData(buffer)));
 
-  let audioBuffer: Promise<AudioBuffer> | undefined;
   let blocked = false;
 
   return async () => {
-    if (ctx == null) {
-      ctx = new AudioContext();
-    }
-    if (audioBuffer == null) {
-      audioBuffer = buffer.then((buffer) => ctx!.decodeAudioData(buffer));
-    }
-
     // Deduplicate calls
     if (blocked) return;
     blocked = true;
     setTimeout(() => (blocked = false));
 
+    const ctx = await audioContext.get();
     const source = ctx.createBufferSource();
     source.buffer = await audioBuffer;
     source.connect(ctx.destination);
