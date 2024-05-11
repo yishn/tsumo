@@ -1,4 +1,4 @@
-import { Cleanup, useEffect, useRef, useSubscope } from "sinho";
+import { Cleanup, useEffect, useMemo, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
@@ -92,7 +92,22 @@ onClientMessage(
 );
 
 function useHeartbeat(session: GameSession) {
-  const { onClientMessage, sendMessage } = useWebSockets(session.clients);
+  const { useClientSignal, onClientMessage, sendMessage } = useWebSockets(
+    session.clients
+  );
+
+  const deadPlayers = useMemo(
+    () =>
+      [...session.peers().values()]
+        .filter((peer) => !session.clients().has(peer.ws))
+        .map((peer) => peer.id)
+        .sort(),
+    {
+      equals: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+    }
+  );
+
+  useClientSignal((msg) => msg.deadPlayers, deadPlayers);
 
   const aliveInfo = new WeakMap<
     WebSocket,

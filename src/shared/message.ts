@@ -8,6 +8,10 @@ export interface ServerMessage {
   error?: {
     message: string;
   };
+  joined?: {
+    id: string;
+    secret: string;
+  };
   mode?: "lobby" | "game";
   players?: {
     id: string;
@@ -15,11 +19,7 @@ export interface ServerMessage {
     avatar: number;
     dice?: [number, number];
   }[];
-  joined?: {
-    id: string;
-    secret: string;
-  };
-  lobby?: {};
+  deadPlayers?: string[];
 }
 
 export interface ClientMessage {
