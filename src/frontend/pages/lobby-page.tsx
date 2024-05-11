@@ -19,7 +19,7 @@ import { ActionBarButton } from "../components/action-bar.tsx";
 import { LeftIcon, RightIcon } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
-import { messageHandler } from "../websocket.ts";
+import { messageHandler } from "../message-handler.ts";
 import { SECRET } from "../global-state.ts";
 import { Dice } from "../components/dice.tsx";
 import clsx from "clsx";

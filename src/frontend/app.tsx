@@ -11,7 +11,7 @@ import {
 import { GamePage } from "./pages/game-page.tsx";
 import { LobbyPage } from "./pages/lobby-page.tsx";
 import { useServerSignal } from "./server-signal.ts";
-import { messageHandler } from "./websocket.ts";
+import { messageHandler } from "./message-handler.ts";
 import { SESSION, setSecret } from "./global-state.ts";
 
 export class AppComponent extends Component("app") {

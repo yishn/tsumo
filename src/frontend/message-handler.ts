@@ -2,7 +2,7 @@ import { MaybeSignal, Signal, useEffect, useSignal } from "sinho";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
 import { SERVER, SESSION } from "./global-state.ts";
 
-export interface WebSocketHook<T, U> {
+export interface MessageHandlerHook<T, U> {
   connected: Signal<boolean>;
   error: Signal<Event | undefined>;
   onMessage<V>(
@@ -13,9 +13,9 @@ export interface WebSocketHook<T, U> {
   close(): void;
 }
 
-export function useWebSocket<T, U>(
+export function useMessageHandler<T, U>(
   url: MaybeSignal<string | URL>
-): WebSocketHook<T, U> {
+): MessageHandlerHook<T, U> {
   let socket: WebSocket;
   const handlers: Set<{
     path: (msg: T) => any;
@@ -81,7 +81,9 @@ export function useWebSocket<T, U>(
   };
 }
 
-export const messageHandler = useWebSocket<ServerMessage, ClientMessage>(SERVER!); // TODO
+export const messageHandler = useMessageHandler<ServerMessage, ClientMessage>(
+  SERVER!
+); // TODO
 
 let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
 

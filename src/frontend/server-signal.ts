@@ -1,5 +1,5 @@
 import { useSignal, Signal, useEffect } from "sinho";
-import { messageHandler } from "./websocket.ts";
+import { messageHandler } from "./message-handler.ts";
 import { ServerMessage } from "../shared/message.ts";
 
 export function useServerSignal<T>(
