@@ -13,8 +13,8 @@ export type MessageEvent<V> = Omit<WsMessageEvent, "data"> & { data: V };
 export interface WebSocketsHook<T, U> {
   useClientSignal: <V>(
     path: (msg: U) => V | undefined,
-    value: V
-  ) => [Signal<V>, SignalSetter<V>];
+    value: MaybeSignal<V>
+  ) => void;
 
   onClientMessage: <V>(
     path: (msg: T) => V,
@@ -32,9 +32,7 @@ export function useWebSockets<T, U>(
   clients: MaybeSignal<Set<WebSocket>>
 ): WebSocketsHook<T, U> {
   const result: WebSocketsHook<T, U> = {
-    useClientSignal: (path, value) => {
-      const [signal, setSignal] = useSignal(value);
-
+    useClientSignal: (path, signal) => {
       let prevValue: any;
       let prevClients: Set<WebSocket> = new Set();
 
@@ -59,7 +57,7 @@ export function useWebSockets<T, U>(
         if (assigneeKey == null) throw new Error("Invalid path");
 
         const clientsValue = MaybeSignal.get(clients);
-        const value = signal();
+        const value = MaybeSignal.get(signal);
         assigneeObj[assigneeKey] = value;
 
         for (const ws of clientsValue) {
@@ -71,8 +69,6 @@ export function useWebSockets<T, U>(
         prevValue = value;
         prevClients = clientsValue;
       });
-
-      return [signal, setSignal];
     },
 
     onClientMessage: (path, handler) => {

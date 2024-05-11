@@ -1,9 +1,20 @@
-import { MaybeSignal, flushBatch, useEffect, useRef, useSubscope } from "sinho";
+import { Cleanup, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import { uuid } from "../shared/utils.ts";
+
+type Players = NonNullable<ServerMessage["players"]>;
+type Mode = NonNullable<ServerMessage["mode"]>;
+
+type Peers = Map<
+  string,
+  {
+    id: string;
+    ws: WebSocket;
+  }
+>;
 
 const useWebSockets = useWebSocketsTemplate<ClientMessage, ServerMessage>;
 
@@ -80,11 +91,8 @@ onClientMessage(
   }
 );
 
-function useHeartbeat(
-  clients: MaybeSignal<Set<WebSocket>>,
-  session: GameSession
-) {
-  const { onClientMessage, sendMessage } = useWebSockets(clients);
+function useHeartbeat(session: GameSession) {
+  const { onClientMessage, sendMessage } = useWebSockets(session.clients);
 
   const aliveInfo = new WeakMap<
     WebSocket,
@@ -98,7 +106,7 @@ function useHeartbeat(
   let prevClients: Set<WebSocket> = new Set();
 
   useEffect(() => {
-    const nextClients = MaybeSignal.get(clients);
+    const nextClients = session.clients();
 
     [...prevClients]
       .filter((ws) => !nextClients.has(ws))
@@ -158,48 +166,13 @@ function useHeartbeat(
   );
 }
 
-export class GameSession {
-  mode = useRef<"lobby" | "game">("lobby");
-  peers = useRef<
-    Map<
-      string,
-      {
-        id: string;
-        ws: WebSocket;
-      }
-    >
-  >(new Map());
-
-  destroy?: () => void;
-
-  constructor(public id: string) {
-    console.log(`[GameSession] Create session ${id}`);
-    [, this.destroy] = useSubscope(() => {
-      this.scope();
-
-      useEffect(() => () => {
-        console.log(`[GameSession] Destroy session ${id}`);
-      });
-    });
-  }
-
-  scope(): void {
-    const clients = () =>
-      new Set([...this.peers().values()].map((peer) => peer.ws));
-
-    const { useClientSignal, onClientMessage, onClientClose } =
-      useWebSockets(clients);
-
-    useHeartbeat(clients, this);
-
-    const [mode, setMode] = useClientSignal((msg) => msg.mode, "lobby");
-    useEffect(() => this.mode.set(mode()));
-
-    const [players, setPlayers] = useClientSignal((msg) => msg.players, []);
+function useLobby(session: GameSession): () => void {
+  const [, destroy] = useSubscope(() => {
+    const { onClientMessage, onClientClose } = useWebSockets(session.clients);
 
     useEffect(() => {
-      setPlayers((players) => {
-        const peers = [...this.peers().values()];
+      session.players.set((players) => {
+        const peers = [...session.peers().values()];
 
         return players.filter((player) =>
           peers.some((peer) => peer.id === player.id)
@@ -210,8 +183,8 @@ export class GameSession {
     onClientMessage(
       (msg) => msg.lobby?.playerInfo,
       (evt) => {
-        setPlayers((players) => {
-          const id = this.peers().get(evt.data.secret)?.id;
+        session.players.set((players) => {
+          const id = session.peers().get(evt.data.secret)?.id;
           const playerCurrent = players.find((player) => player.id === id);
           if (id == null) return players;
 
@@ -259,13 +232,14 @@ export class GameSession {
 
     useEffect(() => {
       let timeout: ReturnType<typeof setTimeout> | undefined;
+      let players = session.players();
 
       if (
-        players().length === 4 &&
-        players().every((player) => player.dice != null)
+        players.length === 4 &&
+        players.every((player) => player.dice != null)
       ) {
         timeout = setTimeout(() => {
-          setMode("game");
+          session.mode.set("game");
         }, 3000);
       }
 
@@ -275,27 +249,66 @@ export class GameSession {
     });
 
     onClientClose((evt) => {
-      if (this.mode() === "lobby") {
-        // Do not remove player mid-game; they might rejoin
+      session.peers.set((peers) => {
+        const result = new Map(peers);
 
-        this.peers.set((peers) => {
-          const result = new Map(peers);
-
-          for (const [secret, peer] of result) {
-            if (peer.ws === evt.target) {
-              console.log(
-                `[GameSession] Peer ${peer.id} leaves session ${this.id}`
-              );
-              result.delete(secret);
-              break;
-            }
+        for (const [secret, peer] of result) {
+          if (peer.ws === evt.target) {
+            console.log(
+              `[GameSession] Peer ${peer.id} leaves session ${session.id}`
+            );
+            result.delete(secret);
+            break;
           }
+        }
 
-          return result;
-        });
+        return result;
+      });
+    });
+  });
 
-        flushBatch();
+  return destroy;
+}
+
+export class GameSession {
+  mode = useRef<Mode>("lobby");
+  peers = useRef<Peers>(new Map());
+  clients = () => new Set([...this.peers().values()].map((peer) => peer.ws));
+  players = useRef<Players>([]);
+
+  destroy?: () => void;
+
+  constructor(public id: string) {
+    console.log(`[GameSession] Create session ${id}`);
+    [, this.destroy] = useSubscope(() => {
+      this.scope();
+
+      useEffect(() => () => {
+        console.log(`[GameSession] Destroy session ${id}`);
+      });
+    });
+  }
+
+  scope(): void {
+    const { useClientSignal, onClientClose } = useWebSockets(this.clients);
+
+    useHeartbeat(this);
+
+    useClientSignal((msg) => msg.mode, this.mode);
+    useClientSignal((msg) => msg.players, this.players);
+
+    useEffect(() => {
+      let destroy: Cleanup;
+
+      if (this.mode() === "lobby") {
+        destroy = useLobby(this);
       }
+
+      return destroy;
+    });
+
+    onClientClose(() => {
+      // Destroy session
 
       if (this.peers().size === 0) {
         allGameSessions.delete(this.id);
