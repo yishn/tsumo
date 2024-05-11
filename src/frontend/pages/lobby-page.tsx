@@ -16,28 +16,12 @@ import {
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
 import { ActionBarButton } from "../components/action-bar.tsx";
-import { LeftIcon, RightIcon } from "../assets.ts";
+import { LeftIcon, RightIcon, avatarList, getAvatarUrl } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { messageHandler } from "../message-handler.ts";
 import { SECRET } from "../global-state.ts";
-import { Dice } from "../components/dice.tsx";
 import clsx from "clsx";
-
-const avatarList = [
-  "rat",
-  "ox",
-  "tiger",
-  "rabbit",
-  "dragon",
-  // "snake",
-  // "horse",
-  // "goat",
-  "monkey",
-  "rooster",
-  "dog",
-  "boar",
-] as const;
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -50,10 +34,6 @@ export class LobbyPage extends Component("lobby-page", {
   >(),
   ownPlayerId: prop<string>(),
 }) {
-  getAvatarUrl(avatar: number): string {
-    return `./assets/avatars/${avatarList[avatar % avatarList.length]}.png`;
-  }
-
   render() {
     const players = this.props.players;
     const ownPlayerId = this.props.ownPlayerId;
@@ -143,12 +123,6 @@ export class LobbyPage extends Component("lobby-page", {
 
     return (
       <>
-        <Portal mount={document.head}>
-          {avatarList.map((_, i) => (
-            <link rel="prefetch" href={this.getAvatarUrl(i)} />
-          ))}
-        </Portal>
-
         <div part="players">
           <For each={remotePlayers} key={(player, i) => player?.id ?? i}>
             {(player) => (
@@ -158,7 +132,7 @@ export class LobbyPage extends Component("lobby-page", {
                 avatar={() =>
                   player()?.avatar == null
                     ? PlayerAvatar.emptyAvatar
-                    : this.getAvatarUrl(player()!.avatar!)
+                    : getAvatarUrl(player()!.avatar!)
                 }
                 dice={() => player()?.dice}
               />
@@ -187,7 +161,7 @@ export class LobbyPage extends Component("lobby-page", {
           </ActionBarButton>
 
           <PlayerAvatar
-            avatar={() => this.getAvatarUrl(ownAvatarIndex())}
+            avatar={() => getAvatarUrl(ownAvatarIndex())}
             current={() => ownPlayerId() === startPlayerId()?.id}
             sound
             dice={ownDice}

@@ -2,6 +2,7 @@ import {
   Component,
   ElseIf,
   If,
+  Portal,
   Style,
   css,
   defineComponents,
@@ -13,6 +14,7 @@ import { LobbyPage } from "./pages/lobby-page.tsx";
 import { useServerSignal } from "./server-signal.ts";
 import { messageHandler } from "./message-handler.ts";
 import { SESSION, setSecret } from "./global-state.ts";
+import { avatarList, getAvatarUrl } from "./assets.ts";
 
 export class AppComponent extends Component("app") {
   render() {
@@ -41,6 +43,13 @@ export class AppComponent extends Component("app") {
 
     return (
       <>
+        <Portal mount={document.head}>
+          <link rel="prefetch" href="./assets/img/sparrow.png" />
+          {avatarList.map((_, i) => (
+            <link rel="prefetch" href={getAvatarUrl(i)} />
+          ))}
+        </Portal>
+
         <If condition={() => mode() === "lobby"}>
           <LobbyPage players={players} ownPlayerId={ownPlayerId} />
         </If>

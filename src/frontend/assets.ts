@@ -15,3 +15,22 @@ export { default as KongIcon } from "../../assets/icons/kong.svg";
 export { default as WinIcon } from "../../assets/icons/win.svg";
 export { default as LeftIcon } from "../../assets/icons/left.svg";
 export { default as RightIcon } from "../../assets/icons/right.svg";
+
+export const avatarList = [
+  "rat",
+  "ox",
+  "tiger",
+  "rabbit",
+  "dragon",
+  // "snake",
+  // "horse",
+  // "goat",
+  "monkey",
+  "rooster",
+  "dog",
+  "boar",
+] as const;
+
+export function getAvatarUrl(avatar: number): string {
+  return `./assets/avatars/${avatarList[avatar % avatarList.length]}.png`;
+}
