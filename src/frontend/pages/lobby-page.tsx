@@ -19,8 +19,7 @@ import { ActionBarButton } from "../components/action-bar.tsx";
 import { LeftIcon, RightIcon, avatarList, getAvatarUrl } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
-import { messageHandler } from "../message-handler.ts";
-import { SECRET, SERVER, SESSION } from "../global-state.ts";
+import { SECRET, SERVER, SESSION, webSocketHook } from "../global-state.ts";
 import clsx from "clsx";
 
 export class LobbyPage extends Component("lobby-page", {
@@ -55,7 +54,7 @@ export class LobbyPage extends Component("lobby-page", {
     useEffect(() => {
       if (ownPlayerId() == null) return;
 
-      messageHandler.send({
+      webSocketHook.sendMessage({
         lobby: {
           playerInfo: {
             secret: SECRET,

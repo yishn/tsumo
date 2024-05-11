@@ -1,16 +1,27 @@
-import { uuid } from "../shared/utils.ts";
-import { MaybeSignal, useBatch, useEffect, useRef, useSubscope } from "sinho";
+import { MaybeSignal, flushBatch, useEffect, useRef, useSubscope } from "sinho";
 import { WebSocket } from "ws";
-import { useClientPropagation } from "../sinho-server/main.ts";
+import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
-import { allGameSessions, messageHandler } from "./global-state.ts";
+import {
+  allClients,
+  allGameSessions,
+  clientSessionMap,
+} from "./global-state.ts";
+import { uuid } from "../shared/utils.ts";
 
-messageHandler.onMessage(
+const useWebSockets = useWebSocketsTemplate<
+  ClientMessage,
+  ServerMessage
+>;
+
+const { onClientMessage, sendMessage } = useWebSockets(allClients);
+
+onClientMessage(
   (msg) => msg.join,
-  function join(req) {
-    const data = req.data;
+  (evt) => {
+    const data = evt.data;
     if (data == null) return;
-    if (messageHandler.getSession(req.ws) != null) return;
+    if (clientSessionMap.get(evt.target) != null) return;
 
     const sessionId = data.session;
     let session = allGameSessions.get(sessionId);
@@ -28,12 +39,12 @@ messageHandler.onMessage(
       console.log(
         `[GameSession] Peer tries to join session ${session.id} with invalid secret`
       );
-      req.send({
+      sendMessage(evt.target, {
         error: {
           message: "Invalid secret",
         },
       });
-      req.ws.close();
+      evt.target.close();
       return;
     }
 
@@ -42,16 +53,16 @@ messageHandler.onMessage(
         `[GameSession] Peer tries to join already full session ${session.id}`
       );
 
-      req.send({
+      sendMessage(evt.target, {
         error: {
           message: "Session is full",
         },
       });
-      req.ws.close();
+      evt.target.close();
       return;
     }
 
-    req.assignSession(session);
+    clientSessionMap.set(evt.target, session);
 
     const id = uuid();
     if (secret == null) {
@@ -62,11 +73,11 @@ messageHandler.onMessage(
 
     session.peers.set((peers) => {
       const result = new Map(peers);
-      result.set(secret, { id, ws: req.ws });
+      result.set(secret, { id, ws: evt.target });
       return result;
     });
 
-    req.send({
+    sendMessage(evt.target, {
       joined: {
         id,
         secret,
@@ -75,38 +86,11 @@ messageHandler.onMessage(
   }
 );
 
-messageHandler.onClose((req) => {
-  const session = req.session;
-  if (session == null) return;
-
-  useBatch(() => {
-    session.peers.set((peers) => {
-      const result = new Map(peers);
-
-      for (const [secret, peer] of result) {
-        if (peer.ws === req.ws) {
-          console.log(
-            `[GameSession] Peer ${peer.id} leaves session ${session.id}`
-          );
-          result.delete(secret);
-          break;
-        }
-      }
-
-      return result;
-    });
-  });
-
-  if (session.peers().size === 0) {
-    allGameSessions.delete(session.id);
-    session.destroy?.();
-  }
-});
-
-function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
-  const { onClientEvent } = useClientPropagation<ClientMessage, ServerMessage>(
-    clients
-  );
+function useHeartbeat(
+  clients: MaybeSignal<Set<WebSocket>>,
+  session: GameSession
+) {
+  const { onClientMessage, sendMessage } = useWebSockets(clients);
 
   const aliveInfo = new WeakMap<
     WebSocket,
@@ -117,13 +101,13 @@ function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
   >();
 
   let id = 0;
-  let prevClients: WebSocket[] = [];
+  let prevClients: Set<WebSocket> = new Set();
 
   useEffect(() => {
     const nextClients = MaybeSignal.get(clients);
 
-    prevClients
-      .filter((ws) => !nextClients.includes(ws))
+    [...prevClients]
+      .filter((ws) => !nextClients.has(ws))
       .forEach((ws) => {
         const info = aliveInfo.get(ws);
 
@@ -142,7 +126,7 @@ function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
         ? V
         : never = {
         intervalId: setInterval(() => {
-          messageHandler.send(ws, {
+          sendMessage(ws, {
             heartbeat: {
               id: id++,
               now: Date.now(),
@@ -150,9 +134,9 @@ function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
           });
 
           info.timeoutId = setTimeout(() => {
-            const peerId = [
-              ...(messageHandler.getSession(ws)?.peers().values() ?? []),
-            ].find((peer) => peer.ws === ws)?.id;
+            const peerId = [...(session.peers().values() ?? [])].find(
+              (peer) => peer.ws === ws
+            )?.id;
 
             if (peerId != null) {
               console.warn(`[WebSocket] Peer ${peerId} is not responsive`);
@@ -165,9 +149,11 @@ function useHeartbeat(clients: MaybeSignal<WebSocket[]>) {
 
       aliveInfo.set(ws, info);
     }
+
+    prevClients = nextClients;
   });
 
-  onClientEvent(
+  onClientMessage(
     (msg) => msg,
     (evt) => {
       const info = aliveInfo.get(evt.target);
@@ -189,7 +175,7 @@ export class GameSession {
       }
     >
   >(new Map());
-  clients = () => [...this.peers().values()].map((peer) => peer.ws);
+  clients = () => new Set([...this.peers().values()].map((peer) => peer.ws));
   destroy?: () => void;
 
   constructor(public id: string) {
@@ -204,12 +190,10 @@ export class GameSession {
   }
 
   scope(): void {
-    const { useClientSignal, onClientEvent } = useClientPropagation<
-      ClientMessage,
-      ServerMessage
-    >(this.clients);
+    const { useClientSignal, onClientMessage, onClientClose } =
+      useWebSockets(this.clients);
 
-    useHeartbeat(this.clients);
+    useHeartbeat(this.clients, this);
 
     const [mode, setMode] = useClientSignal((msg) => msg.mode, "lobby");
     useEffect(() => this.mode.set(mode()));
@@ -226,7 +210,7 @@ export class GameSession {
       });
     });
 
-    onClientEvent(
+    onClientMessage(
       (msg) => msg.lobby?.playerInfo,
       (evt) => {
         setPlayers((players) => {
@@ -291,6 +275,31 @@ export class GameSession {
       return () => {
         clearTimeout(timeout);
       };
+    });
+
+    onClientClose((evt) => {
+      this.peers.set((peers) => {
+        const result = new Map(peers);
+
+        for (const [secret, peer] of result) {
+          if (peer.ws === evt.target) {
+            console.log(
+              `[GameSession] Peer ${peer.id} leaves session ${this.id}`
+            );
+            result.delete(secret);
+            break;
+          }
+        }
+
+        return result;
+      });
+
+      flushBatch();
+
+      if (this.peers().size === 0) {
+        allGameSessions.delete(this.id);
+        this.destroy?.();
+      }
     });
   }
 }

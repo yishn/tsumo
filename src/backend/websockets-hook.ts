@@ -6,31 +6,37 @@ import {
   useEffect,
   useSignal,
 } from "sinho";
-import WebSocket, { MessageEvent as WsMessageEvent } from "ws";
+import WebSocket, { CloseEvent, MessageEvent as WsMessageEvent } from "ws";
 
 export type MessageEvent<V> = Omit<WsMessageEvent, "data"> & { data: V };
 
-export interface ClientPropagationHook<T, U> {
+export interface WebSocketsHook<T, U> {
   useClientSignal: <V>(
     path: (msg: U) => V | undefined,
     value: V
   ) => [Signal<V>, SignalSetter<V>];
 
-  onClientEvent: <V>(
+  onClientMessage: <V>(
     path: (msg: T) => V,
     handler: (evt: MessageEvent<V & ({} | null)>) => void
   ) => void;
+
+  onClientClose: (handler: (evt: CloseEvent) => void) => void;
+
+  broadcastMessage: (msg: U) => void;
+
+  sendMessage: (ws: WebSocket, msg: U) => void;
 }
 
-export function useClientPropagation<T, U>(
-  clients: MaybeSignal<WebSocket[]>
-): ClientPropagationHook<T, U> {
-  return {
+export function useWebSockets<T, U>(
+  clients: MaybeSignal<Set<WebSocket>>
+): WebSocketsHook<T, U> {
+  const result: WebSocketsHook<T, U> = {
     useClientSignal: (path, value) => {
       const [signal, setSignal] = useSignal(value);
 
       let prevValue: any;
-      let prevClients: WebSocket[] = [];
+      let prevClients: Set<WebSocket> = new Set();
 
       useEffect(() => {
         const msg = {} as U;
@@ -57,8 +63,8 @@ export function useClientPropagation<T, U>(
         assigneeObj[assigneeKey] = value;
 
         for (const ws of clientsValue) {
-          if (prevValue !== value || !prevClients.includes(ws)) {
-            ws.send(JSON.stringify(msg));
+          if (prevValue !== value || !prevClients.has(ws)) {
+            result.sendMessage(ws, msg);
           }
         }
 
@@ -69,7 +75,7 @@ export function useClientPropagation<T, U>(
       return [signal, setSignal];
     },
 
-    onClientEvent: (path, handler) => {
+    onClientMessage: (path, handler) => {
       useEffect(() => {
         const clientsValue = MaybeSignal.get(clients);
         const wsHandler = (evt: WsMessageEvent) => {
@@ -97,5 +103,34 @@ export function useClientPropagation<T, U>(
         };
       });
     },
+
+    onClientClose: (handler) => {
+      useEffect(() => {
+        const clientsValue = MaybeSignal.get(clients);
+        const wsHandler = (evt: CloseEvent) => useBatch(() => handler(evt));
+
+        for (const ws of clientsValue) {
+          ws.addEventListener("close", wsHandler);
+        }
+
+        return () => {
+          for (const ws of clientsValue) {
+            ws.removeEventListener("close", wsHandler);
+          }
+        };
+      });
+    },
+
+    broadcastMessage: (msg) => {
+      for (const ws of MaybeSignal.get(clients)) {
+        result.sendMessage(ws, msg);
+      }
+    },
+
+    sendMessage: (ws, msg) => {
+      ws.send(JSON.stringify(msg));
+    },
   };
+
+  return result;
 }

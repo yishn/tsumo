@@ -33,7 +33,7 @@ export function useTransition(
       const el = MaybeSignal.get(element);
 
       if (el != null) {
-        await start(transitionEndOf(el));
+        await start(endOfTransition(el));
       }
     },
   ];
@@ -49,19 +49,19 @@ export function useAnimation(
       const el = MaybeSignal.get(element);
 
       if (el != null) {
-        await start(animationEndOf(el));
+        await start(endOfAnimation(el));
       }
     },
   ];
 }
 
-export async function transitionEndOf(element: HTMLElement): Promise<void> {
+export async function endOfTransition(element: HTMLElement): Promise<void> {
   await new Promise((resolve) => {
     element.addEventListener("transitionend", resolve, { once: true });
   });
 }
 
-export async function animationEndOf(element: HTMLElement): Promise<void> {
+export async function endOfAnimation(element: HTMLElement): Promise<void> {
   await new Promise((resolve) => {
     element.addEventListener("animationend", resolve, { once: true });
   });

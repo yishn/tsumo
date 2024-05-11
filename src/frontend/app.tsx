@@ -11,29 +11,27 @@ import {
 } from "sinho";
 import { GamePage } from "./pages/game-page.tsx";
 import { LobbyPage } from "./pages/lobby-page.tsx";
-import { useServerSignal } from "./server-signal.ts";
-import { messageHandler } from "./message-handler.ts";
-import { SESSION, setSecret } from "./global-state.ts";
+import { SESSION, setSecret, webSocketHook } from "./global-state.ts";
 import { avatarList, getAvatarUrl } from "./assets.ts";
 
 export class AppComponent extends Component("app") {
   render() {
-    const mode = useServerSignal((msg) => msg.mode);
+    const mode = webSocketHook.useServerSignal((msg) => msg.mode);
 
-    const players = useServerSignal((msg) => msg.players);
+    const players = webSocketHook.useServerSignal((msg) => msg.players);
     const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
 
     useEffect(() => {
-      if (messageHandler.connected()) {
-        messageHandler.send({
+      if (webSocketHook.connected()) {
+        webSocketHook.sendMessage({
           join: {
             session: SESSION!, // TODO
           },
         });
       }
-    }, [messageHandler.connected]);
+    }, [webSocketHook.connected]);
 
-    messageHandler.onMessage(
+    webSocketHook.onServerMessage(
       (msg) => msg.joined,
       (data) => {
         setSecret(data.secret);

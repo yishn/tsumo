@@ -1,28 +1,34 @@
 import { WebSocketServer } from "ws";
-import type { ClientMessage } from "../shared/message.ts";
-import { messageHandler } from "./global-state.ts";
+import { setAllClients } from "./global-state.ts";
 import "./game-session.ts";
 
 const port = 8080;
 
 const wss = new WebSocketServer({ port });
 
-wss.on("error", console.error);
+wss.on("error", (err) => console.error("[Server]", err));
 
 wss.on("listening", () => {
   console.log(`Listening on ${port}…`);
 });
 
 wss.on("connection", (ws) => {
-  ws.on("error", console.error);
-
-  ws.on("close", () => {
-    messageHandler.handleClose(ws);
+  setAllClients((clients) => {
+    const result = new Set(clients);
+    result.add(ws);
+    return result;
   });
 
-  ws.on("message", (data) => {
-    const msg: ClientMessage = JSON.parse(data.toString());
+  ws.on("error", (err) => {
+    console.error("[WebSocket]", err);
+    ws.terminate();
+  });
 
-    messageHandler.handleMessage(ws, msg);
+  ws.on("close", () => {
+    setAllClients((clients) => {
+      const result = new Set(clients);
+      result.delete(ws);
+      return result;
+    });
   });
 });
