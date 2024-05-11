@@ -4,6 +4,7 @@ import {
   Style,
   css,
   defineComponents,
+  event,
   prop,
   useEffect,
   useRef,
@@ -21,6 +22,7 @@ export class PlayerAvatar extends Component("player-avatar", {
   sound: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
+  onAvatarClick: event(MouseEvent),
 }) {
   static emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>" as const;
 
@@ -59,6 +61,7 @@ export class PlayerAvatar extends Component("player-avatar", {
               dice: this.props.dice() != null,
             })
           }
+          onclick={this.events.onAvatarClick}
         >
           <Dice ref={dice1} face={6} sound={this.props.sound} />
           <Dice ref={dice2} face={6} sound={this.props.sound} />
@@ -128,8 +131,8 @@ export class PlayerAvatar extends Component("player-avatar", {
 
         <Style>{css`
           [part="avatar"] {
-            background: rgba(0, 0, 0, 0.3) url(${this.props.avatar}) 0 0 / 100%
-              100%;
+            background: url(${this.props.avatar}) center / 100% 100% no-repeat
+              rgba(0, 0, 0, 0.3);
           }
         `}</Style>
       </>

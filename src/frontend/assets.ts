@@ -7,6 +7,7 @@ export { default as WhiteIcon } from "../../assets/icons/white.svg";
 export { default as ScoreIcon } from "../../assets/icons/score.svg";
 export { default as DealerIcon } from "../../assets/icons/dealer.svg";
 
+export { default as InviteIcon } from "../../assets/icons/invite.svg";
 export { default as DiscardIcon } from "../../assets/icons/discard.svg";
 export { default as DrawIcon } from "../../assets/icons/draw.svg";
 export { default as EatIcon } from "../../assets/icons/eat.svg";

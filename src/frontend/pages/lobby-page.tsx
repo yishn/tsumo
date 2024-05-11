@@ -20,7 +20,7 @@ import { LeftIcon, RightIcon, avatarList, getAvatarUrl } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { messageHandler } from "../message-handler.ts";
-import { SECRET } from "../global-state.ts";
+import { SECRET, SERVER, SESSION } from "../global-state.ts";
 import clsx from "clsx";
 
 export class LobbyPage extends Component("lobby-page", {
@@ -121,6 +121,22 @@ export class LobbyPage extends Component("lobby-page", {
       return `Starting game now…`;
     };
 
+    const [justCopiedInviteLink, setJustCopiedInviteLink] = useSignal(false);
+
+    useEffect(() => {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      if (justCopiedInviteLink()) {
+        timeoutId = setTimeout(() => {
+          setJustCopiedInviteLink(false);
+        }, 1000);
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    });
+
     return (
       <>
         <div part="players">
@@ -139,8 +155,31 @@ export class LobbyPage extends Component("lobby-page", {
             )}
           </For>
 
-          <If condition={() => remotePlayers().length <= 0}>
-            <PlayerAvatar style={{ visibility: "hidden" }} name={"\u200b"} />
+          <If condition={() => remotePlayers().length < 3}>
+            <PlayerAvatar
+              class="invite"
+              name={"\u200b"}
+              avatar={() =>
+                !justCopiedInviteLink()
+                  ? "./assets/icons/invite.svg"
+                  : "./assets/icons/clipboard.svg"
+              }
+              title="Copy invitation link"
+              onAvatarClick={() => {
+                navigator.clipboard.writeText(
+                  new URL(
+                    "?" +
+                      new URLSearchParams({
+                        server: SERVER ?? "",
+                        session: SESSION ?? "",
+                      }).toString(),
+                    location.href
+                  ).toString()
+                );
+
+                setJustCopiedInviteLink(true);
+              }}
+            />
           </If>
         </div>
 
@@ -148,7 +187,7 @@ export class LobbyPage extends Component("lobby-page", {
           <ActionBarButton
             class={() => clsx("prev", { disabled: ready() })}
             disabled={ready}
-            tooltip="Previous Avatar"
+            tooltip="Previous avatar"
             onButtonClick={() => {
               setOwnAvatarIndex((index) =>
                 ready()
@@ -170,7 +209,7 @@ export class LobbyPage extends Component("lobby-page", {
           <ActionBarButton
             class={() => clsx("next", { disabled: ready() })}
             disabled={ready}
-            tooltip="Next Avatar"
+            tooltip="Next avatar"
             onButtonClick={() => {
               setOwnAvatarIndex((index) =>
                 ready() ? index : (index + 1) % avatarList.length
@@ -249,6 +288,10 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="players"] ::part(avatar) {
             font-size: 1.2em;
+          }
+          [part="players"] .invite::part(avatar) {
+            background-size: 33% 33%;
+            cursor: pointer;
           }
 
           [part="avatar-chooser"] {
