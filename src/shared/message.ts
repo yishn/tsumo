@@ -3,6 +3,15 @@ export interface Heartbeat {
   id: number;
 }
 
+export type AppMode = "lobby" | "game";
+
+export interface PlayerInfo {
+  id: string;
+  name?: string;
+  avatar: number;
+  dice?: [number, number];
+}
+
 export interface ServerMessage {
   heartbeat?: Heartbeat;
   error?: {
@@ -12,13 +21,8 @@ export interface ServerMessage {
     id: string;
     secret: string;
   };
-  mode?: "lobby" | "game";
-  players?: {
-    id: string;
-    name?: string;
-    avatar: number;
-    dice?: [number, number];
-  }[];
+  mode?: AppMode;
+  players?: PlayerInfo[];
   deadPlayers?: string[];
 }
 

@@ -4,16 +4,15 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useSignal,
   useSubscope,
 } from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
-import { ClientMessage, ServerMessage } from "../shared/message.ts";
+import { AppMode, ClientMessage, PlayerInfo, ServerMessage } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
-import { uuid } from "../shared/utils.ts";
-
-type Players = NonNullable<ServerMessage["players"]>;
-type Mode = NonNullable<ServerMessage["mode"]>;
+import { GameState } from "../core/game-state.ts";
+import { diceSort, uuid } from "../shared/utils.ts";
 
 type Peers = Map<
   string,
@@ -298,6 +297,14 @@ function useGame(session: GameSession): () => void {
   const [, destroy] = useSubscope(() => {
     const { onClientMessage, onClientClose } = useWebSockets(session.clients);
 
+    const orderedPlayers = useMemo(() =>
+      [...session.players()].sort((a, b) =>
+        diceSort(a.dice ?? [0, 0], b.dice ?? [0, 0])
+      )
+    );
+
+    const [gameState, setGameState] = useSignal(GameState.newGame());
+
     onClientClose(() => {
       // Destroy session when all peers have disconnected
 
@@ -315,10 +322,10 @@ function useGame(session: GameSession): () => void {
 }
 
 export class GameSession {
-  mode = useRef<Mode>("lobby");
+  mode = useRef<AppMode>("lobby");
   peers = useRef<Peers>(new Map());
   clients = () => new Set([...this.peers().values()].map((peer) => peer.ws));
-  players = useRef<Players>([]);
+  players = useRef<PlayerInfo[]>([]);
 
   destroy?: () => void;
 

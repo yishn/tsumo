@@ -97,12 +97,13 @@ const AnimatedCounter: FunctionalComponent<{
 
 export class PlayerRow extends Component("player-row", {
   name: prop<string>("", { attribute: String }),
-  minimal: prop<boolean>(false, { attribute: () => true }),
-  current: prop<boolean>(false, { attribute: () => true }),
-  dealer: prop<boolean>(false, { attribute: () => true }),
   avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
     attribute: String,
   }),
+  minimal: prop<boolean>(false, { attribute: () => true }),
+  current: prop<boolean>(false, { attribute: () => true }),
+  dealer: prop<boolean>(false, { attribute: () => true }),
+  loading: prop<boolean>(false, { attribute: () => true }),
   score: prop<number>(0, { attribute: Number }),
 }) {
   render() {
@@ -123,6 +124,7 @@ export class PlayerRow extends Component("player-row", {
             avatar={this.props.avatar}
             current={this.props.current}
             dealer={this.props.dealer}
+            loading={this.props.loading}
           />
           <div part="score">
             <ScoreIcon alt="Score" /> ×
@@ -209,10 +211,8 @@ export class PlayerRow extends Component("player-row", {
           }
 
           ::slotted([slot="tiles"]) {
+            --tile-width: 1.8em;
             font-size: 0.5em;
-          }
-          .minimal ::slotted([slot="tiles"]) {
-            align-self: center;
           }
         `}</Style>
       </div>

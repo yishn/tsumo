@@ -3,6 +3,7 @@ import {
   ElseIf,
   If,
   Portal,
+  Signal,
   Style,
   css,
   defineComponents,
@@ -50,31 +51,39 @@ function useHeartbeat(): void {
   useEffect(() => () => clearTimeout(heartbeatTimeout));
 }
 
+function useError(): Signal<Error | undefined> {
+  const [error, setError] = useSignal<Error>();
+
+  useEffect(() => {
+    if (webSocketHook.error() != null) {
+      setError({
+        name: "WebSocketError",
+        message: "Web socket failure",
+      });
+    }
+  }, [webSocketHook.error]);
+
+  webSocketHook.onServerMessage(
+    (msg) => msg.error,
+    (data) => {
+      setError({
+        name: "ServerError",
+        message: data.message,
+      });
+    }
+  );
+
+  return error;
+}
+
 export class AppComponent extends Component("app") {
   render() {
     useHeartbeat();
 
-    const [error, setError] = useSignal<Error>();
-    useEffect(() => {
-      if (webSocketHook.error() != null) {
-        setError({
-          name: "WebSocketError",
-          message: "Web socket failure",
-        });
-      }
-    }, [webSocketHook.error]);
-    webSocketHook.onServerMessage(
-      (msg) => msg.error,
-      (data) => {
-        setError({
-          name: "ServerError",
-          message: data.message,
-        });
-      }
-    );
-
+    const error = useError();
     const mode = webSocketHook.useServerSignal((msg) => msg.mode);
     const players = webSocketHook.useServerSignal((msg) => msg.players);
+    const deadPlayers = webSocketHook.useServerSignal((msg) => msg.deadPlayers);
     const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
 
     useEffect(() => {
@@ -112,7 +121,11 @@ export class AppComponent extends Component("app") {
           <LobbyPage players={players} ownPlayerId={ownPlayerId} />
         </ElseIf>
         <ElseIf condition={() => mode() === "game"}>
-          <GamePage />
+          <GamePage
+            players={() => players() ?? []}
+            ownPlayerId={ownPlayerId}
+            deadPlayers={() => deadPlayers() ?? []}
+          />
         </ElseIf>
 
         <Style light>{css`

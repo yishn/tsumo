@@ -53,7 +53,7 @@ export type PhaseBase = InstanceType<ReturnType<typeof PhaseBase>>;
 
 export class DealPhase extends PhaseBase(Phase.Deal) {
   deal(): GameState<ActionPhase> {
-    this.state.deck = generateShuffledFullDeck();
+    this.state.drawPile = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDeck()!;
 
     for (const player of this.state.players) {
@@ -273,7 +273,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
 
 export class GameState<P extends PhaseBase = any> {
   phase: P;
-  deck: Tile[] = [];
+  drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;
   dealerIndex: number = 0;
@@ -315,11 +315,11 @@ export class GameState<P extends PhaseBase = any> {
   }
 
   popDeck(): Tile | undefined {
-    return this.deck.pop();
+    return this.drawPile.pop();
   }
 
   shiftDeck(): Tile | undefined {
-    return this.deck.shift();
+    return this.drawPile.shift();
   }
 
   removeLastDiscard(): Tile {

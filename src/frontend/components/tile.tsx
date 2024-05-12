@@ -181,8 +181,8 @@ class TileComponent extends Component("tile", {
 
         <Style>{css`
           :host {
-            --tile-width: 2.15em;
-            --tile-height: calc(var(--tile-width) * 1.2);
+            --_tile-width: var(--tile-width, 2.15em);
+            --tile-height: calc(var(--_tile-width) * 1.2);
             --tile-depth: 0.5em;
             --tile-back-depth: 0.3em;
             --tile-shadow: rgba(18, 32, 26, 0.5) 0 0.5em 0.5em;
@@ -222,7 +222,7 @@ class TileComponent extends Component("tile", {
               var(--tile-back-border-color) 0
                 calc(var(--tile-back-depth) + var(--tile-depth)),
               var(--tile-shadow);
-            width: var(--tile-width);
+            width: var(--_tile-width);
             height: var(--tile-height);
             background-color: var(--tile-face-color);
             overflow: hidden;

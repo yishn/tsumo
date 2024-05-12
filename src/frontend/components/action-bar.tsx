@@ -10,7 +10,7 @@ export class ActionBarButton extends Component("action-bar-button", {
       <>
         <button
           part="button"
-          title={this.props.tooltip}
+          title={() => this.props.tooltip() ?? ""}
           disabled={this.props.disabled}
           onclick={(evt) => {
             evt.preventDefault();
@@ -21,6 +21,17 @@ export class ActionBarButton extends Component("action-bar-button", {
         </button>
 
         <Style>{css`
+          :host {
+            --_action-bar-icon-color: var(
+              --action-bar-icon-color,
+              currentColor
+            );
+            --_action-bar-icon-disabled-color: var(
+              --action-bar-icon-disabled-color,
+              currentColor
+            );
+          }
+
           button {
             border: none;
             padding: 0 0.2em;
@@ -30,15 +41,15 @@ export class ActionBarButton extends Component("action-bar-button", {
           }
           button:disabled {
             cursor: not-allowed;
-            --action-bar-icon-color: var(--action-bar-icon-disabled-color);
+            --_action-bar-icon-color: var(--_action-bar-icon-disabled-color);
           }
           button:not(:disabled):active {
             opacity: 0.5;
           }
 
           ::slotted(svg) {
-            fill: var(--action-bar-icon-color);
-            stroke: var(--action-bar-icon-color);
+            fill: var(--_action-bar-icon-color);
+            stroke: var(--_action-bar-icon-color);
             width: 1.8em;
             height: 1.8em;
             overflow: visible;
@@ -57,8 +68,6 @@ export class ActionBar extends Component("action-bar") {
 
         <Style>{css`
           :host {
-            --action-bar-icon-color: #35de7b;
-            --action-bar-icon-disabled-color: #808f85;
             display: flex;
             justify-content: center;
             gap: 2em;

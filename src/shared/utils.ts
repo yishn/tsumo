@@ -27,3 +27,7 @@ export class LazyCell<T> {
     return this.promise;
   }
 }
+
+export function diceSort(a: [number, number], b: [number, number]) {
+  return b.reduce((sum, n) => sum + n, 0) - a.reduce((sum, n) => sum + n, 0);
+}

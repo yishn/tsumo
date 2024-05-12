@@ -244,6 +244,8 @@ export class LobbyPage extends Component("lobby-page", {
 
         <Style>{css`
           :host {
+            --action-bar-icon-color: rgb(255, 211, 163);
+            --action-bar-icon-disabled-color: rgba(255, 211, 163, 0.5);
             display: flex;
             flex-direction: column;
             justify-content: safe center;
@@ -301,8 +303,6 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="avatar-chooser"] .prev,
           [part="avatar-chooser"] .next {
-            --action-bar-icon-color: rgb(255, 211, 163);
-            --action-bar-icon-disabled-color: rgb(255, 211, 163, 0.5);
             transition: opacity 0.2s;
           }
           @keyframes prev-arrow-sway {

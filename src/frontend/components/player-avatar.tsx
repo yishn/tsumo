@@ -12,6 +12,7 @@ import {
 import { DealerIcon } from "../assets.ts";
 import clsx from "clsx";
 import { Dice } from "./dice.tsx";
+import { Throbber } from "./throbber.tsx";
 
 export class PlayerAvatar extends Component("player-avatar", {
   name: prop<string>("", { attribute: String }),
@@ -21,6 +22,7 @@ export class PlayerAvatar extends Component("player-avatar", {
   dice: prop<[number, number]>(),
   sound: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
+  loading: prop<boolean>(false, { attribute: () => true }),
   dealer: prop<boolean>(false, { attribute: () => true }),
   onAvatarClick: event(MouseEvent),
 }) {
@@ -59,12 +61,17 @@ export class PlayerAvatar extends Component("player-avatar", {
             clsx({
               current: this.props.current(),
               dice: this.props.dice() != null,
+              loading: this.props.loading(),
             })
           }
           onclick={this.events.onAvatarClick}
         >
           <Dice ref={dice1} face={6} sound={this.props.sound} />
           <Dice ref={dice2} face={6} sound={this.props.sound} />
+
+          <If condition={this.props.loading}>
+            <Throbber />
+          </If>
         </div>
 
         <Style>{css`
@@ -100,6 +107,7 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="avatar"] {
+            position: relative;
             display: flex;
             place-content: center;
             place-items: center;
@@ -116,7 +124,8 @@ export class PlayerAvatar extends Component("player-avatar", {
           [part="avatar"].current {
             outline-width: 0.3em;
           }
-          [part="avatar"].dice {
+          [part="avatar"].dice,
+          [part="avatar"].loading {
             box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
           }
           [part="avatar"] mj-dice {
@@ -124,8 +133,15 @@ export class PlayerAvatar extends Component("player-avatar", {
             opacity: 0;
             transition: opacity 0.2s;
           }
-          [part="avatar"].dice mj-dice {
+          [part="avatar"].dice:not(.loading) mj-dice {
             opacity: 1;
+          }
+          [part="avatar"] mj-throbber {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            --throbber-size: calc(0.7 * var(--player-avatar-size));
+            transform: translate(-50%, -50%);
           }
         `}</Style>
 

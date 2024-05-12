@@ -1,103 +1,107 @@
-import { Component, For, Style, css, defineComponents, useSignal } from "sinho";
-import { DrawIcon, EatIcon, KongIcon, WinIcon } from "../assets.ts";
+import {
+  Component,
+  For,
+  Style,
+  css,
+  defineComponents,
+  prop,
+  useMemo,
+  useSignal,
+} from "sinho";
+import {
+  DrawIcon,
+  EatIcon,
+  KongIcon,
+  WinIcon,
+  getAvatarUrl,
+} from "../assets.ts";
 import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
 import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
-import { TileStack } from "../components/tile-stack.tsx";
 import { playPopSound } from "../sounds.ts";
 import {
   TileSuit,
   Tile as TileClass,
   generateShuffledFullDeck,
 } from "../../core/main.ts";
+import { PlayerInfo } from "../../shared/message.ts";
+import { diceSort } from "../../shared/utils.ts";
 
-export class GamePage extends Component("game-page") {
+export interface RemotePlayer {
+  name: string;
+  avatar: number;
+  score: number;
+  tiles: number;
+  dealer: boolean;
+}
+
+export class GamePage extends Component("game-page", {
+  players: prop<PlayerInfo[]>([]),
+  ownPlayerId: prop<string>(),
+  deadPlayers: prop<string[]>([]),
+}) {
   render() {
     const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
+    const remotePlayerInfos = useMemo(() => {
+      const sorted = [...this.props.players()].sort((a, b) =>
+        diceSort(a.dice ?? [0, 0], b.dice ?? [0, 0])
+      );
+      const ownIndex = sorted.findIndex(
+        (player) => player.id === this.props.ownPlayerId()
+      );
+
+      if (ownIndex >= 0) {
+        const remotePlayers = sorted.filter((_, i) => i !== ownIndex);
+
+        for (let i = 0; i < sorted.length - ownIndex - 1; i++) {
+          remotePlayers.unshift(remotePlayers.pop()!);
+        }
+
+        return remotePlayers;
+      }
+
+      return sorted;
+    });
+    const selfPlayerInfo = useMemo(() =>
+      this.props
+        .players()
+        .find((player) => player.id === this.props.ownPlayerId())
+    );
 
     return (
       <>
         <div part="players">
-          <PlayerRow
-            style={{ animationDelay: "0s" }}
-            name="East"
-            dealer
-            avatar="./assets/avatars/monkey.png"
-            score={50}
-          >
-            <TileRow slot="discards">
-              <Tile suit={TileSuit.Bamboo} rank={1} />
-              <Tile suit={TileSuit.Circle} rank={9} />
-              <TileStack>
-                <Tile suit={TileSuit.Wind} rank={4} />
-                <Tile suit={TileSuit.Wind} rank={4} />
-                <Tile suit={TileSuit.Wind} rank={4} />
-                <Tile suit={TileSuit.Wind} rank={4} />
-              </TileStack>
-            </TileRow>
+          <For each={remotePlayerInfos}>
+            {(player, i) => (
+              <PlayerRow
+                style={{ animationDelay: `${i() * 0.1}s` }}
+                name={() => player().name ?? ""}
+                avatar={() => getAvatarUrl(player().avatar)}
+                dealer={false}
+                loading={() => this.props.deadPlayers().includes(player().id)}
+                score={50}
+              >
+                <TileRow slot="discards"></TileRow>
 
-            <TileRow slot="tiles" minimal>
-              <For each={[...Array(11)]}>
-                {() => <Tile back animateEnter />}
-              </For>
-            </TileRow>
-          </PlayerRow>
-
-          <PlayerRow
-            style={{ animationDelay: "0.1s" }}
-            name="South"
-            current
-            avatar="./assets/avatars/boar.png"
-            score={50}
-          >
-            <TileRow slot="discards">
-              <TileStack>
-                <Tile suit={TileSuit.Myriad} rank={3} />
-                <Tile suit={TileSuit.Myriad} rank={4} />
-                <Tile suit={TileSuit.Myriad} rank={5} />
-              </TileStack>
-              <TileStack>
-                <Tile suit={TileSuit.Circle} rank={1} />
-                <Tile suit={TileSuit.Circle} rank={1} />
-                <Tile suit={TileSuit.Circle} rank={1} />
-              </TileStack>
-            </TileRow>
-
-            <TileRow slot="tiles" minimal>
-              <For each={[...Array(8)]}>{() => <Tile back animateEnter />}</For>
-            </TileRow>
-          </PlayerRow>
-
-          <PlayerRow
-            style={{ animationDelay: "0.2s" }}
-            name="West"
-            avatar="./assets/avatars/dog.png"
-            score={50}
-          >
-            <TileRow slot="discards">
-              <Tile suit={TileSuit.Myriad} rank={1} />
-              <Tile suit={TileSuit.Bamboo} rank={2} highlight />
-            </TileRow>
-
-            <TileRow slot="tiles" minimal>
-              <For each={[...Array(14)]}>
-                {() => <Tile back animateEnter />}
-              </For>
-            </TileRow>
-          </PlayerRow>
+                <TileRow slot="tiles" minimal>
+                  <For each={() => [...Array(13)]}>
+                    {() => <Tile back animateEnter />}
+                  </For>
+                </TileRow>
+              </PlayerRow>
+            )}
+          </For>
         </div>
 
         <div part="self">
           <PlayerRow
-            name="North"
+            name={() => selfPlayerInfo()?.name ?? ""}
             minimal
-            avatar="./assets/avatars/dragon.png"
+            avatar={() => getAvatarUrl(selfPlayerInfo()?.avatar ?? 0)}
             score={50}
           >
-            <TileRow slot="discards">
-              <Tile suit={TileSuit.Wind} rank={2} />
-            </TileRow>
+            <TileRow slot="discards"></TileRow>
 
             <TileRow slot="tiles">
               <For
@@ -125,16 +129,16 @@ export class GamePage extends Component("game-page") {
           </PlayerRow>
 
           <ActionBar>
-            <ActionBarButton>
+            <ActionBarButton tooltip="Draw">
               <DrawIcon alt="Draw" />
             </ActionBarButton>
-            <ActionBarButton>
+            <ActionBarButton tooltip="Eat">
               <EatIcon alt="Eat" />
             </ActionBarButton>
-            <ActionBarButton>
+            <ActionBarButton tooltip="Kong">
               <KongIcon alt="Kong" />
             </ActionBarButton>
-            <ActionBarButton disabled>
+            <ActionBarButton disabled tooltip="Win">
               <WinIcon alt="Win" />
             </ActionBarButton>
           </ActionBar>
@@ -174,6 +178,8 @@ export class GamePage extends Component("game-page") {
             }
           }
           [part="self"] {
+            --action-bar-icon-color: #35de7b;
+            --action-bar-icon-disabled-color: #808f85;
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -187,6 +193,7 @@ export class GamePage extends Component("game-page") {
             backdrop-filter: unset;
           }
           [part="self"] mj-tile-row[slot="tiles"] {
+            --tile-width: initial;
             align-self: center;
             margin-bottom: 0.5em;
             font-size: 0.9em;
