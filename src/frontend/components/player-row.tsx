@@ -145,8 +145,6 @@ export class PlayerRow extends Component("player-row", {
             --animated-counter-negative: #ff8356;
             --player-row-background-color: rgba(0, 0, 0, 0.5);
             display: block;
-            -webkit-backdrop-filter: blur(0.5em);
-            backdrop-filter: blur(0.5em);
           }
 
           [part="container"] {

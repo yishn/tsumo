@@ -57,6 +57,8 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
     this.state.primaryJoker = this.state.popDeck()!;
 
     for (const player of this.state.players) {
+      player.tiles = [];
+
       for (let i = 0; i < 13; i++) {
         player.tiles.push(this.state.popDeck()!);
       }

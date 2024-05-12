@@ -9,7 +9,7 @@ import {
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
-import { allGameSessions, clientInfoMap } from "./global-state.ts";
+import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import { uuid } from "../shared/utils.ts";
 
 type Players = NonNullable<ServerMessage["players"]>;
@@ -108,7 +108,7 @@ function useHeartbeat(session: GameSession) {
   const deadPlayers = useMemo(
     () =>
       [...session.peers().values()]
-        .filter((peer) => !session.clients().has(peer.ws))
+        .filter((peer) => !allClients().has(peer.ws))
         .map((peer) => peer.id)
         .sort(),
     {
@@ -294,6 +294,26 @@ function useLobby(session: GameSession): () => void {
   return destroy;
 }
 
+function useGame(session: GameSession): () => void {
+  const [, destroy] = useSubscope(() => {
+    const { onClientMessage, onClientClose } = useWebSockets(session.clients);
+
+    onClientClose(() => {
+      // Destroy session when all peers have disconnected
+
+      if (
+        [...session.peers().values()].every(
+          (peer) => !allClients().has(peer.ws)
+        )
+      ) {
+        session.peers.set(new Map());
+      }
+    });
+  });
+
+  return destroy;
+}
+
 export class GameSession {
   mode = useRef<Mode>("lobby");
   peers = useRef<Peers>(new Map());
@@ -326,12 +346,14 @@ export class GameSession {
 
       if (this.mode() === "lobby") {
         destroy = useLobby(this);
+      } else if (this.mode() === "game") {
+        destroy = useGame(this);
       }
 
       return destroy;
     });
 
-    onClientClose(() => {
+    useEffect(() => {
       // Destroy session
 
       if (this.peers().size === 0) {
