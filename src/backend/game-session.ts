@@ -1,8 +1,15 @@
-import { Cleanup, useEffect, useMemo, useRef, useSubscope } from "sinho";
+import {
+  Cleanup,
+  MaybeSignal,
+  useEffect,
+  useMemo,
+  useRef,
+  useSubscope,
+} from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import { ClientMessage, ServerMessage } from "../shared/message.ts";
-import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
+import { allGameSessions, clientInfoMap } from "./global-state.ts";
 import { uuid } from "../shared/utils.ts";
 
 type Players = NonNullable<ServerMessage["players"]>;
@@ -18,78 +25,80 @@ type Peers = Map<
 
 const useWebSockets = useWebSocketsTemplate<ClientMessage, ServerMessage>;
 
-const { onClientMessage, sendMessage } = useWebSockets(allClients);
+export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
+  const { onClientMessage, sendMessage } = useWebSockets(clients);
 
-onClientMessage(
-  (msg) => msg.join,
-  (evt) => {
-    const data = evt.data;
-    const client = clientInfoMap.get(evt.target);
-    if (client == null || client.session != null) return;
+  onClientMessage(
+    (msg) => msg.join,
+    (evt) => {
+      const data = evt.data;
+      const client = clientInfoMap.get(evt.target);
+      if (client == null || client.session != null) return;
 
-    const sessionId = data.session;
-    let session = allGameSessions.get(sessionId);
+      const sessionId = data.session;
+      let session = allGameSessions.get(sessionId);
 
-    if (session == null) {
-      session = new GameSession(sessionId);
-      allGameSessions.set(sessionId, session);
-    }
+      if (session == null) {
+        session = new GameSession(sessionId);
+        allGameSessions.set(sessionId, session);
+      }
 
-    if (session.mode() === "lobby" && session.peers().size >= 4) {
-      console.log(
-        `[GameSession] Peer tries to join already full session ${session.id}`
-      );
+      if (session.mode() === "lobby" && session.peers().size >= 4) {
+        console.log(
+          `[GameSession] Peer tries to join already full session ${session.id}`
+        );
+
+        sendMessage(evt.target, {
+          error: {
+            message: "Session is full",
+          },
+        });
+        evt.target.close();
+        return;
+      }
+
+      let secret = data.secret;
+
+      if (
+        session.mode() !== "lobby" &&
+        (secret == null || !session.peers().has(secret))
+      ) {
+        console.log(
+          `[GameSession] Peer tries to join session ${session.id} with invalid secret`
+        );
+        sendMessage(evt.target, {
+          error: {
+            message: "Invalid secret",
+          },
+        });
+        evt.target.close();
+        return;
+      }
+
+      client.session = session;
+
+      if (session.mode() === "lobby" || secret == null) {
+        secret = uuid();
+      }
+      const id = session.peers().get(secret)?.id ?? uuid();
+
+      console.log(`[GameSession] Peer ${id} joins session ${session.id}`);
+
+      session.peers.set((peers) => {
+        const result = new Map(peers);
+        result.set(secret, { id, ws: evt.target });
+        return result;
+      });
 
       sendMessage(evt.target, {
-        error: {
-          message: "Session is full",
+        joined: {
+          id,
+          secret,
         },
       });
-      evt.target.close();
-      return;
     }
-
-    let secret = data.secret;
-
-    if (
-      session.mode() !== "lobby" &&
-      (secret == null || !session.peers().has(secret))
-    ) {
-      console.log(
-        `[GameSession] Peer tries to join session ${session.id} with invalid secret`
-      );
-      sendMessage(evt.target, {
-        error: {
-          message: "Invalid secret",
-        },
-      });
-      evt.target.close();
-      return;
-    }
-
-    client.session = session;
-
-    if (session.mode() === "lobby" || secret == null) {
-      secret = uuid();
-    }
-    const id = session.peers().get(secret)?.id ?? uuid();
-
-    console.log(`[GameSession] Peer ${id} joins session ${session.id}`);
-
-    session.peers.set((peers) => {
-      const result = new Map(peers);
-      result.set(secret, { id, ws: evt.target });
-      return result;
-    });
-
-    sendMessage(evt.target, {
-      joined: {
-        id,
-        secret,
-      },
-    });
-  }
-);
+  );
+}
 
 function useHeartbeat(session: GameSession) {
   const { useClientSignal, onClientMessage, sendMessage } = useWebSockets(

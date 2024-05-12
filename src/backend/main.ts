@@ -1,7 +1,6 @@
 import { WebSocketServer } from "ws";
-import { clientInfoMap, setAllClients } from "./global-state.ts";
-import "./game-session.ts";
-import { uuid } from "../shared/utils.ts";
+import { clientInfoMap, allClients } from "./global-state.ts";
+import { useJoinSession } from "./game-session.ts";
 
 const port = 8080;
 
@@ -13,8 +12,10 @@ wss.on("listening", () => {
   console.log(`Listening on ${port}…`);
 });
 
+useJoinSession(allClients);
+
 wss.on("connection", (ws) => {
-  setAllClients((clients) => {
+  allClients.set((clients) => {
     const result = new Set(clients);
     result.add(ws);
     return result;
@@ -27,7 +28,7 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    setAllClients((clients) => {
+    allClients.set((clients) => {
       const result = new Set(clients);
       result.delete(ws);
       return result;

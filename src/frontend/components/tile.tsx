@@ -5,6 +5,7 @@ import {
   If,
   Portal,
   Style,
+  Template,
   css,
   defineComponents,
   prop,
@@ -33,6 +34,7 @@ class TileComponent extends Component("tile", {
     attribute: (val) => val.toLowerCase() as TileSuit,
   }),
   rank: prop<number>(undefined, { attribute: Number }),
+  custom: prop<boolean>(false, { attribute: () => true }),
   back: prop<boolean>(false, { attribute: () => true }),
   selected: prop<boolean>(false, { attribute: () => true }),
   highlight: prop<boolean>(false, { attribute: () => true }),
@@ -102,6 +104,11 @@ class TileComponent extends Component("tile", {
           }}
         >
           <If condition={actualBack}></If>
+          <ElseIf condition={() => this.props.custom()}>
+            <div part="suit">
+              <slot />
+            </div>
+          </ElseIf>
           <ElseIf condition={() => tile() == null}>
             <div part="rank">?</div>
           </ElseIf>
@@ -317,7 +324,8 @@ class TileComponent extends Component("tile", {
             justify-content: center;
             align-items: center;
           }
-          [part="suit"] svg {
+          [part="suit"] svg,
+          [part="suit"] ::slotted(*) {
             display: block;
             width: 70%;
             height: 70%;

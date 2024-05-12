@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { useSignal } from "sinho";
+import { useRef } from "sinho";
 import { GameSession } from "./game-session.ts";
 
 export const allGameSessions = new Map<string, GameSession>();
@@ -9,4 +9,4 @@ export const clientInfoMap = new WeakMap<
   { session?: GameSession }
 >();
 
-export const [allClients, setAllClients] = useSignal(new Set<WebSocket>());
+export const allClients = useRef(new Set<WebSocket>());

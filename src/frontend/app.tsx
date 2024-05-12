@@ -13,11 +13,67 @@ import { GamePage } from "./pages/game-page.tsx";
 import { LobbyPage } from "./pages/lobby-page.tsx";
 import { SECRET, SESSION, setSecret, webSocketHook } from "./global-state.ts";
 import { avatarList, getAvatarUrl } from "./assets.ts";
+import { ErrorPage } from "./pages/error-page.tsx";
+
+function useHeartbeat(): void {
+  let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
+
+  webSocketHook.onServerMessage(
+    (msg) => msg,
+    (msg) => {
+      if (webSocketHook.connected()) {
+        clearTimeout(heartbeatTimeout);
+
+        if (msg.heartbeat != null) {
+          webSocketHook.sendMessage({
+            heartbeat: {
+              id: msg.heartbeat.id,
+              now: Date.now(),
+            },
+          });
+        }
+
+        heartbeatTimeout = setTimeout(() => {
+          console.warn("[WebSocket] Server not responsive");
+          webSocketHook.close();
+        }, 30000);
+      }
+    }
+  );
+
+  useEffect(() => {
+    if (!webSocketHook.connected()) {
+      clearTimeout(heartbeatTimeout);
+    }
+  });
+
+  useEffect(() => () => clearTimeout(heartbeatTimeout));
+}
 
 export class AppComponent extends Component("app") {
   render() {
-    const mode = webSocketHook.useServerSignal((msg) => msg.mode);
+    useHeartbeat();
 
+    const [error, setError] = useSignal<Error>();
+    useEffect(() => {
+      if (webSocketHook.error() != null) {
+        setError({
+          name: "WebSocketError",
+          message: "Web socket failure",
+        });
+      }
+    }, [webSocketHook.error]);
+    webSocketHook.onServerMessage(
+      (msg) => msg.error,
+      (data) => {
+        setError({
+          name: "ServerError",
+          message: data.message,
+        });
+      }
+    );
+
+    const mode = webSocketHook.useServerSignal((msg) => msg.mode);
     const players = webSocketHook.useServerSignal((msg) => msg.players);
     const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
 
@@ -49,9 +105,12 @@ export class AppComponent extends Component("app") {
           ))}
         </Portal>
 
-        <If condition={() => mode() === "lobby"}>
-          <LobbyPage players={players} ownPlayerId={ownPlayerId} />
+        <If condition={() => !!error()}>
+          <ErrorPage message={() => error()?.message ?? "Unknown error"} />
         </If>
+        <ElseIf condition={() => mode() === "lobby"}>
+          <LobbyPage players={players} ownPlayerId={ownPlayerId} />
+        </ElseIf>
         <ElseIf condition={() => mode() === "game"}>
           <GamePage />
         </ElseIf>
