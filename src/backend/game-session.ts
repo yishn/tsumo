@@ -355,6 +355,23 @@ function useGame(session: GameSession): () => void {
 
     useClientSignal((msg) => msg.game?.players, gamePlayersInfo);
 
+    for (const [i, { id }] of orderedPlayers().entries()) {
+      const clients = useMemo(
+        () => [...session.peers().values()].find((peer) => peer.id === id)?.ws
+      );
+
+      const { useClientSignal } = useWebSockets(
+        () => new Set(clients() == null ? [] : [clients()!])
+      );
+
+      const tiles = useMemo(() => gameState().players[i].tiles);
+
+      useClientSignal(
+        (msg) => msg.game?.player,
+        () => ({ tiles: tiles() })
+      );
+    }
+
     useEffect(() => {
       const phase = gameState().phase;
 

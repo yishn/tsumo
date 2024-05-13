@@ -25,6 +25,10 @@ export type GamePlayersInfo = Record<
   }
 >;
 
+export interface GamePlayerInfo {
+  tiles: ITile[];
+}
+
 export interface GameInfo {
   phase: PhaseName;
   currentPlayer: string;
@@ -50,6 +54,7 @@ export interface ServerMessage {
   game?: {
     info?: GameInfo;
     players?: GamePlayersInfo;
+    player?: GamePlayerInfo
   };
 }
 

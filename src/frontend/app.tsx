@@ -98,6 +98,8 @@ export class AppComponent extends Component("app") {
     useHeartbeat();
 
     const error = useError();
+    const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
+
     const mode = webSocketHook.useServerSignal((msg) => msg.mode);
     const players = webSocketHook.useServerSignal((msg) => msg.players);
     const deadPlayers = webSocketHook.useServerSignal((msg) => msg.deadPlayers);
@@ -105,7 +107,9 @@ export class AppComponent extends Component("app") {
     const gamePlayersInfo = webSocketHook.useServerSignal(
       (msg) => msg.game?.players
     );
-    const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
+    const ownPlayerInfo = webSocketHook.useServerSignal(
+      (msg) => msg.game?.player
+    );
 
     useEffect(() => {
       if (webSocketHook.connected()) {
@@ -148,6 +152,7 @@ export class AppComponent extends Component("app") {
             deadPlayers={() => deadPlayers() ?? []}
             gameInfo={gameInfo}
             gamePlayersInfo={gamePlayersInfo}
+            ownPlayerInfo={ownPlayerInfo}
           />
         </ElseIf>
 

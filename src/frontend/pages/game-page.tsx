@@ -28,7 +28,12 @@ import {
   Tile as TileClass,
   generateShuffledFullDeck,
 } from "../../core/main.ts";
-import { GameInfo, PlayerInfo, GamePlayersInfo } from "../../shared/message.ts";
+import {
+  GameInfo,
+  PlayerInfo,
+  GamePlayersInfo,
+  GamePlayerInfo,
+} from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
 
 export interface RemotePlayer {
@@ -45,6 +50,7 @@ export class GamePage extends Component("game-page", {
   deadPlayers: prop<string[]>([]),
   gameInfo: prop<GameInfo>(),
   gamePlayersInfo: prop<GamePlayersInfo>(),
+  ownPlayerInfo: prop<GamePlayerInfo>(),
 }) {
   render() {
     const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
@@ -144,37 +150,45 @@ export class GamePage extends Component("game-page", {
               <Tile />
             </TileRow>
 
-            <TileRow slot="tiles">
-              <For
-                each={generateShuffledFullDeck()
-                  .slice(0, 13)
-                  .sort(TileClass.sort)}
-              >
-                {(tile, i) => (
-                  <Tile
-                    animateEnter
-                    glow={() =>
-                      !!this.props
-                        .gameInfo()
-                        ?.jokers.some(
-                          (joker) =>
-                            joker.suit === tile().suit &&
-                            joker.rank === tile().rank
-                        )
-                    }
-                    suit={() => tile().suit}
-                    rank={() => tile().rank}
-                    selected={() => selectedTileIndex() === i()}
-                    onclick={() => {
-                      if (selectedTileIndex() !== i()) {
-                        playPopSound();
+            <If
+              condition={() =>
+                (this.props.ownPlayerInfo()?.tiles.length ?? 0) > 0
+              }
+            >
+              <TileRow slot="tiles">
+                <For
+                  each={() =>
+                    (this.props.ownPlayerInfo()?.tiles ?? [])
+                      .map((json) => TileClass.fromJSON(json))
+                      .sort(TileClass.sort)
+                  }
+                >
+                  {(tile, i) => (
+                    <Tile
+                      animateEnter
+                      glow={() =>
+                        !!this.props
+                          .gameInfo()
+                          ?.jokers.some(
+                            (joker) =>
+                              joker.suit === tile().suit &&
+                              joker.rank === tile().rank
+                          )
                       }
-                      setSelectedTileIndex(i());
-                    }}
-                  />
-                )}
-              </For>
-            </TileRow>
+                      suit={() => tile().suit}
+                      rank={() => tile().rank}
+                      selected={() => selectedTileIndex() === i()}
+                      onclick={() => {
+                        if (selectedTileIndex() !== i()) {
+                          playPopSound();
+                        }
+                        setSelectedTileIndex(i());
+                      }}
+                    />
+                  )}
+                </For>
+              </TileRow>
+            </If>
           </PlayerRow>
 
           <ActionBar>

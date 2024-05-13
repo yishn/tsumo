@@ -1,11 +1,4 @@
-import {
-  MaybeSignal,
-  Signal,
-  SignalSetter,
-  useBatch,
-  useEffect,
-  useSignal,
-} from "sinho";
+import { MaybeSignal, useBatch, useEffect } from "sinho";
 import WebSocket, { CloseEvent, MessageEvent as WsMessageEvent } from "ws";
 
 export type MessageEvent<V> = Omit<WsMessageEvent, "data"> & { data: V };

@@ -121,8 +121,16 @@ export class PlayerAvatar extends Component("player-avatar", {
               outline-width 0.2s,
               background 0.2s;
           }
+          @keyframes current-pulse {
+            from {
+              box-shadow: #e9d883 0 0 0 0.1em;
+            }
+            to {
+              box-shadow: #e9d883 0 0 0 0.3em;
+            }
+          }
           [part="avatar"].current {
-            outline-width: 0.3em;
+            animation: 1s linear infinite alternate current-pulse;
           }
           [part="avatar"].dice,
           [part="avatar"].loading {
