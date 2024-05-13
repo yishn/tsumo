@@ -160,7 +160,20 @@ export class GamePage extends Component("game-page", {
                   each={() =>
                     (this.props.ownPlayerInfo()?.tiles ?? [])
                       .map((json) => TileClass.fromJSON(json))
-                      .sort(TileClass.sort)
+                      .sort((a, b) => {
+                        const jokers = (
+                          this.props.gameInfo()?.jokers ?? []
+                        ).map((json) => TileClass.fromJSON(json));
+                        const isJoker = (tile: TileClass) =>
+                          jokers.some((joker) => TileClass.equal(joker, tile));
+
+                        if (isJoker(a) !== isJoker(b)) {
+                          if (isJoker(a)) return -1;
+                          return 1;
+                        }
+
+                        return TileClass.sort(a, b);
+                      })
                   }
                 >
                   {(tile, i) => (
@@ -189,6 +202,20 @@ export class GamePage extends Component("game-page", {
                 </For>
               </TileRow>
             </If>
+
+            <div slot="player-extra" style={{ flex: 1 }} />
+            <span slot="player-extra" class="rounds">
+              {() => this.props.gameInfo()?.round ?? 1}/
+              {() => this.props.gameInfo()?.maxRound ?? 1}
+            </span>
+            <Tile
+              slot="player-extra"
+              class="joker"
+              title="Joker"
+              suit={() => this.props.gameInfo()?.jokers[0].suit}
+              rank={() => this.props.gameInfo()?.jokers[0].rank}
+              glow
+            />
           </PlayerRow>
 
           <ActionBar>
@@ -249,6 +276,13 @@ export class GamePage extends Component("game-page", {
             padding-bottom: max(0.5em, env(safe-area-inset-bottom));
             background-color: rgba(0, 0, 0, 0.9);
             animation: 0.5s enter-self;
+          }
+          [part="self"] .rounds {
+            opacity: 0.7;
+          }
+          [part="self"] .joker {
+            font-size: 0.7em;
+            margin-right: 0.5em;
           }
           [part="self"] > mj-player-row {
             --player-row-background-color: transparent;

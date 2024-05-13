@@ -327,7 +327,7 @@ function useGame(session: GameSession): () => void {
       dealer: orderedPlayers()[gameState().dealerIndex].id,
       jokers: [gameState().primaryJoker, gameState().secondaryJoker],
       round: gameState().round,
-      maxRounds: gameState().maxRounds,
+      maxRound: gameState().maxRound,
       lastDiscard:
         gameState().lastDiscard == null
           ? null
@@ -379,7 +379,7 @@ function useGame(session: GameSession): () => void {
         setTimeout(() => {
           phase.deal();
           setGameState((state) => state);
-        }, 500);
+        });
       }
     });
 

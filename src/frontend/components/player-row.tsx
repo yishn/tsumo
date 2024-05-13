@@ -130,6 +130,8 @@ export class PlayerRow extends Component("player-row", {
             <ScoreIcon alt="Score" /> ×
             <AnimatedCounter value={this.props.score} />
           </div>
+
+          <slot name="player-extra" />
         </div>
 
         <div part="tiles">

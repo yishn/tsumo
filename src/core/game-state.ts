@@ -274,7 +274,7 @@ export class ScorePhase extends PhaseBase(PhaseName.Score) {
 export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
   round: number = 1;
-  maxRounds: number = 4;
+  maxRound: number = 4;
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;

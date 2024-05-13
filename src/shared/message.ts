@@ -35,7 +35,7 @@ export interface GameInfo {
   dealer: string;
   jokers: [ITile, ITile];
   round: number;
-  maxRounds: number;
+  maxRound: number;
   lastDiscard: null | [playerId: string, discardIndex: number];
 }
 
