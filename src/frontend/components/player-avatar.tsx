@@ -23,7 +23,6 @@ export class PlayerAvatar extends Component("player-avatar", {
   sound: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
   loading: prop<boolean>(false, { attribute: () => true }),
-  dealer: prop<boolean>(false, { attribute: () => true }),
   onAvatarClick: event(MouseEvent),
 }) {
   static emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>" as const;
@@ -49,12 +48,7 @@ export class PlayerAvatar extends Component("player-avatar", {
 
     return (
       <>
-        <div part="name">
-          <If condition={this.props.dealer}>
-            <DealerIcon class="dealer" alt="Dealer" />{" "}
-          </If>
-          {this.props.name}
-        </div>
+        <div part="name">{this.props.name}</div>
         <div
           part="avatar"
           class={() =>
@@ -93,18 +87,6 @@ export class PlayerAvatar extends Component("player-avatar", {
             overflow-y: visible;
             text-overflow: ellipsis;
           }
-          @keyframes dealer-enter {
-            from {
-              transform: scale(2);
-            }
-          }
-          [part="name"] .dealer {
-            fill: #ee401d;
-            height: 0.8em;
-            width: 0.8em;
-            margin-bottom: -0.1em;
-            animation: 1s dealer-enter;
-          }
 
           [part="avatar"] {
             position: relative;
@@ -135,6 +117,22 @@ export class PlayerAvatar extends Component("player-avatar", {
           [part="avatar"].dice,
           [part="avatar"].loading {
             box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+          }
+          @keyframes current-pulse-dark {
+            from {
+              box-shadow:
+                #e9d883 0 0 0 0.1em,
+                rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+            }
+            to {
+              box-shadow:
+                #e9d883 0 0 0 0.3em,
+                rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+            }
+          }
+          [part="avatar"].dice.current,
+          [part="avatar"].loading.current {
+            animation-name: current-pulse-dark;
           }
           [part="avatar"] mj-dice {
             --dice-size: calc(0.25 * var(--player-avatar-size));

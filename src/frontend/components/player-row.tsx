@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
   Component,
   FunctionalComponent,
+  If,
   MaybeSignal,
   Style,
   css,
@@ -11,7 +12,7 @@ import {
   useRef,
   useSignal,
 } from "sinho";
-import { ScoreIcon } from "../assets.ts";
+import { DealerIcon, ScoreIcon } from "../assets.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 
 const AnimatedCounter: FunctionalComponent<{
@@ -119,11 +120,14 @@ export class PlayerRow extends Component("player-row", {
         }
       >
         <div part="player">
+          <If condition={this.props.dealer}>
+            <DealerIcon class="dealer" alt="Dealer" title="Dealer" />{" "}
+          </If>
+
           <PlayerAvatar
             name={this.props.name}
             avatar={this.props.avatar}
             current={this.props.current}
-            dealer={this.props.dealer}
             loading={this.props.loading}
           />
           <div part="score">
@@ -152,6 +156,7 @@ export class PlayerRow extends Component("player-row", {
           }
 
           [part="container"] {
+            position: relative;
             display: flex;
             gap: 1em;
             background-color: var(--player-row-background-color);
@@ -172,6 +177,21 @@ export class PlayerRow extends Component("player-row", {
             flex-direction: column;
             align-items: center;
             gap: 0.15em;
+          }
+          @keyframes dealer-enter {
+            from {
+              transform: scale(2) translate(.2em, .2em);
+            }
+          }
+          [part="player"] .dealer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 0.8em;
+            width: 0.8em;
+            fill: #ee401d;
+            margin-bottom: -0.1em;
+            animation: 1s dealer-enter;
           }
           .minimal [part="player"] {
             flex-direction: row;
