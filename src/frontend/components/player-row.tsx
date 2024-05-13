@@ -133,8 +133,8 @@ export class PlayerRow extends Component("player-row", {
         </div>
 
         <div part="tiles">
-          <slot name="discards" />
           <slot name="tiles" />
+          <slot name="discards" />
         </div>
 
         <Style>{css`

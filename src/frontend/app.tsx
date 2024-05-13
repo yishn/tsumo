@@ -61,7 +61,22 @@ function useError(): Signal<Error | undefined> {
         message: "Web socket failure",
       });
     }
-  }, [webSocketHook.error]);
+  });
+
+  let connected = false;
+
+  useEffect(() => {
+    if (webSocketHook.connected()) {
+      connected = true;
+    }
+
+    if (connected && !webSocketHook.connected()) {
+      setError({
+        name: "WebSocketError",
+        message: "Web socket disconnected",
+      });
+    }
+  });
 
   webSocketHook.onServerMessage(
     (msg) => msg.error,

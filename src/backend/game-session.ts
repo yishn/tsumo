@@ -9,7 +9,12 @@ import {
 } from "sinho";
 import { WebSocket } from "ws";
 import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
-import { AppMode, ClientMessage, PlayerInfo, ServerMessage } from "../shared/message.ts";
+import {
+  AppMode,
+  ClientMessage,
+  PlayerInfo,
+  ServerMessage,
+} from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import { GameState } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
@@ -82,6 +87,10 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
       const id = session.peers().get(secret)?.id ?? uuid();
 
       console.log(`[GameSession] Peer ${id} joins session ${session.id}`);
+
+      if (session.peers().get(secret)?.ws !== evt.target) {
+        session.peers().get(secret)?.ws.close();
+      }
 
       session.peers.set((peers) => {
         const result = new Map(peers);

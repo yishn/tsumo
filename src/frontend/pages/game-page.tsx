@@ -101,7 +101,9 @@ export class GamePage extends Component("game-page", {
             avatar={() => getAvatarUrl(selfPlayerInfo()?.avatar ?? 0)}
             score={50}
           >
-            <TileRow slot="discards"></TileRow>
+            <TileRow slot="discards">
+              <Tile />
+            </TileRow>
 
             <TileRow slot="tiles">
               <For
@@ -195,6 +197,7 @@ export class GamePage extends Component("game-page", {
           [part="self"] mj-tile-row[slot="tiles"] {
             --tile-width: initial;
             align-self: center;
+            order: 2;
             margin-bottom: 0.5em;
             font-size: 0.9em;
           }
