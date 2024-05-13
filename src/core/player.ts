@@ -4,7 +4,7 @@ export class Player {
   tiles: Tile[] = [];
   discards: Tile[] = [];
   melds: Tile[][] = [];
-  score: number = 0;
+  score: number = 50;
 
   getTile(index: number): Tile {
     const tile = this.tiles[index];

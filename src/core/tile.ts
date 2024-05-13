@@ -6,7 +6,7 @@ export enum TileSuit {
   Dragon = "dragon",
 }
 
-export class Tile {
+export class Tile implements ITile {
   static sort(a: Tile, b: Tile): number {
     if (a.numeric !== b.numeric) {
       return a.numeric ? -1 : 1;
@@ -146,4 +146,20 @@ export class Tile {
 
     return new Tile(this.suit, this.rank === suitRanks ? 1 : this.rank + 1);
   }
+
+  static fromJSON(tile: ITile): Tile {
+    return new Tile(tile.suit, tile.rank);
+  }
+
+  toJSON(): ITile {
+    return {
+      suit: this.suit,
+      rank: this.rank,
+    };
+  }
+}
+
+export interface ITile {
+  suit: TileSuit;
+  rank: number;
 }

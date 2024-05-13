@@ -1,10 +1,12 @@
 import {
   Component,
   For,
+  If,
   Style,
   css,
   defineComponents,
   prop,
+  useEffect,
   useMemo,
   useSignal,
 } from "sinho";
@@ -19,13 +21,14 @@ import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
 import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
-import { playPopSound } from "../sounds.ts";
+import { playPopSound, playShuffleSound } from "../sounds.ts";
 import {
-  TileSuit,
+  ITile,
+  PhaseName,
   Tile as TileClass,
   generateShuffledFullDeck,
 } from "../../core/main.ts";
-import { PlayerInfo } from "../../shared/message.ts";
+import { GameInfo, PlayerInfo, GamePlayersInfo } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
 
 export interface RemotePlayer {
@@ -40,6 +43,8 @@ export class GamePage extends Component("game-page", {
   players: prop<PlayerInfo[]>([]),
   ownPlayerId: prop<string>(),
   deadPlayers: prop<string[]>([]),
+  gameInfo: prop<GameInfo>(),
+  gamePlayersInfo: prop<GamePlayersInfo>(),
 }) {
   render() {
     const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
@@ -69,6 +74,12 @@ export class GamePage extends Component("game-page", {
         .find((player) => player.id === this.props.ownPlayerId())
     );
 
+    useEffect(() => {
+      if (this.props.gameInfo()?.phase === PhaseName.Deal) {
+        playShuffleSound();
+      }
+    });
+
     return (
       <>
         <div part="players">
@@ -78,17 +89,36 @@ export class GamePage extends Component("game-page", {
                 style={{ animationDelay: `${i() * 0.1}s` }}
                 name={() => player().name ?? ""}
                 avatar={() => getAvatarUrl(player().avatar)}
-                dealer={false}
+                current={() =>
+                  player().id === this.props.gameInfo()?.currentPlayer
+                }
+                dealer={() => player().id === this.props.gameInfo()?.dealer}
                 loading={() => this.props.deadPlayers().includes(player().id)}
-                score={50}
+                score={() =>
+                  this.props.gamePlayersInfo()?.[player().id]?.score ?? 0
+                }
               >
                 <TileRow slot="discards"></TileRow>
 
-                <TileRow slot="tiles" minimal>
-                  <For each={() => [...Array(13)]}>
-                    {() => <Tile back animateEnter />}
-                  </For>
-                </TileRow>
+                <If
+                  condition={() =>
+                    (this.props.gamePlayersInfo()?.[player().id]?.tiles ?? 0) >
+                    0
+                  }
+                >
+                  <TileRow slot="tiles" minimal>
+                    <For
+                      each={() => [
+                        ...Array(
+                          this.props.gamePlayersInfo()?.[player().id]?.tiles ??
+                            0
+                        ),
+                      ]}
+                    >
+                      {() => <Tile back animateEnter />}
+                    </For>
+                  </TileRow>
+                </If>
               </PlayerRow>
             )}
           </For>
@@ -99,7 +129,16 @@ export class GamePage extends Component("game-page", {
             name={() => selfPlayerInfo()?.name ?? ""}
             minimal
             avatar={() => getAvatarUrl(selfPlayerInfo()?.avatar ?? 0)}
-            score={50}
+            current={() =>
+              this.props.ownPlayerId() === this.props.gameInfo()?.currentPlayer
+            }
+            dealer={() =>
+              this.props.ownPlayerId() === this.props.gameInfo()?.dealer
+            }
+            score={() =>
+              this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? -1]
+                ?.score ?? 0
+            }
           >
             <TileRow slot="discards">
               <Tile />
@@ -111,12 +150,20 @@ export class GamePage extends Component("game-page", {
                   .slice(0, 13)
                   .sort(TileClass.sort)}
               >
-                {(item, i) => (
+                {(tile, i) => (
                   <Tile
                     animateEnter
-                    glow={() => i() <= 1}
-                    suit={() => item().suit}
-                    rank={() => item().rank}
+                    glow={() =>
+                      !!this.props
+                        .gameInfo()
+                        ?.jokers.some(
+                          (joker) =>
+                            joker.suit === tile().suit &&
+                            joker.rank === tile().rank
+                        )
+                    }
+                    suit={() => tile().suit}
+                    rank={() => tile().rank}
                     selected={() => selectedTileIndex() === i()}
                     onclick={() => {
                       if (selectedTileIndex() !== i()) {
@@ -186,7 +233,7 @@ export class GamePage extends Component("game-page", {
             flex-direction: column;
             align-items: stretch;
             padding-bottom: max(0.5em, env(safe-area-inset-bottom));
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.9);
             animation: 0.5s enter-self;
           }
           [part="self"] > mj-player-row {

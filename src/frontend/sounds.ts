@@ -28,4 +28,6 @@ export const playTileSound = prepareAudio("./assets/sounds/tile.mp3");
 
 export const playDiceSound = prepareAudio("./assets/sounds/dice.mp3");
 
+export const playShuffleSound = prepareAudio("./assets/sounds/shuffle.mp3");
+
 export const playPopSound = prepareAudio("./assets/sounds/pop.mp3");

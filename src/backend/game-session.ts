@@ -12,11 +12,13 @@ import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import {
   AppMode,
   ClientMessage,
+  GameInfo,
+  GamePlayersInfo,
   PlayerInfo,
   ServerMessage,
 } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
-import { GameState } from "../core/game-state.ts";
+import { DealPhase, GameState, PhaseName } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
 
 type Peers = Map<
@@ -304,7 +306,9 @@ function useLobby(session: GameSession): () => void {
 
 function useGame(session: GameSession): () => void {
   const [, destroy] = useSubscope(() => {
-    const { onClientMessage, onClientClose } = useWebSockets(session.clients);
+    const { useClientSignal, onClientMessage, onClientClose } = useWebSockets(
+      session.clients
+    );
 
     const orderedPlayers = useMemo(() =>
       [...session.players()].sort((a, b) =>
@@ -312,7 +316,55 @@ function useGame(session: GameSession): () => void {
       )
     );
 
-    const [gameState, setGameState] = useSignal(GameState.newGame());
+    const [gameState, setGameState] = useSignal<GameState>(
+      GameState.newGame(),
+      { force: true }
+    );
+
+    const gameInfo = useMemo<GameInfo>(() => ({
+      phase: gameState().phase.name,
+      currentPlayer: orderedPlayers()[gameState().currentPlayerIndex].id,
+      dealer: orderedPlayers()[gameState().dealerIndex].id,
+      jokers: [gameState().primaryJoker, gameState().secondaryJoker],
+      round: gameState().round,
+      maxRounds: gameState().maxRounds,
+      lastDiscard:
+        gameState().lastDiscard == null
+          ? null
+          : [
+              orderedPlayers()[gameState().lastDiscardInfo![0]].id,
+              gameState().lastDiscardInfo![1],
+            ],
+    }));
+
+    useClientSignal((msg) => msg.game?.info, gameInfo);
+
+    const gamePlayersInfo = useMemo<GamePlayersInfo>(() =>
+      Object.fromEntries(
+        orderedPlayers().map((player, i) => [
+          player.id,
+          {
+            score: gameState().players[i].score,
+            tiles: gameState().players[i].tiles.length,
+            discards: gameState().players[i].discards,
+            melds: gameState().players[i].melds,
+          },
+        ])
+      )
+    );
+
+    useClientSignal((msg) => msg.game?.players, gamePlayersInfo);
+
+    useEffect(() => {
+      const phase = gameState().phase;
+
+      if (phase instanceof DealPhase) {
+        setTimeout(() => {
+          phase.deal();
+          setGameState((state) => state);
+        }, 500);
+      }
+    });
 
     onClientClose(() => {
       // Destroy session when all peers have disconnected

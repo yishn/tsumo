@@ -145,7 +145,7 @@ export class PlayerRow extends Component("player-row", {
           :host {
             --animated-counter-positive: #35de7b;
             --animated-counter-negative: #ff8356;
-            --player-row-background-color: rgba(0, 0, 0, 0.5);
+            --player-row-background-color: rgba(0, 0, 0, 0.7);
             display: block;
           }
 

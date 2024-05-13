@@ -15,6 +15,8 @@ import { LobbyPage } from "./pages/lobby-page.tsx";
 import { SECRET, SESSION, setSecret, webSocketHook } from "./global-state.ts";
 import { avatarList, getAvatarUrl } from "./assets.ts";
 import { ErrorPage } from "./pages/error-page.tsx";
+import { AppMode } from "../shared/message.ts";
+import { playShuffleSound } from "./sounds.ts";
 
 function useHeartbeat(): void {
   let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -99,6 +101,10 @@ export class AppComponent extends Component("app") {
     const mode = webSocketHook.useServerSignal((msg) => msg.mode);
     const players = webSocketHook.useServerSignal((msg) => msg.players);
     const deadPlayers = webSocketHook.useServerSignal((msg) => msg.deadPlayers);
+    const gameInfo = webSocketHook.useServerSignal((msg) => msg.game?.info);
+    const gamePlayersInfo = webSocketHook.useServerSignal(
+      (msg) => msg.game?.players
+    );
     const [ownPlayerId, setOwnPlayerId] = useSignal<string>();
 
     useEffect(() => {
@@ -140,6 +146,8 @@ export class AppComponent extends Component("app") {
             players={() => players() ?? []}
             ownPlayerId={ownPlayerId}
             deadPlayers={() => deadPlayers() ?? []}
+            gameInfo={gameInfo}
+            gamePlayersInfo={gamePlayersInfo}
           />
         </ElseIf>
 
