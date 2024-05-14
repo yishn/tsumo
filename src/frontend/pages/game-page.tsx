@@ -1,5 +1,6 @@
 import {
   Component,
+  Else,
   For,
   If,
   Style,
@@ -11,6 +12,7 @@ import {
   useSignal,
 } from "sinho";
 import {
+  DiscardIcon,
   DrawIcon,
   EatIcon,
   KongIcon,
@@ -22,12 +24,7 @@ import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
 import { playPopSound, playShuffleSound } from "../sounds.ts";
-import {
-  ITile,
-  PhaseName,
-  Tile as TileClass,
-  generateShuffledFullDeck,
-} from "../../core/main.ts";
+import { PhaseName, Tile as TileClass } from "../../core/main.ts";
 import {
   GameInfo,
   PlayerInfo,
@@ -35,6 +32,7 @@ import {
   GamePlayerInfo,
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
+import { webSocketHook } from "../global-state.ts";
 
 export interface RemotePlayer {
   name: string;
@@ -53,7 +51,6 @@ export class GamePage extends Component("game-page", {
   ownPlayerInfo: prop<GamePlayerInfo>(),
 }) {
   render() {
-    const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
     const remotePlayerInfos = useMemo(() => {
       const sorted = [...this.props.players()].sort((a, b) =>
         diceSort(a.dice ?? [0, 0], b.dice ?? [0, 0])
@@ -79,11 +76,23 @@ export class GamePage extends Component("game-page", {
         .players()
         .find((player) => player.id === this.props.ownPlayerId())
     );
+    const isSelfTurn = useMemo(
+      () => this.props.gameInfo()?.currentPlayer === this.props.ownPlayerId()
+    );
+    const phase = () => this.props.gameInfo()?.phase;
 
     useEffect(() => {
       if (this.props.gameInfo()?.phase === PhaseName.Deal) {
         playShuffleSound();
       }
+    });
+
+    const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
+
+    useEffect(() => {
+      setSelectedTileIndex(
+        this.props.ownPlayerInfo()?.lastDrawnTileIndex ?? -1
+      );
     });
 
     return (
@@ -104,7 +113,22 @@ export class GamePage extends Component("game-page", {
                   this.props.gamePlayersInfo()?.[player().id]?.score ?? 0
                 }
               >
-                <TileRow slot="discards"></TileRow>
+                <TileRow slot="discards">
+                  <For
+                    each={() =>
+                      this.props.gamePlayersInfo()?.[player().id ?? -1]
+                        .discards ?? []
+                    }
+                  >
+                    {(tile) => (
+                      <Tile
+                        animateEnter
+                        suit={() => tile().suit}
+                        rank={() => tile().rank}
+                      />
+                    )}
+                  </For>
+                </TileRow>
 
                 <If
                   condition={() =>
@@ -135,9 +159,7 @@ export class GamePage extends Component("game-page", {
             name={() => selfPlayerInfo()?.name ?? ""}
             minimal
             avatar={() => getAvatarUrl(selfPlayerInfo()?.avatar ?? 0)}
-            current={() =>
-              this.props.ownPlayerId() === this.props.gameInfo()?.currentPlayer
-            }
+            current={isSelfTurn}
             dealer={() =>
               this.props.ownPlayerId() === this.props.gameInfo()?.dealer
             }
@@ -147,7 +169,20 @@ export class GamePage extends Component("game-page", {
             }
           >
             <TileRow slot="discards">
-              <Tile />
+              <For
+                each={() =>
+                  this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? -1]
+                    .discards ?? []
+                }
+              >
+                {(tile) => (
+                  <Tile
+                    animateEnter
+                    suit={() => tile().suit}
+                    rank={() => tile().rank}
+                  />
+                )}
+              </For>
             </TileRow>
 
             <If
@@ -156,26 +191,7 @@ export class GamePage extends Component("game-page", {
               }
             >
               <TileRow slot="tiles">
-                <For
-                  each={() =>
-                    (this.props.ownPlayerInfo()?.tiles ?? [])
-                      .map((json) => TileClass.fromJSON(json))
-                      .sort((a, b) => {
-                        const jokers = (
-                          this.props.gameInfo()?.jokers ?? []
-                        ).map((json) => TileClass.fromJSON(json));
-                        const isJoker = (tile: TileClass) =>
-                          jokers.some((joker) => TileClass.equal(joker, tile));
-
-                        if (isJoker(a) !== isJoker(b)) {
-                          if (isJoker(a)) return -1;
-                          return 1;
-                        }
-
-                        return TileClass.sort(a, b);
-                      })
-                  }
-                >
+                <For each={() => this.props.ownPlayerInfo()?.tiles ?? []}>
                   {(tile, i) => (
                     <Tile
                       animateEnter
@@ -219,16 +235,75 @@ export class GamePage extends Component("game-page", {
           </PlayerRow>
 
           <ActionBar>
-            <ActionBarButton tooltip="Draw">
-              <DrawIcon alt="Draw" />
-            </ActionBarButton>
-            <ActionBarButton tooltip="Eat">
+            <If
+              condition={() => !isSelfTurn() || phase() !== PhaseName.EndAction}
+            >
+              <ActionBarButton
+                tooltip="Draw"
+                disabled={() => !isSelfTurn() || phase() !== PhaseName.Action}
+                onButtonClick={() => {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [PhaseName.Action]: { draw: [] },
+                      },
+                    },
+                  });
+                }}
+              >
+                <DrawIcon alt="Draw" />
+              </ActionBarButton>
+            </If>
+            <Else>
+              <ActionBarButton
+                tooltip="Discard"
+                disabled={() =>
+                  !isSelfTurn() ||
+                  phase() !== PhaseName.EndAction ||
+                  this.props.ownPlayerInfo()?.tiles[selectedTileIndex()] == null
+                }
+                onButtonClick={() => {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [PhaseName.EndAction]: {
+                          discard: [selectedTileIndex()],
+                        },
+                      },
+                    },
+                  });
+                }}
+              >
+                <DiscardIcon alt="Discard" />
+              </ActionBarButton>
+            </Else>
+
+            <ActionBarButton
+              tooltip="Eat"
+              disabled={() => !isSelfTurn() || phase() !== PhaseName.Action}
+            >
               <EatIcon alt="Eat" />
             </ActionBarButton>
-            <ActionBarButton tooltip="Kong">
+
+            <ActionBarButton
+              tooltip="Kong"
+              disabled={() =>
+                !isSelfTurn() ||
+                phase() !== PhaseName.Action ||
+                phase() !== PhaseName.EndAction
+              }
+            >
               <KongIcon alt="Kong" />
             </ActionBarButton>
-            <ActionBarButton disabled tooltip="Win">
+
+            <ActionBarButton
+              tooltip="Win"
+              disabled={() =>
+                !isSelfTurn() ||
+                phase() !== PhaseName.Action ||
+                phase() !== PhaseName.EndAction
+              }
+            >
               <WinIcon alt="Win" />
             </ActionBarButton>
           </ActionBar>

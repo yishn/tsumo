@@ -240,7 +240,7 @@ class TileComponent extends Component("tile", {
           @keyframes glow-pulse {
             from {
               box-shadow:
-                var(--tile-glow-pulse-color) 0 0 0.3em 0.5em,
+                var(--tile-glow-pulse-color) 0 0 0.6em 0.3em,
                 var(--tile-face-border-color) 0 var(--tile-depth),
                 var(--tile-back-border-color) 0
                   calc(var(--tile-back-depth) + var(--tile-depth)),

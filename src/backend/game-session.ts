@@ -18,8 +18,15 @@ import {
   ServerMessage,
 } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
-import { DealPhase, GameState, PhaseName } from "../core/game-state.ts";
+import {
+  ActionPhase,
+  DealPhase,
+  GameState,
+  PhaseBase,
+  PhaseName,
+} from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
+import { ITile } from "../core/tile.ts";
 
 type Peers = Map<
   string,
@@ -321,6 +328,25 @@ function useGame(session: GameSession): () => void {
       { force: true }
     );
 
+    const updateGameState = <P extends PhaseBase>(
+      phase: "*" | (new (...args: any) => P),
+      fn: (state: GameState<P>) => void
+    ) => {
+      if (phase === "*" || gameState().phase instanceof phase) {
+        setGameState((state) => {
+          try {
+            fn(state as GameState<P>);
+          } catch (err) {
+            // Ignore
+          }
+
+          return state;
+        });
+      }
+    };
+
+    // Propagate public information
+
     const gameInfo = useMemo<GameInfo>(() => ({
       phase: gameState().phase.name,
       currentPlayer: orderedPlayers()[gameState().currentPlayerIndex].id,
@@ -356,6 +382,8 @@ function useGame(session: GameSession): () => void {
     useClientSignal((msg) => msg.game?.players, gamePlayersInfo);
 
     for (const [i, { id }] of orderedPlayers().entries()) {
+      // Propagate player secrets
+
       const clients = useMemo(
         () => [...session.peers().values()].find((peer) => peer.id === id)?.ws
       );
@@ -364,24 +392,38 @@ function useGame(session: GameSession): () => void {
         () => new Set(clients() == null ? [] : [clients()!])
       );
 
-      const tiles = useMemo(() => gameState().players[i].tiles);
+      const tiles = () =>
+        gameState().players[i].tiles.map((tile) => tile.toJSON());
 
       useClientSignal(
         (msg) => msg.game?.player,
-        () => ({ tiles: tiles() })
+        () => ({
+          tiles: tiles(),
+          lastDrawnTileIndex: gameState().players[i].lastDrawnTileIndex ?? null,
+        })
       );
     }
 
-    useEffect(() => {
-      const phase = gameState().phase;
+    // Game operations
 
-      if (phase instanceof DealPhase) {
-        setTimeout(() => {
-          phase.deal();
-          setGameState((state) => state);
-        });
+    useEffect(() => {
+      setTimeout(() => {
+        updateGameState(DealPhase, (state) => state.phase.deal());
+      });
+    }, [gameState]);
+
+    onClientMessage(
+      (msg) => msg.game?.operation,
+      (evt) => {
+        for (const phaseName in evt.data) {
+          for (const key in evt.data[phaseName as keyof (typeof evt)["data"]]) {
+            updateGameState("*", (state) => {
+              (state.phase as any)[key](...(evt.data as any)[phaseName][key]);
+            });
+          }
+        }
       }
-    });
+    );
 
     onClientClose(() => {
       // Destroy session when all peers have disconnected

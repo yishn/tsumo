@@ -180,7 +180,7 @@ export class PlayerRow extends Component("player-row", {
           }
           @keyframes dealer-enter {
             from {
-              transform: scale(2) translate(.2em, .2em);
+              transform: scale(2) translate(0.2em, 0.2em);
             }
           }
           [part="player"] .dealer {
@@ -222,13 +222,10 @@ export class PlayerRow extends Component("player-row", {
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 0.5em;
           }
 
           ::slotted([slot="discards"]) {
-            margin-bottom: 0.5em;
-            font-size: 0.9em;
-          }
-          .minimal ::slotted([slot="discards"]) {
             font-size: 0.7em;
           }
 

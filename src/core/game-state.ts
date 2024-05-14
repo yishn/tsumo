@@ -34,13 +34,13 @@ export enum PhaseName {
   Score = "score",
 }
 
-export function PhaseBase(name: PhaseName) {
-  return class _PhaseBase {
-    name: PhaseName = name;
+export function PhaseBase<N extends PhaseName>(name: N) {
+  return class _PhaseBase implements PhaseBase {
+    name: N = name;
 
     constructor(public state: GameState<any>) {}
 
-    nextPhase<P extends _PhaseBase>(
+    nextPhase<P extends PhaseBase>(
       phase: new (state: GameState) => P
     ): GameState<P> {
       this.state.phase = new phase(this.state);
@@ -49,19 +49,27 @@ export function PhaseBase(name: PhaseName) {
   };
 }
 
-export type PhaseBase = InstanceType<ReturnType<typeof PhaseBase>>;
+export interface PhaseBase {
+  name: PhaseName;
+
+  nextPhase<P extends PhaseBase>(
+    phase: new (state: GameState) => P
+  ): GameState<P>;
+}
 
 export class DealPhase extends PhaseBase(PhaseName.Deal) {
   deal(): GameState<ActionPhase> {
     this.state.drawPile = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDeck()!;
 
-    for (const player of this.state.players) {
+    for (const [i, player] of this.state.players.entries()) {
       player.tiles = [];
 
       for (let i = 0; i < 13; i++) {
         player.tiles.push(this.state.popDeck()!);
       }
+
+      this.state.sortPlayerTiles(i);
     }
 
     return this.nextPhase(ActionPhase);
@@ -77,6 +85,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
       throw new Error("not implemented");
     }
 
+    player.lastDrawnTileIndex = player.tiles.length;
     player.tiles.push(tile);
 
     return this.nextPhase(EndActionPhase);
@@ -96,6 +105,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     this.state.removeLastDiscard();
 
     player.melds.push([tile1, tile2, lastDiscard]);
+    player.lastDrawnTileIndex = undefined;
 
     return this.nextPhase(EndActionPhase);
   }
@@ -124,6 +134,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     const tile = player.removeTile(tileIndex);
 
     player.discards.push(tile);
+    this.state.sortPlayerTiles(this.state.currentPlayerIndex);
 
     return this.nextPhase(ReactionPhase);
   }
@@ -156,6 +167,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     // Draw from the bottom of the deck
     const tile = this.state.shiftDeck()!;
     // TODO handle empty deck
+    player.lastDrawnTileIndex = player.tiles.length;
     player.tiles.push(tile);
 
     this.state.scoreKong(this.state.currentPlayerIndex);
@@ -181,6 +193,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     // Draw from the bottom of the deck
     const drawnTile = this.state.shiftDeck()!;
     // TODO handle empty deck
+    player.lastDrawnTileIndex = player.tiles.length;
     player.tiles.push(drawnTile);
 
     this.state.scoreKong(this.state.currentPlayerIndex);
@@ -230,6 +243,7 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
       // Draw from the bottom of the deck
       const tile = this.state.shiftDeck()!;
       // TODO handle empty deck
+      player.lastDrawnTileIndex = player.tiles.length;
       player.tiles.push(tile);
       this.state.scoreKong(playerIndex);
     }
@@ -349,15 +363,27 @@ export class GameState<P extends PhaseBase = PhaseBase> {
     return this;
   }
 
-  isWinningHand(tiles: Tile[], melds: number): boolean {
-    const lastDiscard = this.lastDiscard;
-    if (lastDiscard == null) throw new Error("No discard");
+  sortPlayerTiles(playerIndex: number): void {
+    const jokers = [this.primaryJoker, this.secondaryJoker];
+    const isJoker = (tile: Tile) =>
+      jokers.some((joker) => Tile.equal(joker, tile));
 
+    this.getPlayer(playerIndex).tiles.sort((a, b) => {
+      if (isJoker(a) !== isJoker(b)) {
+        if (isJoker(a)) return -1;
+        return 1;
+      }
+
+      return Tile.sort(a, b);
+    });
+  }
+
+  isWinningHand(tiles: Tile[], melds: number): boolean {
     const nonJokers = tiles.filter((tile) => !this.isJoker(tile));
 
     let win = false;
 
-    if (tiles.length === 13 && Tile.isChaotic(nonJokers)) {
+    if (tiles.length === 14 && Tile.isChaotic(nonJokers)) {
       // Chaotic thirteen
       win = true;
     } else {

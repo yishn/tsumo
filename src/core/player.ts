@@ -2,6 +2,7 @@ import { Tile } from "./tile.ts";
 
 export class Player {
   tiles: Tile[] = [];
+  lastDrawnTileIndex?: number;
   discards: Tile[] = [];
   melds: Tile[][] = [];
   score: number = 50;

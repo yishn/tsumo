@@ -1,5 +1,10 @@
-import { PhaseName } from "../core/game-state.ts";
-import { ITile } from "../core/tile.ts";
+import type {
+  ITile,
+  ActionPhase,
+  EndActionPhase,
+  PhaseName,
+  ReactionPhase,
+} from "../core/main.ts";
 
 export interface Heartbeat {
   now: number;
@@ -27,6 +32,7 @@ export type GamePlayersInfo = Record<
 
 export interface GamePlayerInfo {
   tiles: ITile[];
+  lastDrawnTileIndex: number | null;
 }
 
 export interface GameInfo {
@@ -54,9 +60,13 @@ export interface ServerMessage {
   game?: {
     info?: GameInfo;
     players?: GamePlayersInfo;
-    player?: GamePlayerInfo
+    player?: GamePlayerInfo;
   };
 }
+
+type ClassToMessage<T> = {
+  [K in keyof T]?: T[K] extends (...args: infer P) => any ? P : never;
+};
 
 export interface ClientMessage {
   heartbeat?: Heartbeat;
@@ -70,6 +80,13 @@ export interface ClientMessage {
       name?: string;
       avatar: number;
       ready?: boolean;
+    };
+  };
+  game?: {
+    operation?: {
+      [PhaseName.Action]?: ClassToMessage<ActionPhase>;
+      [PhaseName.EndAction]?: ClassToMessage<EndActionPhase>;
+      [PhaseName.Reaction]?: ClassToMessage<ReactionPhase>;
     };
   };
 }
