@@ -27,6 +27,7 @@ export type GamePlayersInfo = Record<
     tiles: number;
     discards: ITile[];
     melds: ITile[][];
+    order: [type: "discard" | "meld", index: number][];
   }
 >;
 
@@ -42,7 +43,8 @@ export interface GameInfo {
   jokers: [ITile, ITile];
   round: number;
   maxRound: number;
-  lastDiscard: null | [playerId: string, discardIndex: number];
+  lastDiscard: ITile | null;
+  lastDiscardInfo: [playerId: string, discardIndex: number] | null;
 }
 
 export interface ServerMessage {

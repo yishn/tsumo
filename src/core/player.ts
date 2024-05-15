@@ -5,6 +5,7 @@ export class Player {
   lastDrawnTileIndex?: number;
   discards: Tile[] = [];
   melds: Tile[][] = [];
+  order: [type: "discard" | "meld", index: number][] = [];
   score: number = 50;
 
   getTile(index: number): Tile {
@@ -17,5 +18,15 @@ export class Player {
     const tile = this.getTile(index);
     this.tiles.splice(index, 1);
     return tile;
+  }
+
+  pushDiscard(tile: Tile): void {
+    this.discards.push(tile);
+    this.order.push(["discard", this.discards.length - 1]);
+  }
+
+  pushMeld(meld: Tile[]): void {
+    this.melds.push(meld);
+    this.order.push(["meld", this.melds.length - 1]);
   }
 }

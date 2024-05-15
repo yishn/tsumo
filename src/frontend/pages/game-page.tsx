@@ -3,6 +3,7 @@ import {
   Else,
   For,
   If,
+  Signal,
   Style,
   css,
   defineComponents,
@@ -33,6 +34,7 @@ import {
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
+import { TileStack } from "../components/tile-stack.tsx";
 
 export interface RemotePlayer {
   name: string;
@@ -87,11 +89,15 @@ export class GamePage extends Component("game-page", {
       }
     });
 
-    const [selectedTileIndex, setSelectedTileIndex] = useSignal<number>(-1);
+    const [selectedTileIndices, setSelectedTileIndices] = useSignal<number[]>(
+      []
+    );
 
     useEffect(() => {
-      setSelectedTileIndex(
-        this.props.ownPlayerInfo()?.lastDrawnTileIndex ?? -1
+      setSelectedTileIndices(
+        this.props.ownPlayerInfo()?.lastDrawnTileIndex == null
+          ? []
+          : [this.props.ownPlayerInfo()!.lastDrawnTileIndex!]
       );
     });
 
@@ -115,18 +121,48 @@ export class GamePage extends Component("game-page", {
               >
                 <TileRow slot="discards">
                   <For
-                    each={() =>
-                      this.props.gamePlayersInfo()?.[player().id ?? -1]
-                        .discards ?? []
-                    }
+                    each={() => {
+                      const gamePlayerInfo =
+                        this.props.gamePlayersInfo()?.[player().id];
+                      const lastDiscardInfo =
+                        this.props.gameInfo()?.lastDiscardInfo;
+
+                      return (gamePlayerInfo?.order ?? []).map(([type, i]) =>
+                        type === "discard"
+                          ? {
+                              ...gamePlayerInfo!.discards[i],
+                              highlight:
+                                lastDiscardInfo?.[0] === player().id &&
+                                lastDiscardInfo?.[1] === i,
+                            }
+                          : gamePlayerInfo!.melds[i]
+                      );
+                    }}
                   >
-                    {(tile) => (
-                      <Tile
-                        animateEnter
-                        suit={() => tile().suit}
-                        rank={() => tile().rank}
-                      />
-                    )}
+                    {(tileOrMeld) => {
+                      const tileOrMeldValue = tileOrMeld();
+
+                      return Array.isArray(tileOrMeldValue) ? (
+                        <TileStack>
+                          <For each={tileOrMeld as Signal<TileClass[]>}>
+                            {(tile) => (
+                              <Tile
+                                animateEnter
+                                suit={() => tile().suit}
+                                rank={() => tile().rank}
+                              />
+                            )}
+                          </For>
+                        </TileStack>
+                      ) : (
+                        <Tile
+                          animateEnter
+                          highlight={() => tileOrMeldValue.highlight}
+                          suit={() => tileOrMeldValue.suit}
+                          rank={() => tileOrMeldValue.rank}
+                        />
+                      );
+                    }}
                   </For>
                 </TileRow>
 
@@ -170,18 +206,48 @@ export class GamePage extends Component("game-page", {
           >
             <TileRow slot="discards">
               <For
-                each={() =>
-                  this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? -1]
-                    .discards ?? []
-                }
+                each={() => {
+                  const gamePlayerInfo =
+                    this.props.gamePlayersInfo()?.[this.props.ownPlayerId()!];
+                  const lastDiscardInfo =
+                    this.props.gameInfo()?.lastDiscardInfo;
+
+                  return (gamePlayerInfo?.order ?? []).map(([type, i]) =>
+                    type === "discard"
+                      ? {
+                          ...gamePlayerInfo!.discards[i],
+                          highlight:
+                            lastDiscardInfo?.[0] === this.props.ownPlayerId() &&
+                            lastDiscardInfo?.[1] === i,
+                        }
+                      : gamePlayerInfo!.melds[i]
+                  );
+                }}
               >
-                {(tile) => (
-                  <Tile
-                    animateEnter
-                    suit={() => tile().suit}
-                    rank={() => tile().rank}
-                  />
-                )}
+                {(tileOrMeld) => {
+                  const tileOrMeldValue = tileOrMeld();
+
+                  return Array.isArray(tileOrMeldValue) ? (
+                    <TileStack>
+                      <For each={tileOrMeld as Signal<TileClass[]>}>
+                        {(tile) => (
+                          <Tile
+                            animateEnter
+                            suit={() => tile().suit}
+                            rank={() => tile().rank}
+                          />
+                        )}
+                      </For>
+                    </TileStack>
+                  ) : (
+                    <Tile
+                      animateEnter
+                      highlight={() => tileOrMeldValue.highlight}
+                      suit={() => tileOrMeldValue.suit}
+                      rank={() => tileOrMeldValue.rank}
+                    />
+                  );
+                }}
               </For>
             </TileRow>
 
@@ -206,12 +272,31 @@ export class GamePage extends Component("game-page", {
                       }
                       suit={() => tile().suit}
                       rank={() => tile().rank}
-                      selected={() => selectedTileIndex() === i()}
+                      selected={() => selectedTileIndices().includes(i())}
                       onclick={() => {
-                        if (selectedTileIndex() !== i()) {
-                          playPopSound();
-                        }
-                        setSelectedTileIndex(i());
+                        playPopSound();
+
+                        setSelectedTileIndices((indices) =>
+                          indices.includes(i())
+                            ? indices.filter((index) => index !== i())
+                            : this.props.gameInfo()?.phase !==
+                                  PhaseName.Action ||
+                                indices.length !== 1 ||
+                                this.props.gameInfo()?.lastDiscard == null ||
+                                !TileClass.isSet(
+                                  TileClass.fromJSON(
+                                    this.props.gameInfo()!.lastDiscard!
+                                  ),
+                                  TileClass.fromJSON(tile()),
+                                  TileClass.fromJSON(
+                                    this.props.ownPlayerInfo()!.tiles[
+                                      indices[0]
+                                    ]
+                                  )
+                                )
+                              ? [i()]
+                              : [...indices, i()]
+                        );
                       }}
                     />
                   )}
@@ -260,14 +345,14 @@ export class GamePage extends Component("game-page", {
                 disabled={() =>
                   !isSelfTurn() ||
                   phase() !== PhaseName.EndAction ||
-                  this.props.ownPlayerInfo()?.tiles[selectedTileIndex()] == null
+                  selectedTileIndices().length !== 1
                 }
                 onButtonClick={() => {
                   webSocketHook.sendMessage({
                     game: {
                       operation: {
                         [PhaseName.EndAction]: {
-                          discard: [selectedTileIndex()],
+                          discard: [selectedTileIndices()[0]],
                         },
                       },
                     },
@@ -280,7 +365,19 @@ export class GamePage extends Component("game-page", {
 
             <ActionBarButton
               tooltip="Eat"
-              disabled={() => !isSelfTurn() || phase() !== PhaseName.Action}
+              disabled={() =>
+                !isSelfTurn() ||
+                phase() !== PhaseName.Action ||
+                selectedTileIndices().length !== 2 ||
+                this.props.gameInfo()?.lastDiscard == null ||
+                this.props.ownPlayerInfo() == null ||
+                !TileClass.isSet(
+                  TileClass.fromJSON(this.props.gameInfo()!.lastDiscard!),
+                  ...(selectedTileIndices().map((i) =>
+                    TileClass.fromJSON(this.props.ownPlayerInfo()!.tiles[i])
+                  ) as [TileClass, TileClass])
+                )
+              }
             >
               <EatIcon alt="Eat" />
             </ActionBarButton>

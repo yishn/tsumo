@@ -354,8 +354,9 @@ function useGame(session: GameSession): () => void {
       jokers: [gameState().primaryJoker, gameState().secondaryJoker],
       round: gameState().round,
       maxRound: gameState().maxRound,
-      lastDiscard:
-        gameState().lastDiscard == null
+      lastDiscard: gameState().lastDiscard?.toJSON() ?? null,
+      lastDiscardInfo:
+        gameState().lastDiscardInfo == null
           ? null
           : [
               orderedPlayers()[gameState().lastDiscardInfo![0]].id,
@@ -374,6 +375,7 @@ function useGame(session: GameSession): () => void {
             tiles: gameState().players[i].tiles.length,
             discards: gameState().players[i].discards,
             melds: gameState().players[i].melds,
+            order: gameState().players[i].order,
           },
         ])
       )

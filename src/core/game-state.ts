@@ -104,7 +104,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     player.removeTile(tileIndex2);
     this.state.removeLastDiscard();
 
-    player.melds.push([tile1, tile2, lastDiscard]);
+    player.pushMeld([tile1, tile2, lastDiscard]);
     player.lastDrawnTileIndex = undefined;
 
     return this.nextPhase(EndActionPhase);
@@ -133,8 +133,12 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     const player = this.state.currentPlayer;
     const tile = player.removeTile(tileIndex);
 
-    player.discards.push(tile);
+    player.pushDiscard(tile);
     this.state.sortPlayerTiles(this.state.currentPlayerIndex);
+    this.state.lastDiscardInfo = [
+      this.state.currentPlayerIndex,
+      player.discards.length - 1,
+    ];
 
     return this.nextPhase(ReactionPhase);
   }
@@ -162,7 +166,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     player.removeTile(tileIndex3);
     player.removeTile(tileIndex4);
 
-    player.melds.push([tile1, tile2, tile3, tile4]);
+    player.pushMeld([tile1, tile2, tile3, tile4]);
 
     // Draw from the bottom of the deck
     const tile = this.state.shiftDeck()!;
@@ -232,7 +236,7 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
     if (tileIndex3 != null) player.removeTile(tileIndex3);
 
     const discard = this.state.removeLastDiscard();
-    player.melds.push(
+    player.pushMeld(
       tile3 == null ? [tile1, tile2, discard] : [tile1, tile2, tile3, discard]
     );
 
