@@ -2,7 +2,7 @@ import { MaybeSignal, Signal, useEffect, useSignal } from "sinho";
 
 export interface WebSocketHook<T, U> {
   connected: Signal<boolean>;
-  error: Signal<Event | undefined>;
+  error: Signal<Event | Error | undefined>;
 
   useServerSignal: <V>(path: (msg: T) => V) => Signal<V | undefined>;
 
@@ -25,38 +25,42 @@ export function useWebSocket<T, U>(
     handler: (data: any) => void;
   }> = new Set();
   const [connected, setConnected] = useSignal(false);
-  const [error, setError] = useSignal<Event>();
+  const [error, setError] = useSignal<Event | Error>();
   const queuedMessages: U[] = [];
 
   useEffect(() => {
-    socket = new WebSocket(MaybeSignal.get(url));
+    try {
+      socket = new WebSocket(MaybeSignal.get(url));
 
-    socket.addEventListener("open", () => {
-      setConnected(true);
-      setError(undefined);
+      socket.addEventListener("open", () => {
+        setConnected(true);
+        setError(undefined);
 
-      queuedMessages.length = 0;
-    });
+        queuedMessages.length = 0;
+      });
 
-    socket.addEventListener("close", () => {
-      setConnected(false);
-    });
+      socket.addEventListener("close", () => {
+        setConnected(false);
+      });
 
-    socket.addEventListener("error", (evt) => {
-      setError(evt);
-    });
+      socket.addEventListener("error", (evt) => {
+        setError(evt);
+      });
 
-    socket.addEventListener("message", (evt) => {
-      const data = JSON.parse(evt.data);
+      socket.addEventListener("message", (evt) => {
+        const data = JSON.parse(evt.data);
 
-      for (const { path, handler } of handlers) {
-        const value = path(data);
+        for (const { path, handler } of handlers) {
+          const value = path(data);
 
-        if (value !== undefined) {
-          handler(value);
+          if (value !== undefined) {
+            handler(value);
+          }
         }
-      }
-    });
+      });
+    } catch (err) {
+      setError(err as Error);
+    }
 
     return () => {
       socket.close();
