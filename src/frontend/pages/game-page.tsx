@@ -17,6 +17,7 @@ import {
   DrawIcon,
   EatIcon,
   KongIcon,
+  PongIcon,
   WinIcon,
   getAvatarUrl,
 } from "../assets.ts";
@@ -35,6 +36,8 @@ import {
 import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
+import { ReactionWindow } from "../components/reaction-window.tsx";
+import clsx from "clsx";
 
 export interface RemotePlayer {
   name: string;
@@ -82,6 +85,7 @@ export class GamePage extends Component("game-page", {
       () => this.props.gameInfo()?.currentPlayer === this.props.ownPlayerId()
     );
     const phase = () => this.props.gameInfo()?.phase;
+    const lastDiscard = () => this.props.gameInfo()?.lastDiscard;
 
     useEffect(() => {
       if (this.props.gameInfo()?.phase === PhaseName.Deal) {
@@ -103,7 +107,7 @@ export class GamePage extends Component("game-page", {
 
     return (
       <>
-        <div part="players">
+        <div part="players" class={() => phase()}>
           <For each={remotePlayerInfos}>
             {(player, i) => (
               <PlayerRow
@@ -188,6 +192,53 @@ export class GamePage extends Component("game-page", {
               </PlayerRow>
             )}
           </For>
+
+          <If condition={() => phase() === PhaseName.Reaction}>
+            <ReactionWindow
+              suit={() => lastDiscard()?.suit}
+              rank={() => lastDiscard()?.rank}
+            >
+              <ActionBarButton
+                slot="action"
+                tooltip="Pong"
+                disabled={() =>
+                  isSelfTurn() ||
+                  (this.props
+                    .ownPlayerInfo()
+                    ?.tiles.filter(
+                      (tile) =>
+                        tile.suit === lastDiscard()?.suit &&
+                        tile.rank === lastDiscard()?.rank
+                    ).length ?? 0) < 2
+                }
+              >
+                <PongIcon alt="Pong" />
+              </ActionBarButton>
+              <ActionBarButton
+                slot="action"
+                tooltip="Kong"
+                disabled={() =>
+                  isSelfTurn() ||
+                  (this.props
+                    .ownPlayerInfo()
+                    ?.tiles.filter(
+                      (tile) =>
+                        tile.suit === lastDiscard()?.suit &&
+                        tile.rank === lastDiscard()?.rank
+                    ).length ?? 0) < 3
+                }
+              >
+                <KongIcon alt="Kong" />
+              </ActionBarButton>
+              <ActionBarButton
+                slot="action"
+                tooltip="Win"
+                disabled={() => isSelfTurn()}
+              >
+                <WinIcon alt="Win" />
+              </ActionBarButton>
+            </ReactionWindow>
+          </If>
         </div>
 
         <div part="self">
@@ -282,11 +333,9 @@ export class GamePage extends Component("game-page", {
                             : this.props.gameInfo()?.phase !==
                                   PhaseName.Action ||
                                 indices.length !== 1 ||
-                                this.props.gameInfo()?.lastDiscard == null ||
+                                lastDiscard() == null ||
                                 !TileClass.isSet(
-                                  TileClass.fromJSON(
-                                    this.props.gameInfo()!.lastDiscard!
-                                  ),
+                                  TileClass.fromJSON(lastDiscard()!),
                                   TileClass.fromJSON(tile()),
                                   TileClass.fromJSON(
                                     this.props.ownPlayerInfo()!.tiles[
@@ -369,10 +418,10 @@ export class GamePage extends Component("game-page", {
                 !isSelfTurn() ||
                 phase() !== PhaseName.Action ||
                 selectedTileIndices().length !== 2 ||
-                this.props.gameInfo()?.lastDiscard == null ||
+                lastDiscard() == null ||
                 this.props.ownPlayerInfo() == null ||
                 !TileClass.isSet(
-                  TileClass.fromJSON(this.props.gameInfo()!.lastDiscard!),
+                  TileClass.fromJSON(lastDiscard()!),
                   ...(selectedTileIndices().map((i) =>
                     TileClass.fromJSON(this.props.ownPlayerInfo()!.tiles[i])
                   ) as [TileClass, TileClass])
@@ -420,6 +469,7 @@ export class GamePage extends Component("game-page", {
             }
           }
           [part="players"] {
+            position: relative;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -432,6 +482,13 @@ export class GamePage extends Component("game-page", {
           [part="players"] > mj-player-row {
             scroll-snap-align: center;
             animation: 0.5s enter-player both;
+          }
+
+          mj-reaction-window {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
           }
 
           @keyframes enter-self {

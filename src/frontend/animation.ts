@@ -1,4 +1,4 @@
-import { MaybeSignal, Signal, useSignal } from "sinho";
+import { Signal, useSignal } from "sinho";
 
 export function useInProgress(): [
   inProgress: Signal<boolean>,
@@ -20,49 +20,4 @@ export function useInProgress(): [
       setInProgress(false);
     },
   ];
-}
-
-export function useTransition(
-  element: MaybeSignal<HTMLElement | undefined>
-): [inProgress: Signal<boolean>, start: () => Promise<void>] {
-  const [inProgress, start] = useInProgress();
-  
-  return [
-    inProgress,
-    async () => {
-      const el = MaybeSignal.get(element);
-
-      if (el != null) {
-        await start(endOfTransition(el));
-      }
-    },
-  ];
-}
-
-export function useAnimation(
-  element: MaybeSignal<HTMLElement | undefined>
-): [inProgress: Signal<boolean>, start: () => Promise<void>] {
-  const [inProgress, start] = useInProgress();
-  return [
-    inProgress,
-    async () => {
-      const el = MaybeSignal.get(element);
-
-      if (el != null) {
-        await start(endOfAnimation(el));
-      }
-    },
-  ];
-}
-
-export async function endOfTransition(element: HTMLElement): Promise<void> {
-  await new Promise((resolve) => {
-    element.addEventListener("transitionend", resolve, { once: true });
-  });
-}
-
-export async function endOfAnimation(element: HTMLElement): Promise<void> {
-  await new Promise((resolve) => {
-    element.addEventListener("animationend", resolve, { once: true });
-  });
 }

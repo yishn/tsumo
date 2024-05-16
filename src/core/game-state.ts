@@ -269,6 +269,12 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
 
     return this.nextPhase(ScorePhase);
   }
+
+  pass(): GameState<ActionPhase> {
+    this.state.moveToNextPlayer();
+
+    return this.nextPhase(ActionPhase);
+  }
 }
 
 export class ScorePhase extends PhaseBase(PhaseName.Score) {

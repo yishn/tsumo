@@ -9,7 +9,6 @@ import {
 } from "sinho";
 import { Tile } from "./tile.tsx";
 import { TileStack } from "./tile-stack.tsx";
-import { endOfAnimation } from "../animation.ts";
 
 export class TileRow extends Component("tile-row", {
   minimal: prop<boolean>(false, { attribute: () => true }),
@@ -36,9 +35,10 @@ export class TileRow extends Component("tile-row", {
             const oldAnimationDelay = tile.style.animationDelay;
 
             tile.style.animationDelay = `${i * 0.1}s`;
-            endOfAnimation(tile).then(
-              () => (tile.style.animationDelay = oldAnimationDelay)
-            );
+
+            setTimeout(() => {
+              tile.style.animationDelay = oldAnimationDelay;
+            }, 200);
           }
         });
       }

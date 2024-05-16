@@ -3,20 +3,17 @@ import {
   Else,
   ElseIf,
   If,
-  Portal,
   Style,
-  Template,
   css,
   defineComponents,
   prop,
   useEffect,
   useMemo,
-  useRef,
   useSignal,
 } from "sinho";
 import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/main.ts";
-import { useTransition } from "../animation.ts";
+import { useInProgress } from "../animation.ts";
 import { playTileSound } from "../sounds.ts";
 import {
   BambooIcon,
@@ -59,19 +56,17 @@ class TileComponent extends Component("tile", {
   }
 
   render() {
-    const containerRef = useRef<HTMLDivElement>();
     const tile = useMemo(() => this.getTile());
     const back = useMemo(this.props.back);
     const [actualBack, setActualBack] = useSignal(this.props.back());
-    const [backTransitionInProgress, startBackTransition] =
-      useTransition(containerRef);
+    const [backTransitionInProgress, startBackTransition] = useInProgress();
 
     let firstRender = true;
 
     useEffect(() => {
       if (!firstRender) {
         (async () => {
-          await startBackTransition();
+          await startBackTransition(transitionDuration);
           setActualBack(back());
           setTimeout(() => playTileSound(), transitionDuration * 0.8);
         })();
@@ -83,7 +78,6 @@ class TileComponent extends Component("tile", {
     return (
       <>
         <div
-          ref={containerRef}
           part="tile"
           class={() =>
             clsx(tile()?.suit, {
@@ -268,7 +262,7 @@ class TileComponent extends Component("tile", {
               var(--tile-shadow);
             background-color: var(--tile-back-color);
           }
-          [part="tile"].sparrow {
+          [part="tile"]:not(.back).sparrow {
             background-image: url("./assets/img/sparrow.png");
             background-position: center calc(100% + 0.15em);
             background-repeat: no-repeat;

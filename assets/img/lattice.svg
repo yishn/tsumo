@@ -1,0 +1,17 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="70"
+  height="70"
+  viewBox="0 0 70 70"
+  stroke-width="1.5"
+  stroke="#d4353a"
+>
+  <path
+    id="a"
+    d="M0 10h10v-10v10h10v-10v10h10v-10v10h-10v10h-10v-10v10h-10h10v10h-10h10v-5h15v-15v5h-10v10M5 30v10"
+    fill="none"
+  />
+  <use href="#a" transform="rotate(90 35 35)" />
+  <use href="#a" transform="rotate(180 35 35)" />
+  <use href="#a" transform="rotate(270 35 35)" />
+</svg>
