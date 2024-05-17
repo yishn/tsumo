@@ -26,6 +26,19 @@ export function generateShuffledFullDeck(): Tile[] {
   );
 }
 
+interface AllowPlayerMessageOptions {
+  currentPlayerOnly?: boolean;
+  verifyPlayerIndex?: number;
+}
+
+function allowPlayerMessage(opts: AllowPlayerMessageOptions = {}) {
+  return (method: any, context: ClassMethodDecoratorContext<PhaseBase>) => {
+    context.addInitializer(function () {
+      this.allowPlayerMessageFns.set(context.name as string, opts);
+    });
+  };
+}
+
 export enum PhaseName {
   Deal = "deal",
   Action = "action",
@@ -37,6 +50,7 @@ export enum PhaseName {
 export function PhaseBase<N extends PhaseName>(name: N) {
   return class _PhaseBase implements PhaseBase {
     name: N = name;
+    allowPlayerMessageFns: Map<string, AllowPlayerMessageOptions> = new Map();
 
     constructor(public state: GameState<any>) {}
 
@@ -51,6 +65,7 @@ export function PhaseBase<N extends PhaseName>(name: N) {
 
 export interface PhaseBase {
   name: PhaseName;
+  allowPlayerMessageFns: Map<string, AllowPlayerMessageOptions>;
 
   nextPhase<P extends PhaseBase>(
     phase: new (state: GameState) => P
@@ -77,6 +92,7 @@ export class DealPhase extends PhaseBase(PhaseName.Deal) {
 }
 
 export class ActionPhase extends PhaseBase(PhaseName.Action) {
+  @allowPlayerMessage({ currentPlayerOnly: true })
   draw(): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
     const tile = this.state.popDeck();
@@ -91,6 +107,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     return this.nextPhase(EndActionPhase);
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   eat(tileIndex1: number, tileIndex2: number): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
     const lastDiscard = this.state.lastDiscard;
@@ -110,6 +127,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     return this.nextPhase(EndActionPhase);
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   kong(
     tileIndex1: number,
     tileIndex2: number,
@@ -123,12 +141,14 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     );
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
     return new ReactionPhase(this.state).win(this.state.currentPlayerIndex);
   }
 }
 
 export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
+  @allowPlayerMessage({ currentPlayerOnly: true })
   discard(tileIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
     const tile = player.removeTile(tileIndex);
@@ -143,6 +163,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     return this.nextPhase(ReactionPhase);
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   kong(
     tileIndex1: number,
     tileIndex2: number,
@@ -178,6 +199,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     return this.nextPhase(EndActionPhase);
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   meldKong(tileIndex: number, meldIndex: number): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
     const tile = player.getTile(tileIndex);
@@ -204,6 +226,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     return this.nextPhase(EndActionPhase);
   }
 
+  @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
     const player = this.state.currentPlayer;
     const win = this.state.isWinningHand(player.tiles, player.melds.length);
@@ -214,6 +237,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
 }
 
 export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
+  @allowPlayerMessage({ verifyPlayerIndex: 0 })
   pongKong(
     playerIndex: number,
     tileIndex1: number,
@@ -255,6 +279,7 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
     return this.nextPhase(EndActionPhase);
   }
 
+  @allowPlayerMessage({ verifyPlayerIndex: 0 })
   win(playerIndex: number): GameState<ScorePhase> {
     const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");

@@ -40,6 +40,7 @@ export default {
           },
           target: "es2022",
           transform: {
+            decoratorVersion: "2022-03",
             react: {
               runtime: "automatic",
               importSource: "sinho",

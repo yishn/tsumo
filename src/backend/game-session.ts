@@ -357,6 +357,12 @@ function useGame(session: GameSession): () => void {
             ],
     }));
 
+    const currentPlayerPeer = useMemo(() =>
+      [...session.peers().values()].find(
+        (peer) => peer.id === gameInfo().currentPlayer
+      )
+    );
+
     useClientSignal((msg) => msg.game?.info, gameInfo);
 
     const gamePlayersInfo = useMemo<GamePlayersInfo>(() =>
@@ -412,9 +418,23 @@ function useGame(session: GameSession): () => void {
       (msg) => msg.game?.operation,
       (evt) => {
         for (const phaseName in evt.data) {
-          for (const key in evt.data[phaseName as keyof (typeof evt)["data"]]) {
+          for (const key in (evt.data as any)[phaseName]) {
             updateGameState("*", (state) => {
-              (state.phase as any)[key](...(evt.data as any)[phaseName][key]);
+              const parameters = (evt.data as any)[phaseName][key] as any[];
+              const playerMessageOpts =
+                state.phase.allowPlayerMessageFns.get(key);
+
+              if (
+                playerMessageOpts != null &&
+                (!playerMessageOpts.currentPlayerOnly ||
+                  currentPlayerPeer()?.ws === evt.target) &&
+                (playerMessageOpts.verifyPlayerIndex == null ||
+                  orderedPlayers()[
+                    parameters[playerMessageOpts.verifyPlayerIndex]
+                  ].id === currentPlayerPeer()?.id)
+              ) {
+                (state.phase as any)[key](...parameters);
+              }
             });
           }
         }

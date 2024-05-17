@@ -19,9 +19,11 @@ export default {
         jsc: {
           parser: {
             syntax: "typescript",
-            tsx: true,
           },
           target: "es2022",
+          transform: {
+            decoratorVersion: "2022-03",
+          },
         },
       },
     }),
