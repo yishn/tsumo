@@ -33,12 +33,14 @@ export class TileRow extends Component("tile-row", {
         tiles.forEach((tile, i) => {
           if (tile.animateEnter) {
             const oldAnimationDelay = tile.style.animationDelay;
+            const delay = i * 100;
 
-            tile.style.animationDelay = `${i * 0.1}s`;
+            tile.style.animationDelay = `${delay}ms`;
 
-            setTimeout(() => {
-              tile.style.animationDelay = oldAnimationDelay;
-            }, 200);
+            setTimeout(
+              () => (tile.style.animationDelay = oldAnimationDelay),
+              delay + 200 + 50
+            );
           }
         });
       }
