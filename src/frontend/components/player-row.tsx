@@ -158,7 +158,6 @@ export class PlayerRow extends Component("player-row", {
           [part="container"] {
             position: relative;
             display: flex;
-            justify-content: center;
             gap: 1em;
             background-color: var(--player-row-background-color);
             padding: 0.5em;

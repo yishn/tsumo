@@ -390,7 +390,7 @@ export class GamePage extends Component("game-page", {
               </TileRow>
             </If>
 
-            <div slot="player-extra" style={{ flex: 1, maxWidth: "13em" }} />
+            <div slot="player-extra" style={{ flex: 1 }} />
             <span slot="player-extra" class="rounds">
               {() => this.props.gameInfo()?.round ?? 1}/
               {() => this.props.gameInfo()?.maxRound ?? 1}

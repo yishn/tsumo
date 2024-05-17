@@ -97,7 +97,10 @@ class TileComponent extends Component("tile", {
               !backTransitionInProgress() ? undefined : "translateY(-1em)",
           }}
         >
-          <If condition={actualBack}></If>
+          <If condition={actualBack}>
+            {/* Keep dummy div to preserve layout */}
+            <div part="suit"></div>
+          </If>
           <ElseIf condition={() => this.props.custom()}>
             <div part="suit">
               <slot />
