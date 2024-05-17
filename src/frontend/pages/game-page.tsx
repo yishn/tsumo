@@ -76,11 +76,13 @@ export class GamePage extends Component("game-page", {
 
       return sorted;
     });
-    const selfPlayerInfo = useMemo(() =>
-      this.props
+    const selfPlayerInfo = useMemo(() => ({
+      ...this.props
         .players()
-        .find((player) => player.id === this.props.ownPlayerId())
-    );
+        .find((player) => player.id === this.props.ownPlayerId()),
+      ...this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? ""],
+      ...this.props.ownPlayerInfo(),
+    }));
     const isSelfTurn = useMemo(
       () => this.props.gameInfo()?.currentPlayer === this.props.ownPlayerId()
     );
@@ -119,9 +121,7 @@ export class GamePage extends Component("game-page", {
                 }
                 dealer={() => player().id === this.props.gameInfo()?.dealer}
                 loading={() => this.props.deadPlayers().includes(player().id)}
-                score={() =>
-                  this.props.gamePlayersInfo()?.[player().id]?.score ?? 0
-                }
+                score={() => selfPlayerInfo()?.score ?? 0}
               >
                 <TileRow slot="discards">
                   <For
@@ -172,16 +172,16 @@ export class GamePage extends Component("game-page", {
 
                 <If
                   condition={() =>
-                    (this.props.gamePlayersInfo()?.[player().id]?.tiles ?? 0) >
-                    0
+                    (this.props.gamePlayersInfo()?.[player().id]?.tilesCount ??
+                      0) > 0
                   }
                 >
                   <TileRow slot="tiles" minimal>
                     <For
                       each={() => [
                         ...Array(
-                          this.props.gamePlayersInfo()?.[player().id]?.tiles ??
-                            0
+                          this.props.gamePlayersInfo()?.[player().id]
+                            ?.tilesCount ?? 0
                         ),
                       ]}
                     >
@@ -203,17 +203,37 @@ export class GamePage extends Component("game-page", {
                 tooltip="Pong"
                 disabled={() =>
                   isSelfTurn() ||
-                  (this.props
-                    .ownPlayerInfo()
-                    ?.tiles.filter(
-                      (tile) =>
-                        tile.suit === lastDiscard()?.suit &&
-                        tile.rank === lastDiscard()?.rank
-                    ).length ?? 0) < 2
+                  (selfPlayerInfo()?.tiles?.filter(
+                    (tile) =>
+                      tile.suit === lastDiscard()?.suit &&
+                      tile.rank === lastDiscard()?.rank
+                  ).length ?? 0) < 2
                 }
+                onclick={() => {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [PhaseName.Reaction]: {
+                          pongKong: [
+                            selfPlayerInfo()!.index!,
+                            ...(selfPlayerInfo()
+                              ?.tiles?.filter(
+                                (tile) =>
+                                  tile.suit === lastDiscard()?.suit &&
+                                  tile.rank === lastDiscard()?.rank
+                              )
+                              .map((_, i) => i)
+                              .slice(0, 2) as [number, number]),
+                          ],
+                        },
+                      },
+                    },
+                  });
+                }}
               >
                 <PongIcon alt="Pong" />
               </ActionBarButton>
+
               <ActionBarButton
                 slot="action"
                 tooltip="Kong"
@@ -227,9 +247,31 @@ export class GamePage extends Component("game-page", {
                         tile.rank === lastDiscard()?.rank
                     ).length ?? 0) < 3
                 }
+                onclick={() => {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [PhaseName.Reaction]: {
+                          pongKong: [
+                            selfPlayerInfo()!.index!,
+                            ...(selfPlayerInfo()
+                              ?.tiles?.filter(
+                                (tile) =>
+                                  tile.suit === lastDiscard()?.suit &&
+                                  tile.rank === lastDiscard()?.rank
+                              )
+                              .map((_, i) => i)
+                              .slice(0, 3) as [number, number, number]),
+                          ],
+                        },
+                      },
+                    },
+                  });
+                }}
               >
                 <KongIcon alt="Kong" />
               </ActionBarButton>
+
               <ActionBarButton
                 slot="action"
                 tooltip="Win"
@@ -250,28 +292,23 @@ export class GamePage extends Component("game-page", {
             dealer={() =>
               this.props.ownPlayerId() === this.props.gameInfo()?.dealer
             }
-            score={() =>
-              this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? -1]
-                ?.score ?? 0
-            }
+            score={() => selfPlayerInfo()?.score ?? 0}
           >
             <TileRow slot="discards">
               <For
                 each={() => {
-                  const gamePlayerInfo =
-                    this.props.gamePlayersInfo()?.[this.props.ownPlayerId()!];
                   const lastDiscardInfo =
                     this.props.gameInfo()?.lastDiscardInfo;
 
-                  return (gamePlayerInfo?.order ?? []).map(([type, i]) =>
+                  return (selfPlayerInfo()?.order ?? []).map(([type, i]) =>
                     type === "discard"
                       ? {
-                          ...gamePlayerInfo!.discards[i],
+                          ...selfPlayerInfo()!.discards![i],
                           highlight:
                             lastDiscardInfo?.[0] === this.props.ownPlayerId() &&
                             lastDiscardInfo?.[1] === i,
                         }
-                      : gamePlayerInfo!.melds[i]
+                      : selfPlayerInfo()!.melds![i]
                   );
                 }}
               >
@@ -353,7 +390,7 @@ export class GamePage extends Component("game-page", {
               </TileRow>
             </If>
 
-            <div slot="player-extra" style={{ flex: 1 }} />
+            <div slot="player-extra" style={{ flex: 1, maxWidth: "13em" }} />
             <span slot="player-extra" class="rounds">
               {() => this.props.gameInfo()?.round ?? 1}/
               {() => this.props.gameInfo()?.maxRound ?? 1}
@@ -518,14 +555,14 @@ export class GamePage extends Component("game-page", {
             -webkit-backdrop-filter: unset;
             backdrop-filter: unset;
           }
-          [part="self"] mj-tile-row[slot="tiles"] {
+          [part="self"] [slot="tiles"] {
             --tile-width: initial;
             align-self: center;
             order: 2;
             margin-bottom: 0.5em;
             font-size: 0.9em;
           }
-          [part="self"] mj-tile-row[slot="tiles"] > mj-tile {
+          [part="self"] [slot="tiles"] > mj-tile {
             cursor: pointer;
           }
         `}</Style>

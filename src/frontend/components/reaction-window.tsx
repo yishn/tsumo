@@ -42,7 +42,7 @@ export class ReactionWindow extends Component("reaction-window", {
 
         <Style>{css`
           :host {
-            filter: drop-shadow(rgba(0, 0, 0, 0.9) 0 1em 2em);
+            filter: drop-shadow(rgba(0, 0, 0, 0.8) 0 1em 1em);
           }
 
           @keyframes show-window {

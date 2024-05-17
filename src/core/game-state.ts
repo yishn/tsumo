@@ -279,16 +279,11 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
 
 export class ScorePhase extends PhaseBase(PhaseName.Score) {
   score(): GameState<DealPhase> {
-    const player = this.state.currentPlayer;
-    player.score += 1;
+    const winner = this.state.currentPlayer;
 
-    if (player.score === 3) {
-      // TODO end game
-      throw new Error("not implemented");
-    }
+    // TODO
 
-    this.state.dealerIndex =
-      (this.state.dealerIndex + 1) % this.state.players.length;
+    this.state.moveToNextDealer();
     this.state.currentPlayerIndex = this.state.dealerIndex;
 
     return this.nextPhase(DealPhase);

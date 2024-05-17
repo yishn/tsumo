@@ -18,15 +18,8 @@ import {
   ServerMessage,
 } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
-import {
-  ActionPhase,
-  DealPhase,
-  GameState,
-  PhaseBase,
-  PhaseName,
-} from "../core/game-state.ts";
+import { DealPhase, GameState, PhaseBase } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
-import { ITile } from "../core/tile.ts";
 
 type Peers = Map<
   string,
@@ -371,8 +364,9 @@ function useGame(session: GameSession): () => void {
         orderedPlayers().map((player, i) => [
           player.id,
           {
+            index: i,
             score: gameState().players[i].score,
-            tiles: gameState().players[i].tiles.length,
+            tilesCount: gameState().players[i].tiles.length,
             discards: gameState().players[i].discards,
             melds: gameState().players[i].melds,
             order: gameState().players[i].order,

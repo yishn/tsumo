@@ -158,6 +158,7 @@ export class PlayerRow extends Component("player-row", {
           [part="container"] {
             position: relative;
             display: flex;
+            justify-content: center;
             gap: 1em;
             background-color: var(--player-row-background-color);
             padding: 0.5em;
@@ -195,6 +196,7 @@ export class PlayerRow extends Component("player-row", {
           }
           .minimal [part="player"] {
             flex-direction: row;
+            justify-content: center;
             gap: 0.5em;
           }
           .minimal [part="player"] mj-player-avatar {
@@ -219,7 +221,6 @@ export class PlayerRow extends Component("player-row", {
           }
 
           [part="tiles"] {
-            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.5em;

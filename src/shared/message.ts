@@ -23,8 +23,9 @@ export interface PlayerInfo {
 export type GamePlayersInfo = Record<
   string,
   {
+    index: number;
     score: number;
-    tiles: number;
+    tilesCount: number;
     discards: ITile[];
     melds: ITile[][];
     order: [type: "discard" | "meld", index: number][];
