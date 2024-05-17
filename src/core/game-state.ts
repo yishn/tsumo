@@ -133,12 +133,35 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
     tileIndex2: number,
     tileIndex3: number
   ): GameState<EndActionPhase> {
-    return new ReactionPhase(this.state).pongKong(
-      this.state.currentPlayerIndex,
-      tileIndex1,
-      tileIndex2,
-      tileIndex3
-    );
+    const player = this.state.currentPlayer;
+    if (this.state.lastDiscard == null) throw new Error("No discard");
+
+    const tile1 = player.getTile(tileIndex1);
+    const tile2 = player.getTile(tileIndex2);
+    const tile3 = player.getTile(tileIndex3);
+    if (
+      [tile1, tile2, tile3].some(
+        (tile) => !Tile.equal(tile, this.state.lastDiscard!)
+      )
+    ) {
+      throw new Error("Invalid kong");
+    }
+
+    player.removeTile(tileIndex1);
+    player.removeTile(tileIndex2);
+    player.removeTile(tileIndex3);
+
+    const discard = this.state.removeLastDiscard();
+    player.pushMeld([tile1, tile2, tile3, discard]);
+
+    // Draw from the bottom of the deck
+    const tile = this.state.shiftDeck()!;
+    // TODO handle empty deck
+    player.lastDrawnTileIndex = player.tiles.length;
+    player.tiles.push(tile);
+    this.state.scoreKong(this.state.currentPlayerIndex);
+
+    return this.nextPhase(EndActionPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -237,46 +260,53 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
 }
 
 export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
+  reactions: {
+    playerIndex: number;
+    tileIndices: number[];
+  }[] = [];
+
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
   pongKong(
     playerIndex: number,
-    tileIndex1: number,
-    tileIndex2: number,
-    tileIndex3?: number
-  ): GameState<EndActionPhase> {
+    ...tileIndices: number[]
+  ): GameState<ReactionPhase> {
     const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");
-
-    const tile1 = player.getTile(tileIndex1);
-    const tile2 = player.getTile(tileIndex2);
-    const tile3 = tileIndex3 == null ? undefined : player.getTile(tileIndex3);
-    if (!Tile.equal(tile1, tile2) || !Tile.equal(tile1, this.state.lastDiscard))
-      throw new Error("Invalid pong");
-    if (tile3 != null && !Tile.equal(tile1, tile3))
-      throw new Error("Invalid kong");
-
-    player.removeTile(tileIndex1);
-    player.removeTile(tileIndex2);
-    if (tileIndex3 != null) player.removeTile(tileIndex3);
-
-    const discard = this.state.removeLastDiscard();
-    player.pushMeld(
-      tile3 == null ? [tile1, tile2, discard] : [tile1, tile2, tile3, discard]
-    );
-
-    this.state.currentPlayerIndex = playerIndex;
-
-    // Handle kongs
-    if (tileIndex3 != null) {
-      // Draw from the bottom of the deck
-      const tile = this.state.shiftDeck()!;
-      // TODO handle empty deck
-      player.lastDrawnTileIndex = player.tiles.length;
-      player.tiles.push(tile);
-      this.state.scoreKong(playerIndex);
+    if (
+      tileIndices.some(
+        (i) =>
+          player.tiles[i] == null ||
+          !Tile.equal(player.tiles[i], this.state.lastDiscard!)
+      )
+    ) {
+      throw new Error("Invalid tiles");
     }
 
-    return this.nextPhase(EndActionPhase);
+    this.reactions.push({
+      playerIndex,
+      tileIndices,
+    });
+
+    this.reactions.sort((a, b) => {
+      // Prefer kong over pong
+      if (a.tileIndices.length !== b.tileIndices.length) {
+        return a.tileIndices.length - b.tileIndices.length;
+      }
+
+      // Prefer the player who is closer to the current player
+      const nextTurnA =
+        a.playerIndex < this.state.currentPlayerIndex
+          ? a.playerIndex + this.state.players.length
+          : a.playerIndex;
+      const nextTurnB =
+        b.playerIndex < this.state.currentPlayerIndex
+          ? b.playerIndex + this.state.players.length
+          : b.playerIndex;
+
+      return nextTurnB - nextTurnA;
+    });
+
+    return this.state;
   }
 
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
@@ -295,10 +325,53 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
     return this.nextPhase(ScorePhase);
   }
 
-  pass(): GameState<ActionPhase> {
-    this.state.moveToNextPlayer();
+  next(): GameState<EndActionPhase | ActionPhase> {
+    if (this.reactions.length > 0) {
+      const {
+        playerIndex,
+        tileIndices: [tileIndex1, tileIndex2, tileIndex3],
+      } = this.reactions[this.reactions.length - 1];
+      const player = this.state.getPlayer(playerIndex);
+      if (this.state.lastDiscard == null) throw new Error("No discard");
 
-    return this.nextPhase(ActionPhase);
+      const tile1 = player.getTile(tileIndex1);
+      const tile2 = player.getTile(tileIndex2);
+      const tile3 = tileIndex3 == null ? undefined : player.getTile(tileIndex3);
+      if (
+        !Tile.equal(tile1, tile2) ||
+        !Tile.equal(tile1, this.state.lastDiscard)
+      )
+        throw new Error("Invalid pong");
+      if (tile3 != null && !Tile.equal(tile1, tile3))
+        throw new Error("Invalid kong");
+
+      player.removeTile(tileIndex1);
+      player.removeTile(tileIndex2);
+      if (tileIndex3 != null) player.removeTile(tileIndex3);
+
+      const discard = this.state.removeLastDiscard();
+      player.pushMeld(
+        tile3 == null ? [tile1, tile2, discard] : [tile1, tile2, tile3, discard]
+      );
+
+      this.state.currentPlayerIndex = playerIndex;
+
+      // Handle kongs
+      if (tileIndex3 != null) {
+        // Draw from the bottom of the deck
+        const tile = this.state.shiftDeck()!;
+        // TODO handle empty deck
+        player.lastDrawnTileIndex = player.tiles.length;
+        player.tiles.push(tile);
+        this.state.scoreKong(playerIndex);
+      }
+
+      return this.nextPhase(EndActionPhase);
+    } else {
+      this.state.moveToNextPlayer();
+
+      return this.nextPhase(ActionPhase);
+    }
   }
 }
 

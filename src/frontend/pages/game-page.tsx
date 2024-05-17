@@ -216,14 +216,14 @@ export class GamePage extends Component("game-page", {
                         [PhaseName.Reaction]: {
                           pongKong: [
                             selfPlayerInfo()!.index!,
-                            ...(selfPlayerInfo()
-                              ?.tiles?.filter(
+                            ...selfPlayerInfo()!
+                              .tiles!.filter(
                                 (tile) =>
                                   tile.suit === lastDiscard()?.suit &&
                                   tile.rank === lastDiscard()?.rank
                               )
                               .map((_, i) => i)
-                              .slice(0, 2) as [number, number]),
+                              .slice(0, 2),
                           ],
                         },
                       },
@@ -254,14 +254,14 @@ export class GamePage extends Component("game-page", {
                         [PhaseName.Reaction]: {
                           pongKong: [
                             selfPlayerInfo()!.index!,
-                            ...(selfPlayerInfo()
-                              ?.tiles?.filter(
+                            ...selfPlayerInfo()!
+                              .tiles!.filter(
                                 (tile) =>
                                   tile.suit === lastDiscard()?.suit &&
                                   tile.rank === lastDiscard()?.rank
                               )
                               .map((_, i) => i)
-                              .slice(0, 3) as [number, number, number]),
+                              .slice(0, 3),
                           ],
                         },
                       },
