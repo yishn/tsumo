@@ -37,6 +37,7 @@ import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
+import { reactionTimeout } from "../../shared/constants.ts";
 
 export interface RemotePlayer {
   name: string;
@@ -199,6 +200,7 @@ export class GamePage extends Component("game-page", {
             <ReactionWindow
               suit={() => lastDiscard()?.suit}
               rank={() => lastDiscard()?.rank}
+              timeout={reactionTimeout}
             >
               <ActionBarButton
                 slot="action"

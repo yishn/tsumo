@@ -25,8 +25,7 @@ import {
   ReactionPhase,
 } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
-
-export const reactionTimeout = 5000;
+import { reactionTimeout } from "../shared/constants.ts";
 
 type Peers = Map<
   string,
@@ -423,7 +422,7 @@ function useGame(session: GameSession): () => void {
       if (gameState().phase instanceof ReactionPhase) {
         setTimeout(() => {
           updateGameState(ReactionPhase, (state) => state.phase.next());
-        }, reactionTimeout);
+        }, reactionTimeout + 200);
       }
     }, [gameState]);
 

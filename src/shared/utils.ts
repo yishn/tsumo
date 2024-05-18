@@ -29,5 +29,6 @@ export class LazyCell<T> {
 }
 
 export function diceSort(a: [number, number], b: [number, number]) {
-  return b.reduce((sum, n) => sum + n, 0) - a.reduce((sum, n) => sum + n, 0);
+  const sum = (arr: number[]) => arr.reduce((sum, n) => sum + n, 0);
+  return sum(b) - sum(a);
 }

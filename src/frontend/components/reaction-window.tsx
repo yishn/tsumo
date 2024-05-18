@@ -4,6 +4,7 @@ import {
   css,
   defineComponents,
   prop,
+  useEffect,
   useSignal,
 } from "sinho";
 import { ActionBar } from "./action-bar.tsx";
@@ -15,12 +16,26 @@ export class ReactionWindow extends Component("reaction-window", {
     attribute: (val) => val.toLowerCase() as TileSuit,
   }),
   rank: prop<number>(undefined, { attribute: Number }),
-  progress: prop<number>(0, { attribute: Number }),
+  timeout: prop<number>(5000, { attribute: Number }),
 }) {
   render() {
     const [showTile, setShowTile] = useSignal(false);
+    const [progress, setProgress] = useSignal(this.props.timeout());
 
     setTimeout(() => setShowTile(true), 500);
+
+    useEffect(() => {
+      setTimeout(() => {
+        setProgress(Math.max(this.props.timeout() - 1000, 0));
+      });
+
+      const intervalId = setInterval(() => {
+        if (progress() <= 0) clearInterval(intervalId);
+        setProgress((value) => Math.max(value - 1000, 0));
+      }, 1000);
+
+      return () => clearInterval(intervalId);
+    }, [this.props.timeout]);
 
     return (
       <>
@@ -28,6 +43,21 @@ export class ReactionWindow extends Component("reaction-window", {
           <h1>React</h1>
 
           <div part="content">
+            <svg viewBox="-20 -20 40 40" class="progress">
+              <circle
+                cx={0}
+                cy={0}
+                r={18}
+                fill="none"
+                pathLength={() => this.props.timeout()}
+                stroke="rgba(255, 163, 130, .5)"
+                stroke-width={4}
+                stroke-dasharray={() => this.props.timeout()}
+                stroke-dashoffset={() => this.props.timeout() - progress()}
+                transform="rotate(-90)"
+              />
+            </svg>
+
             <Tile
               back={() => !showTile()}
               suit={this.props.suit}
@@ -82,6 +112,11 @@ export class ReactionWindow extends Component("reaction-window", {
             font-style: italic;
           }
 
+          @keyframes fade-enter {
+            from {
+              opacity: 0;
+            }
+          }
           @keyframes content-enter {
             from {
               opacity: 0;
@@ -89,27 +124,34 @@ export class ReactionWindow extends Component("reaction-window", {
             }
           }
           [part="content"] {
+            position: relative;
             font-size: 1em;
             margin: 1em 0;
-            padding: 1em;
             filter: drop-shadow(rgba(0, 0, 0, 0.9) 0 1em 2em);
             animation: 0.5s content-enter;
           }
+          [part="content"] .progress {
+            width: 6em;
+            height: 6em;
+          }
+          [part="content"] .progress circle {
+            transition: stroke-dashoffset 1s linear;
+            animation: 0.5s backwards fade-enter 0.5s;
+          }
           [part="content"] mj-tile {
-            margin-bottom: 0.8em;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            padding-bottom: 1.3em;
+            transform: translate(-50%, -50%);
           }
 
-          @keyframes actions-enter {
-            from {
-              opacity: 0;
-            }
-          }
           mj-action-bar {
             --action-bar-icon-color: #ff7864;
             --action-bar-icon-disabled-color: #8c7672;
             gap: 0.5em;
             padding: 0;
-            animation: 0.5s backwards actions-enter 0.2s;
+            animation: 0.5s backwards fade-enter 0.2s;
           }
         `}</Style>
       </>
