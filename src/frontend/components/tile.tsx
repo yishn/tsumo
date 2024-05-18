@@ -322,6 +322,7 @@ class TileComponent extends Component("tile", {
             align-items: center;
           }
           [part="suit"] svg,
+          [part="rank"] svg,
           [part="suit"] ::slotted(*) {
             display: block;
             width: 70%;

@@ -37,7 +37,6 @@ import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
-import clsx from "clsx";
 
 export interface RemotePlayer {
   name: string;
