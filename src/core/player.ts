@@ -14,10 +14,10 @@ export class Player {
     return tile;
   }
 
-  removeTile(index: number): Tile {
-    const tile = this.getTile(index);
-    this.tiles.splice(index, 1);
-    return tile;
+  removeTiles(...indices: number[]): Tile[] {
+    const result = indices.map((i) => this.getTile(i));
+    this.tiles = this.tiles.filter((_, i) => !indices.includes(i));
+    return result;
   }
 
   pushDiscard(tile: Tile): void {

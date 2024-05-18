@@ -115,10 +115,10 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
 
     const tile1 = player.getTile(tileIndex1);
     const tile2 = player.getTile(tileIndex2);
-    if (!Tile.isSet(tile1, tile2, lastDiscard)) throw new Error("Invalid eat");
+    if (tileIndex1 === tileIndex2 || !Tile.isSet(tile1, tile2, lastDiscard))
+      throw new Error("Invalid eat");
 
-    player.removeTile(tileIndex1);
-    player.removeTile(tileIndex2);
+    player.removeTiles(tileIndex1, tileIndex2);
     this.state.removeLastDiscard();
 
     player.pushMeld([tile1, tile2, lastDiscard]);
@@ -147,11 +147,8 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
       throw new Error("Invalid kong");
     }
 
-    player.removeTile(tileIndex1);
-    player.removeTile(tileIndex2);
-    player.removeTile(tileIndex3);
-
     const discard = this.state.removeLastDiscard();
+    player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
     player.pushMeld([tile1, tile2, tile3, discard]);
 
     // Draw from the bottom of the deck
@@ -174,9 +171,11 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
   @allowPlayerMessage({ currentPlayerOnly: true })
   discard(tileIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
-    const tile = player.removeTile(tileIndex);
+    const [tile] = player.removeTiles(tileIndex);
 
+    player.lastDrawnTileIndex = undefined;
     player.pushDiscard(tile);
+
     this.state.sortPlayerTiles(this.state.currentPlayerIndex);
     this.state.lastDiscardInfo = [
       this.state.currentPlayerIndex,
@@ -205,11 +204,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     )
       throw new Error("Invalid kong");
 
-    player.removeTile(tileIndex1);
-    player.removeTile(tileIndex2);
-    player.removeTile(tileIndex3);
-    player.removeTile(tileIndex4);
-
+    player.removeTiles(tileIndex1, tileIndex2, tileIndex3, tileIndex4);
     player.pushMeld([tile1, tile2, tile3, tile4]);
 
     // Draw from the bottom of the deck
@@ -236,7 +231,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
     )
       throw new Error("Invalid kong");
 
-    player.removeTile(tileIndex);
+    player.removeTiles(tileIndex);
     meld.push(tile);
 
     // Draw from the bottom of the deck
@@ -345,9 +340,8 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
       if (tile3 != null && !Tile.equal(tile1, tile3))
         throw new Error("Invalid kong");
 
-      player.removeTile(tileIndex1);
-      player.removeTile(tileIndex2);
-      if (tileIndex3 != null) player.removeTile(tileIndex3);
+      player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
+      player.lastDrawnTileIndex = undefined;
 
       const discard = this.state.removeLastDiscard();
       player.pushMeld(
@@ -446,6 +440,11 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
     const [playerIndex, discardIndex] = this.lastDiscardInfo;
     delete this.lastDiscardInfo;
+    const player = this.getPlayer(playerIndex);
+    player.order = player.order.filter(
+      ([type, index]) => type !== "discard" || index !== discardIndex
+    );
+
     return this.players[playerIndex].discards.splice(discardIndex, 1)[0];
   }
 

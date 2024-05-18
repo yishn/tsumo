@@ -18,8 +18,15 @@ import {
   ServerMessage,
 } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
-import { DealPhase, GameState, PhaseBase } from "../core/game-state.ts";
+import {
+  DealPhase,
+  GameState,
+  PhaseBase,
+  ReactionPhase,
+} from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
+
+export const reactionTimeout = 5000;
 
 type Peers = Map<
   string,
@@ -412,6 +419,12 @@ function useGame(session: GameSession): () => void {
       setTimeout(() => {
         updateGameState(DealPhase, (state) => state.phase.deal());
       });
+
+      if (gameState().phase instanceof ReactionPhase) {
+        setTimeout(() => {
+          updateGameState(ReactionPhase, (state) => state.phase.next());
+        }, reactionTimeout);
+      }
     }, [gameState]);
 
     onClientMessage(

@@ -26,7 +26,7 @@ import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
 import { playPopSound, playShuffleSound } from "../sounds.ts";
-import { PhaseName, Tile as TileClass } from "../../core/main.ts";
+import { ITile, PhaseName, Tile as TileClass } from "../../core/main.ts";
 import {
   GameInfo,
   PlayerInfo,
@@ -143,30 +143,33 @@ export class GamePage extends Component("game-page", {
                       );
                     }}
                   >
-                    {(tileOrMeld) => {
-                      const tileOrMeldValue = tileOrMeld();
-
-                      return Array.isArray(tileOrMeldValue) ? (
-                        <TileStack>
-                          <For each={tileOrMeld as Signal<TileClass[]>}>
-                            {(tile) => (
-                              <Tile
-                                animateEnter
-                                suit={() => tile().suit}
-                                rank={() => tile().rank}
-                              />
-                            )}
-                          </For>
-                        </TileStack>
-                      ) : (
-                        <Tile
-                          animateEnter
-                          highlight={() => tileOrMeldValue.highlight}
-                          suit={() => tileOrMeldValue.suit}
-                          rank={() => tileOrMeldValue.rank}
-                        />
-                      );
-                    }}
+                    {(tileOrMeld) => (
+                      <>
+                        <If condition={() => Array.isArray(tileOrMeld())}>
+                          <TileStack>
+                            <For each={tileOrMeld as Signal<TileClass[]>}>
+                              {(tile) => (
+                                <Tile
+                                  animateEnter
+                                  suit={() => tile().suit}
+                                  rank={() => tile().rank}
+                                />
+                              )}
+                            </For>
+                          </TileStack>
+                        </If>
+                        <Else>
+                          <Tile
+                            animateEnter
+                            highlight={() =>
+                              (tileOrMeld() as { highlight: boolean }).highlight
+                            }
+                            suit={() => (tileOrMeld() as ITile).suit}
+                            rank={() => (tileOrMeld() as ITile).rank}
+                          />
+                        </Else>
+                      </>
+                    )}
                   </For>
                 </TileRow>
 
@@ -312,30 +315,33 @@ export class GamePage extends Component("game-page", {
                   );
                 }}
               >
-                {(tileOrMeld) => {
-                  const tileOrMeldValue = tileOrMeld();
-
-                  return Array.isArray(tileOrMeldValue) ? (
-                    <TileStack>
-                      <For each={tileOrMeld as Signal<TileClass[]>}>
-                        {(tile) => (
-                          <Tile
-                            animateEnter
-                            suit={() => tile().suit}
-                            rank={() => tile().rank}
-                          />
-                        )}
-                      </For>
-                    </TileStack>
-                  ) : (
-                    <Tile
-                      animateEnter
-                      highlight={() => tileOrMeldValue.highlight}
-                      suit={() => tileOrMeldValue.suit}
-                      rank={() => tileOrMeldValue.rank}
-                    />
-                  );
-                }}
+                {(tileOrMeld) => (
+                  <>
+                    <If condition={() => Array.isArray(tileOrMeld())}>
+                      <TileStack>
+                        <For each={tileOrMeld as Signal<TileClass[]>}>
+                          {(tile) => (
+                            <Tile
+                              animateEnter
+                              suit={() => tile().suit}
+                              rank={() => tile().rank}
+                            />
+                          )}
+                        </For>
+                      </TileStack>
+                    </If>
+                    <Else>
+                      <Tile
+                        animateEnter
+                        highlight={() =>
+                          (tileOrMeld() as { highlight: boolean }).highlight
+                        }
+                        suit={() => (tileOrMeld() as ITile).suit}
+                        rank={() => (tileOrMeld() as ITile).rank}
+                      />
+                    </Else>
+                  </>
+                )}
               </For>
             </TileRow>
 
@@ -464,6 +470,17 @@ export class GamePage extends Component("game-page", {
                   ) as [TileClass, TileClass])
                 )
               }
+              onButtonClick={() => {
+                webSocketHook.sendMessage({
+                  game: {
+                    operation: {
+                      [PhaseName.Action]: {
+                        eat: selectedTileIndices() as [number, number],
+                      },
+                    },
+                  },
+                });
+              }}
             >
               <EatIcon alt="Eat" />
             </ActionBarButton>
