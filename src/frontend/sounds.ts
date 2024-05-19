@@ -24,10 +24,14 @@ export function prepareAudio(url: string): () => void {
   };
 }
 
-export const playTileSound = prepareAudio("./assets/sounds/tile.mp3");
+export const playPlaceSound = prepareAudio("./assets/sounds/place.mp3");
 
 export const playDiceSound = prepareAudio("./assets/sounds/dice.mp3");
 
 export const playShuffleSound = prepareAudio("./assets/sounds/shuffle.mp3");
 
 export const playPopSound = prepareAudio("./assets/sounds/pop.mp3");
+
+export const playCoinSound = prepareAudio("./assets/sounds/coin.mp3");
+
+export const playClackSound = prepareAudio("./assets/sounds/clack.mp3");

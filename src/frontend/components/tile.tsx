@@ -13,8 +13,8 @@ import {
 } from "sinho";
 import { clsx } from "clsx";
 import { Tile, TileSuit } from "../../core/main.ts";
-import { useInProgress } from "../animation.ts";
-import { playTileSound } from "../sounds.ts";
+import { delay, useInProgress } from "../animation.ts";
+import { playClackSound, playPlaceSound } from "../sounds.ts";
 import {
   BambooIcon,
   CircleIcon,
@@ -22,9 +22,6 @@ import {
   WhiteIcon,
   WindIcon,
 } from "../assets.ts";
-
-const transitionDuration = 200;
-const enterAnimationDuration = 400;
 
 class TileComponent extends Component("tile", {
   suit: prop<TileSuit>(undefined, {
@@ -37,7 +34,11 @@ class TileComponent extends Component("tile", {
   highlight: prop<boolean>(false, { attribute: () => true }),
   glow: prop<boolean>(false, { attribute: () => true }),
   animateEnter: prop<boolean>(false, { attribute: () => true }),
+  sounds: prop<boolean>(false, { attribute: () => true }),
 }) {
+  static transitionDuration = 200;
+  static enterAnimationDuration = 400;
+
   getTile(): Tile | null {
     const suit = this.props.suit();
     const rank = this.props.rank();
@@ -58,22 +59,35 @@ class TileComponent extends Component("tile", {
   render() {
     const tile = useMemo(() => this.getTile());
     const back = useMemo(this.props.back);
-    const [actualBack, setActualBack] = useSignal(this.props.back());
+    const [backVisual, setBackVisual] = useSignal(this.props.back());
     const [backTransitionInProgress, startBackTransition] = useInProgress();
 
     let firstRender = true;
 
     useEffect(() => {
-      if (!firstRender) {
-        (async () => {
-          await startBackTransition(transitionDuration);
-          setActualBack(back());
-          setTimeout(() => playTileSound(), transitionDuration * 0.8);
-        })();
-      }
+      if (!firstRender && back() !== backVisual()) {
+        startBackTransition(TileComponent.transitionDuration).then(async () => {
+          setBackVisual(back());
 
-      firstRender = false;
+          if (this.props.sounds()) {
+            await delay(TileComponent.transitionDuration);
+            playPlaceSound();
+          }
+        });
+      }
     }, [back]);
+
+    useEffect(() => {
+      if (this.props.animateEnter() && this.props.sounds()) {
+        delay(TileComponent.enterAnimationDuration).then(() => {
+          playClackSound();
+        });
+      }
+    }, []);
+
+    useEffect(() => {
+      firstRender = false;
+    });
 
     return (
       <>
@@ -84,7 +98,7 @@ class TileComponent extends Component("tile", {
               unknown: tile() == null,
               numeric: tile()?.numeric,
               honor: tile()?.honor,
-              back: actualBack(),
+              back: backVisual(),
               selected: this.props.selected(),
               highlight: this.props.highlight(),
               glow: this.props.glow(),
@@ -97,7 +111,7 @@ class TileComponent extends Component("tile", {
               !backTransitionInProgress() ? undefined : "translateY(-1em)",
           }}
         >
-          <If condition={actualBack}>
+          <If condition={backVisual}>
             {/* Keep dummy div to preserve layout */}
             <div part="suit"></div>
           </If>
@@ -171,7 +185,8 @@ class TileComponent extends Component("tile", {
             }
 
             :host {
-              animation: ${enterAnimationDuration}ms backwards enter-animation;
+              animation: ${TileComponent.enterAnimationDuration}ms backwards
+                enter-animation;
             }
           `}</Style>
         </If>
@@ -223,7 +238,7 @@ class TileComponent extends Component("tile", {
             height: var(--tile-height);
             background-color: var(--tile-face-color);
             overflow: hidden;
-            transition: transform ${transitionDuration}ms;
+            transition: transform ${TileComponent.transitionDuration}ms;
           }
           [part="tile"].highlight,
           [part="tile"].selected {

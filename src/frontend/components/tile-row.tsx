@@ -39,7 +39,7 @@ export class TileRow extends Component("tile-row", {
 
             setTimeout(
               () => (tile.style.animationDelay = oldAnimationDelay),
-              delay + 200 + 50
+              delay + Tile.enterAnimationDuration + 50
             );
           }
         });

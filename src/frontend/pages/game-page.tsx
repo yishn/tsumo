@@ -38,6 +38,7 @@ import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
+import { delay } from "../animation.ts";
 
 export interface RemotePlayer {
   name: string;
@@ -125,23 +126,31 @@ export class GamePage extends Component("game-page", {
               >
                 <TileRow slot="discards">
                   <For
-                    each={() => {
+                    each={useMemo(() => {
                       const gamePlayerInfo =
                         this.props.gamePlayersInfo()?.[player().id];
                       const lastDiscardInfo =
                         this.props.gameInfo()?.lastDiscardInfo;
 
-                      return (gamePlayerInfo?.order ?? []).map(([type, i]) =>
-                        type === "discard"
-                          ? {
-                              ...gamePlayerInfo!.discards[i],
-                              highlight:
-                                lastDiscardInfo?.[0] === player().id &&
-                                lastDiscardInfo?.[1] === i,
-                            }
-                          : gamePlayerInfo!.melds[i]
-                      );
-                    }}
+                      return (gamePlayerInfo?.order ?? [])
+                        .map(([type, i]) =>
+                          type === "discard"
+                            ? {
+                                ...gamePlayerInfo!.discards[i],
+                                highlight:
+                                  lastDiscardInfo?.[0] === player().id &&
+                                  lastDiscardInfo?.[1] === i,
+                              }
+                            : gamePlayerInfo!.melds[i]
+                        )
+                        .filter((tileOrMeld) =>
+                          phase() === PhaseName.Reaction &&
+                          !Array.isArray(tileOrMeld) &&
+                          tileOrMeld.highlight
+                            ? false
+                            : true
+                        );
+                    })}
                   >
                     {(tileOrMeld) => (
                       <>
@@ -151,6 +160,7 @@ export class GamePage extends Component("game-page", {
                               {(tile) => (
                                 <Tile
                                   animateEnter
+                                  sounds
                                   suit={() => tile().suit}
                                   rank={() => tile().rank}
                                 />
@@ -161,6 +171,7 @@ export class GamePage extends Component("game-page", {
                         <Else>
                           <Tile
                             animateEnter
+                            sounds
                             highlight={() =>
                               (tileOrMeld() as { highlight: boolean }).highlight
                             }
@@ -188,7 +199,7 @@ export class GamePage extends Component("game-page", {
                         ),
                       ]}
                     >
-                      {() => <Tile back animateEnter />}
+                      {() => <Tile back animateEnter sounds />}
                     </For>
                   </TileRow>
                 </If>
@@ -300,7 +311,7 @@ export class GamePage extends Component("game-page", {
           >
             <TileRow slot="discards">
               <For
-                each={() => {
+                each={useMemo(() => {
                   const lastDiscardInfo =
                     this.props.gameInfo()?.lastDiscardInfo;
 
@@ -314,7 +325,7 @@ export class GamePage extends Component("game-page", {
                         }
                       : selfPlayerInfo()!.melds![i]
                   );
-                }}
+                })}
               >
                 {(tileOrMeld) => (
                   <>
@@ -324,6 +335,7 @@ export class GamePage extends Component("game-page", {
                           {(tile) => (
                             <Tile
                               animateEnter
+                              sounds
                               suit={() => tile().suit}
                               rank={() => tile().rank}
                             />
@@ -334,6 +346,7 @@ export class GamePage extends Component("game-page", {
                     <Else>
                       <Tile
                         animateEnter
+                        sounds
                         highlight={() =>
                           (tileOrMeld() as { highlight: boolean }).highlight
                         }
@@ -356,6 +369,7 @@ export class GamePage extends Component("game-page", {
                   {(tile, i) => (
                     <Tile
                       animateEnter
+                      sounds
                       glow={() =>
                         !!this.props
                           .gameInfo()
@@ -403,6 +417,7 @@ export class GamePage extends Component("game-page", {
               {() => this.props.gameInfo()?.maxRound ?? 1}
             </span>
             <Tile
+              sounds
               slot="player-extra"
               class="joker"
               title="Joker"

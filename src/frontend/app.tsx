@@ -62,15 +62,21 @@ function useError(): Signal<Error | undefined> {
 
   useEffect(() => {
     if (!SERVER) {
-      setError({
-        name: "WebSocketError",
-        message: "Server not specified",
-      });
+      setError(
+        (err) =>
+          err ?? {
+            name: "WebSocketError",
+            message: "Server not specified",
+          }
+      );
     } else if (webSocketHook.error() != null) {
-      setError({
-        name: "WebSocketError",
-        message: "Web socket failure",
-      });
+      setError(
+        (err) =>
+          err ?? {
+            name: "WebSocketError",
+            message: "Web socket failure",
+          }
+      );
     }
   });
 
@@ -82,20 +88,26 @@ function useError(): Signal<Error | undefined> {
     }
 
     if (connected && !webSocketHook.connected()) {
-      setError({
-        name: "WebSocketError",
-        message: "Web socket disconnected",
-      });
+      setError(
+        (err) =>
+          err ?? {
+            name: "WebSocketError",
+            message: "Web socket disconnected",
+          }
+      );
     }
   });
 
   webSocketHook.onServerMessage(
     (msg) => msg.error,
     (data) => {
-      setError({
-        name: "ServerError",
-        message: data.message,
-      });
+      setError(
+        (err) =>
+          err ?? {
+            name: "ServerError",
+            message: data.message,
+          }
+      );
     }
   );
 

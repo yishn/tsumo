@@ -27,7 +27,7 @@ export class ReactionWindow extends Component("reaction-window", {
     useEffect(() => {
       setTimeout(() => {
         setProgress(Math.max(this.props.timeout() - 1000, 0));
-      });
+      }, 10);
 
       const intervalId = setInterval(() => {
         if (progress() <= 0) clearInterval(intervalId);
@@ -62,6 +62,7 @@ export class ReactionWindow extends Component("reaction-window", {
               back={() => !showTile()}
               suit={this.props.suit}
               rank={this.props.rank}
+              sounds
             />
           </div>
 

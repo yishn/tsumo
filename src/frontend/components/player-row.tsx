@@ -9,11 +9,13 @@ import {
   defineComponents,
   prop,
   useEffect,
+  useMemo,
   useRef,
   useSignal,
 } from "sinho";
 import { DealerIcon, ScoreIcon } from "../assets.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
+import { playCoinSound } from "../sounds.ts";
 
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
@@ -108,6 +110,12 @@ export class PlayerRow extends Component("player-row", {
   score: prop<number>(0, { attribute: Number }),
 }) {
   render() {
+    const score = useMemo(this.props.score);
+
+    useEffect(() => {
+      playCoinSound();
+    }, [score]);
+
     return (
       <div
         part="container"
@@ -132,7 +140,7 @@ export class PlayerRow extends Component("player-row", {
           />
           <div part="score">
             <ScoreIcon alt="Score" /> ×
-            <AnimatedCounter value={this.props.score} />
+            <AnimatedCounter value={score} />
           </div>
 
           <slot name="player-extra" />

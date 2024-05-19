@@ -12,7 +12,7 @@ export function useInProgress(): [
       setInProgress(true);
 
       if (typeof wait === "number") {
-        await new Promise((resolve) => setTimeout(resolve, wait));
+        await delay(wait);
       } else {
         await wait;
       }
@@ -20,4 +20,8 @@ export function useInProgress(): [
       setInProgress(false);
     },
   ];
+}
+
+export async function delay(timeout: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, timeout));
 }

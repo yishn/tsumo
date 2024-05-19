@@ -235,6 +235,7 @@ export class LobbyPage extends Component("lobby-page", {
           <Tile
             class={() => clsx({ hide: ready() ? true : false })}
             animateEnter
+            sounds={() => canRollInitiative() || ready()}
             back={() => !canRollInitiative() && !ready()}
             suit={TileSuit.Dragon}
             rank={2}

@@ -17,7 +17,7 @@ export class Tile implements ITile {
     return a.rank - b.rank;
   }
 
-  static equal(a: Tile, b: Tile): boolean {
+  static equal(a: ITile, b: ITile): boolean {
     return a.suit === b.suit && a.rank === b.rank;
   }
 
