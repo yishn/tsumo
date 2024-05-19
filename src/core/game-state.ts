@@ -490,19 +490,18 @@ export class GameState<P extends PhaseBase = PhaseBase> {
       win = true;
     } else {
       const jokers = tiles.filter((tile) => this.isJoker(tile)).length;
-      const [sets, pairs, others] = Tile.countSetsPairs(nonJokers);
+      const setsPairs = Tile.formSetsPairs(nonJokers, jokers);
 
-      if (pairs + Math.min(others.length, jokers) === 7) {
-        // Seven pairs
-
+      if (
+        setsPairs.some(
+          ({ sets, pairs }) =>
+            // Seven pairs
+            pairs.length === 7 ||
+            // Four sets and one pair
+            (sets.length + melds === 4 && pairs.length >= 1)
+        )
+      ) {
         win = true;
-      } else {
-        // Regular win
-
-        win = Tile.formSetsPairs(others, jokers).some(
-          ([formedSets, formedPairs]) =>
-            sets + melds + formedSets === 4 && pairs + formedPairs >= 1
-        );
       }
     }
 

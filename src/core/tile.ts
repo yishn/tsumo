@@ -6,6 +6,11 @@ export enum TileSuit {
   Dragon = "dragon",
 }
 
+export interface SetsPairs {
+  sets: Tile[][];
+  pairs: Tile[][];
+}
+
 export class Tile implements ITile {
   static sort(a: Tile, b: Tile): number {
     if (a.numeric !== b.numeric) {
@@ -39,50 +44,90 @@ export class Tile implements ITile {
     return Math.abs(a.rank - b.rank) <= 2;
   }
 
-  static countSetsPairs(
-    tiles: Tile[]
-  ): [sets: number, pairs: number, others: Tile[]] {
-    if (tiles.length === 0) return [0, 0, []];
+  static formSetsPairs(tiles: Tile[], jokers: number): SetsPairs[] {
+    if (tiles.length + jokers <= 1)
+      return [
+        {
+          sets: [],
+          pairs: [],
+        },
+      ];
 
-    const sortedTiles = [...tiles].sort(Tile.sort);
+    const result: SetsPairs[] = [];
+    const pivot = tiles[0];
 
-    if (Tile.isSet(tiles[0], tiles[1], tiles[2])) {
-      const [sets, pairs, others] = Tile.countSetsPairs(sortedTiles.slice(3));
-      return [sets + 1, pairs, others];
-    } else if (Tile.equal(tiles[0], tiles[1])) {
-      const [sets, pairs, others] = Tile.countSetsPairs(sortedTiles.slice(2));
-      return [sets, pairs + 1, others];
+    for (let i = 1; i < tiles.length; i++) {
+      for (let j = i + 1; j < tiles.length; j++) {
+        if (Tile.isSet(pivot, tiles[i], tiles[j])) {
+          const subresult = Tile.formSetsPairs(
+            tiles.filter((_, index) => ![0, i, j].includes(index)),
+            jokers
+          );
+
+          result.push(
+            ...subresult.map(({ sets, pairs }) => ({
+              sets: (sets.unshift([pivot, tiles[i], tiles[j]]), sets),
+              pairs,
+            }))
+          );
+        }
+      }
+
+      const residue = tiles.filter((_, index) => ![0, i].includes(index));
+
+      if (Tile.equal(pivot, tiles[i])) {
+        const subresult = Tile.formSetsPairs(residue, jokers);
+
+        result.push(
+          ...subresult.map(({ sets, pairs }) => ({
+            sets,
+            pairs: (pairs.unshift([pivot, tiles[i]]), pairs),
+          }))
+        );
+      }
+
+      if (Tile.isAlmostSet(pivot, tiles[i]) && jokers >= 1) {
+        const subresult = Tile.formSetsPairs(residue, jokers - 1);
+
+        result.push(
+          ...subresult.map(({ sets, pairs }) => ({
+            sets: (sets.unshift([pivot, tiles[i]]), sets),
+            pairs,
+          }))
+        );
+      }
     }
 
-    const [sets, pairs, others] = Tile.countSetsPairs(sortedTiles.slice(1));
-    others.push(sortedTiles[0]);
-    return [sets, pairs, others];
-  }
+    const residue = tiles.slice(1);
 
-  static formSetsPairs(
-    tiles: Tile[],
-    jokers: number
-  ): [sets: number, pairs: number][] {
-    if (tiles.length === 0) return [[0, 0]];
-    if (jokers <= 0) return [[0, 0]];
+    if (jokers >= 2) {
+      const subresult = Tile.formSetsPairs(residue, jokers - 2);
 
-    const result: [sets: number, pairs: number][] = [];
-
-    if (Tile.isAlmostSet(tiles[0], tiles[1])) {
       result.push(
-        ...Tile.formSetsPairs(tiles.slice(2), jokers - 1).map<[number, number]>(
-          ([sets, pairs]) => [sets + 1, pairs]
+        ...subresult.map(({ sets, pairs }) =>
+          pivot != null
+            ? {
+                sets: (sets.unshift([pivot]), sets),
+                pairs,
+              }
+            : {
+                sets,
+                pairs: (pairs.unshift([]), pairs),
+              }
         )
       );
     }
 
-    result.push(
-      ...Tile.formSetsPairs(tiles.slice(1), jokers - 1).map<[number, number]>(
-        ([sets, pairs]) => [sets, pairs + 1]
-      )
-    );
+    if (pivot != null && jokers >= 1) {
+      const subresult = Tile.formSetsPairs(residue, jokers - 1);
 
-    result.push(...Tile.formSetsPairs(tiles.slice(1), jokers));
+      result.push(
+        ...subresult.map(({ sets, pairs }) => ({
+          sets,
+          pairs: (pairs.unshift([pivot]), pairs),
+        }))
+      );
+    }
 
     return result;
   }
@@ -97,10 +142,7 @@ export class Tile implements ITile {
     const numericTiles = tiles.filter((tile) => tile.numeric).sort(Tile.sort);
 
     for (let i = 1; i < numericTiles.length - 1; i++) {
-      if (
-        numericTiles[i].suit === numericTiles[i - 1].suit &&
-        numericTiles[i].rank - numericTiles[i - 1].rank < 3
-      ) {
+      if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
         return false;
       }
     }
@@ -163,3 +205,19 @@ export interface ITile {
   suit: TileSuit;
   rank: number;
 }
+
+console.log(
+  Tile.formSetsPairs(
+    [
+      new Tile(TileSuit.Bamboo, 1),
+      new Tile(TileSuit.Bamboo, 2),
+      new Tile(TileSuit.Bamboo, 3),
+      new Tile(TileSuit.Bamboo, 5),
+      new Tile(TileSuit.Bamboo, 6),
+      new Tile(TileSuit.Bamboo, 7),
+      new Tile(TileSuit.Bamboo, 8),
+      new Tile(TileSuit.Bamboo, 9),
+    ],
+    1
+  )
+);
