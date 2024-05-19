@@ -12,7 +12,7 @@ export interface SetsPairs {
 }
 
 export class Tile implements ITile {
-  static sort(a: Tile, b: Tile): number {
+  static compare(a: Tile, b: Tile): number {
     if (a.numeric !== b.numeric) {
       return a.numeric ? -1 : 1;
     } else if (a.suit !== b.suit) {
@@ -133,13 +133,13 @@ export class Tile implements ITile {
   }
 
   static isChaotic(tiles: Tile[]): boolean {
-    const honorTiles = tiles.filter((tile) => tile.honor).sort(Tile.sort);
+    const honorTiles = tiles.filter((tile) => tile.honor).sort(Tile.compare);
 
     for (let i = 1; i < honorTiles.length; i++) {
       if (Tile.equal(honorTiles[i], honorTiles[i - 1])) return false;
     }
 
-    const numericTiles = tiles.filter((tile) => tile.numeric).sort(Tile.sort);
+    const numericTiles = tiles.filter((tile) => tile.numeric).sort(Tile.compare);
 
     for (let i = 1; i < numericTiles.length - 1; i++) {
       if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
@@ -205,19 +205,3 @@ export interface ITile {
   suit: TileSuit;
   rank: number;
 }
-
-console.log(
-  Tile.formSetsPairs(
-    [
-      new Tile(TileSuit.Bamboo, 1),
-      new Tile(TileSuit.Bamboo, 2),
-      new Tile(TileSuit.Bamboo, 3),
-      new Tile(TileSuit.Bamboo, 5),
-      new Tile(TileSuit.Bamboo, 6),
-      new Tile(TileSuit.Bamboo, 7),
-      new Tile(TileSuit.Bamboo, 8),
-      new Tile(TileSuit.Bamboo, 9),
-    ],
-    1
-  )
-);

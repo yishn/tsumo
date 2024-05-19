@@ -476,7 +476,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
         return 1;
       }
 
-      return Tile.sort(a, b);
+      return Tile.compare(a, b);
     });
   }
 

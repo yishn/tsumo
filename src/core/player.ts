@@ -26,7 +26,7 @@ export class Player {
   }
 
   pushMeld(meld: Tile[]): void {
-    this.melds.push(meld);
+    this.melds.push(meld.sort(Tile.compare));
     this.order.push(["meld", this.melds.length - 1]);
   }
 }
