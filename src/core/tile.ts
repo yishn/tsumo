@@ -139,7 +139,9 @@ export class Tile implements ITile {
       if (Tile.equal(honorTiles[i], honorTiles[i - 1])) return false;
     }
 
-    const numericTiles = tiles.filter((tile) => tile.numeric).sort(Tile.compare);
+    const numericTiles = tiles
+      .filter((tile) => tile.numeric)
+      .sort(Tile.compare);
 
     for (let i = 1; i < numericTiles.length - 1; i++) {
       if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
@@ -148,6 +150,32 @@ export class Tile implements ITile {
     }
 
     return true;
+  }
+
+  static isWinningHand(
+    tiles: Tile[],
+    jokers: ITile[],
+    melds: number
+  ): SetsPairs | "chaotic" | undefined {
+    const nonJokers = tiles.filter(
+      (tile) => !jokers.some((joker) => Tile.equal(joker, tile))
+    );
+
+    if (tiles.length === 14 && Tile.isChaotic(nonJokers)) {
+      // Chaotic thirteen
+      return "chaotic";
+    } else {
+      const jokerCount = tiles.length - nonJokers.length;
+      const setsPairs = Tile.formSetsPairs(nonJokers, jokerCount);
+
+      return setsPairs.find(
+        ({ sets, pairs }) =>
+          // Seven pairs
+          pairs.length === 7 ||
+          // Four sets and one pair
+          (sets.length + melds === 4 && pairs.length >= 1)
+      );
+    }
   }
 
   constructor(

@@ -1,5 +1,5 @@
 import { Player } from "./player.ts";
-import { Tile, TileSuit } from "./tile.ts";
+import { SetsPairs, Tile, TileSuit } from "./tile.ts";
 
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -246,9 +246,8 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
-    const player = this.state.currentPlayer;
-    const win = this.state.isWinningHand(player.tiles, player.melds.length);
-    if (!win) throw new Error("Invalid win");
+    const win = this.state.hasWinningHand(this.state.currentPlayerIndex);
+    if (win == null) throw new Error("Invalid win");
 
     return this.nextPhase(ScorePhase);
   }
@@ -309,11 +308,8 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
     const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
-    const win = this.state.isWinningHand(
-      [...player.tiles, this.state.lastDiscard],
-      player.melds.length
-    );
-    if (!win) throw new Error("Invalid win");
+    const win = this.state.hasWinningHand(playerIndex);
+    if (win == null) throw new Error("Invalid win");
 
     this.state.currentPlayerIndex = playerIndex;
 
@@ -480,32 +476,17 @@ export class GameState<P extends PhaseBase = PhaseBase> {
     });
   }
 
-  isWinningHand(tiles: Tile[], melds: number): boolean {
-    const nonJokers = tiles.filter((tile) => !this.isJoker(tile));
+  hasWinningHand(playerIndex: number): SetsPairs | "chaotic" | undefined {
+    const player = this.getPlayer(playerIndex);
+    const useDiscard =
+      this.lastDiscard != null &&
+      player.tiles.length + player.melds.length * 3 === 13;
 
-    let win = false;
-
-    if (tiles.length === 14 && Tile.isChaotic(nonJokers)) {
-      // Chaotic thirteen
-      win = true;
-    } else {
-      const jokers = tiles.filter((tile) => this.isJoker(tile)).length;
-      const setsPairs = Tile.formSetsPairs(nonJokers, jokers);
-
-      if (
-        setsPairs.some(
-          ({ sets, pairs }) =>
-            // Seven pairs
-            pairs.length === 7 ||
-            // Four sets and one pair
-            (sets.length + melds === 4 && pairs.length >= 1)
-        )
-      ) {
-        win = true;
-      }
-    }
-
-    return win;
+    return Tile.isWinningHand(
+      !useDiscard ? player.tiles : [...player.tiles, this.lastDiscard],
+      [this.primaryJoker, this.secondaryJoker],
+      player.melds.length
+    );
   }
 
   scoreKong(playerIndex: number): void {
