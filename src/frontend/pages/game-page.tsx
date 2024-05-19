@@ -220,8 +220,8 @@ export class GamePage extends Component("game-page", {
                   isSelfTurn() ||
                   (selfPlayerInfo()?.tiles?.filter(
                     (tile) =>
-                      tile.suit === lastDiscard()?.suit &&
-                      tile.rank === lastDiscard()?.rank
+                      lastDiscard() != null &&
+                      TileClass.equal(tile, lastDiscard()!)
                   ).length ?? 0) < 2
                 }
                 onclick={() => {
@@ -234,8 +234,8 @@ export class GamePage extends Component("game-page", {
                             ...selfPlayerInfo()!
                               .tiles!.filter(
                                 (tile) =>
-                                  tile.suit === lastDiscard()?.suit &&
-                                  tile.rank === lastDiscard()?.rank
+                                  lastDiscard() != null &&
+                                  TileClass.equal(tile, lastDiscard()!)
                               )
                               .map((_, i) => i)
                               .slice(0, 2),
@@ -258,8 +258,8 @@ export class GamePage extends Component("game-page", {
                     .ownPlayerInfo()
                     ?.tiles.filter(
                       (tile) =>
-                        tile.suit === lastDiscard()?.suit &&
-                        tile.rank === lastDiscard()?.rank
+                        lastDiscard() != null &&
+                        TileClass.equal(tile, lastDiscard()!)
                     ).length ?? 0) < 3
                 }
                 onclick={() => {
@@ -272,8 +272,8 @@ export class GamePage extends Component("game-page", {
                             ...selfPlayerInfo()!
                               .tiles!.filter(
                                 (tile) =>
-                                  tile.suit === lastDiscard()?.suit &&
-                                  tile.rank === lastDiscard()?.rank
+                                  lastDiscard() != null &&
+                                  TileClass.equal(tile, lastDiscard()!)
                               )
                               .map((_, i) => i)
                               .slice(0, 3),
@@ -373,10 +373,8 @@ export class GamePage extends Component("game-page", {
                       glow={() =>
                         !!this.props
                           .gameInfo()
-                          ?.jokers.some(
-                            (joker) =>
-                              joker.suit === tile().suit &&
-                              joker.rank === tile().rank
+                          ?.jokers.some((joker) =>
+                            TileClass.equal(joker, tile())
                           )
                       }
                       suit={() => tile().suit}
