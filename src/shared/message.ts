@@ -4,6 +4,7 @@ import type {
   EndActionPhase,
   Phase,
   ReactionPhase,
+  Reaction,
 } from "../core/main.ts";
 
 export interface Heartbeat {
@@ -46,6 +47,7 @@ export interface GameInfo {
   maxRound: number;
   lastDiscard: ITile | null;
   lastDiscardInfo: [playerId: string, discardIndex: number] | null;
+  reactions: Reaction[];
 }
 
 export interface ServerMessage {

@@ -281,7 +281,13 @@ export namespace Reaction {
 export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   reactions: Reaction[] = [];
 
-  private pushReaction(reaction: Reaction): void {
+  private pushReaction(playerIndex: number, reaction: Reaction): void {
+    if (
+      this.reactions.some((reaction) => reaction.playerIndex === playerIndex)
+    ) {
+      return;
+    }
+
     this.reactions.push(reaction);
     this.reactions.sort((a, b) => Reaction.compare(this.state, a, b));
   }
@@ -304,7 +310,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       throw new Error("Invalid tiles");
     }
 
-    this.pushReaction({
+    this.pushReaction(playerIndex, {
       type: "pongKong",
       playerIndex,
       tileIndices,
@@ -320,7 +326,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
     const win = this.state.hasWinningHand(playerIndex);
     if (win == null) throw new Error("Invalid win");
 
-    this.pushReaction({
+    this.pushReaction(playerIndex, {
       type: "win",
       playerIndex,
       tileIndices: [],
@@ -337,6 +343,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
         tileIndices: [tileIndex1, tileIndex2, tileIndex3],
       } = this.reactions[this.reactions.length - 1];
       const player = this.state.getPlayer(playerIndex);
+      this.reactions = [];
 
       if (type === "pongKong") {
         const tile1 = player.getTile(tileIndex1);
@@ -344,7 +351,11 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
         const tile3 =
           tileIndex3 == null ? undefined : player.getTile(tileIndex3);
 
-        player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
+        if (tileIndex3 == null) {
+          player.removeTiles(tileIndex1, tileIndex2);
+        } else {
+          player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
+        }
         player.lastDrawnTileIndex = undefined;
 
         const discard = this.state.removeLastDiscard();

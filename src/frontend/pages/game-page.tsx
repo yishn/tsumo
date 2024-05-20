@@ -38,7 +38,6 @@ import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
-import { delay } from "../animation.ts";
 
 export interface RemotePlayer {
   name: string;
@@ -242,12 +241,13 @@ export class GamePage extends Component("game-page", {
                           pongKong: [
                             selfPlayerInfo()!.index!,
                             ...selfPlayerInfo()!
-                              .tiles!.filter(
-                                (tile) =>
+                              .tiles!.map((tile, i) => [tile, i] as const)
+                              .filter(
+                                ([tile]) =>
                                   lastDiscard() != null &&
                                   TileClass.equal(tile, lastDiscard()!)
                               )
-                              .map((_, i) => i)
+                              .map(([_, i]) => i)
                               .slice(0, 2),
                           ],
                         },
@@ -280,12 +280,13 @@ export class GamePage extends Component("game-page", {
                           pongKong: [
                             selfPlayerInfo()!.index!,
                             ...selfPlayerInfo()!
-                              .tiles!.filter(
-                                (tile) =>
+                              .tiles!.map((tile, i) => [tile, i] as const)
+                              .filter(
+                                ([tile]) =>
                                   lastDiscard() != null &&
                                   TileClass.equal(tile, lastDiscard()!)
                               )
-                              .map((_, i) => i)
+                              .map(([_, i]) => i)
                               .slice(0, 3),
                           ],
                         },

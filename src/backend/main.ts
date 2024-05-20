@@ -1,3 +1,4 @@
+import "source-map-support/register.js";
 import { WebSocketServer } from "ws";
 import { clientInfoMap, allClients } from "./global-state.ts";
 import { useJoinSession } from "./game-session.ts";

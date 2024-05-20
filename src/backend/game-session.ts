@@ -21,6 +21,7 @@ import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import {
   DealPhase,
   GameState,
+  Phase,
   PhaseBase,
   ReactionPhase,
 } from "../core/game-state.ts";
@@ -362,6 +363,10 @@ function useGame(session: GameSession): () => void {
               orderedPlayers()[gameState().lastDiscardInfo![0]].id,
               gameState().lastDiscardInfo![1],
             ],
+      reactions:
+        gameState().phase.name === Phase.Reaction
+          ? (gameState().phase as ReactionPhase).reactions
+          : [],
     }));
 
     const currentPlayerPeer = useMemo(() =>
@@ -430,6 +435,17 @@ function useGame(session: GameSession): () => void {
     onClientMessage(
       (msg) => msg.game?.operation,
       (evt) => {
+        const targetPeerId = [...session.peers().values()].find(
+          (peer) => peer.ws === evt.target
+        )?.id;
+
+        if (targetPeerId == null) {
+          console.warn(
+            `[GameSession] Unauthorized operation from unknown peer`
+          );
+          return;
+        }
+
         for (const phaseName in evt.data) {
           for (const key in (evt.data as any)[phaseName]) {
             updateGameState("*", (state) => {
@@ -444,9 +460,13 @@ function useGame(session: GameSession): () => void {
                 (playerMessageOpts.verifyPlayerIndex == null ||
                   orderedPlayers()[
                     parameters[playerMessageOpts.verifyPlayerIndex]
-                  ].id === currentPlayerPeer()?.id)
+                  ].id === targetPeerId)
               ) {
                 (state.phase as any)[key](...parameters);
+              } else {
+                console.warn(
+                  `[GameSession] Unauthorized operation ${phaseName}.${key} from ${targetPeerId}`
+                );
               }
             });
           }
