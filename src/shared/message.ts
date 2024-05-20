@@ -2,7 +2,7 @@ import type {
   ITile,
   ActionPhase,
   EndActionPhase,
-  PhaseName,
+  Phase,
   ReactionPhase,
 } from "../core/main.ts";
 
@@ -38,7 +38,7 @@ export interface GamePlayerInfo {
 }
 
 export interface GameInfo {
-  phase: PhaseName;
+  phase: Phase;
   currentPlayer: string;
   dealer: string;
   jokers: [ITile, ITile];
@@ -87,9 +87,9 @@ export interface ClientMessage {
   };
   game?: {
     operation?: {
-      [PhaseName.Action]?: ClassToMessage<ActionPhase>;
-      [PhaseName.EndAction]?: ClassToMessage<EndActionPhase>;
-      [PhaseName.Reaction]?: ClassToMessage<ReactionPhase>;
+      [Phase.Action]?: ClassToMessage<ActionPhase>;
+      [Phase.EndAction]?: ClassToMessage<EndActionPhase>;
+      [Phase.Reaction]?: ClassToMessage<ReactionPhase>;
     };
   };
 }

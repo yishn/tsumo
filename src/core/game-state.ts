@@ -39,7 +39,7 @@ function allowPlayerMessage(opts: AllowPlayerMessageOptions = {}) {
   };
 }
 
-export enum PhaseName {
+export enum Phase {
   Deal = "deal",
   Action = "action",
   EndAction = "endaction",
@@ -47,7 +47,7 @@ export enum PhaseName {
   Score = "score",
 }
 
-export function PhaseBase<N extends PhaseName>(name: N) {
+export function PhaseBase<N extends Phase>(name: N) {
   return class _PhaseBase implements PhaseBase {
     name: N = name;
     allowPlayerMessageFns: Map<string, AllowPlayerMessageOptions> = new Map();
@@ -64,7 +64,7 @@ export function PhaseBase<N extends PhaseName>(name: N) {
 }
 
 export interface PhaseBase {
-  name: PhaseName;
+  name: Phase;
   allowPlayerMessageFns: Map<string, AllowPlayerMessageOptions>;
 
   nextPhase<P extends PhaseBase>(
@@ -72,7 +72,7 @@ export interface PhaseBase {
   ): GameState<P>;
 }
 
-export class DealPhase extends PhaseBase(PhaseName.Deal) {
+export class DealPhase extends PhaseBase(Phase.Deal) {
   deal(): GameState<ActionPhase> {
     this.state.drawPile = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDeck()!;
@@ -91,7 +91,7 @@ export class DealPhase extends PhaseBase(PhaseName.Deal) {
   }
 }
 
-export class ActionPhase extends PhaseBase(PhaseName.Action) {
+export class ActionPhase extends PhaseBase(Phase.Action) {
   @allowPlayerMessage({ currentPlayerOnly: true })
   draw(): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
@@ -167,7 +167,7 @@ export class ActionPhase extends PhaseBase(PhaseName.Action) {
   }
 }
 
-export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
+export class EndActionPhase extends PhaseBase(Phase.EndAction) {
   @allowPlayerMessage({ currentPlayerOnly: true })
   discard(tileIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
@@ -253,7 +253,7 @@ export class EndActionPhase extends PhaseBase(PhaseName.EndAction) {
   }
 }
 
-export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
+export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   reactions: {
     playerIndex: number;
     tileIndices: number[];
@@ -364,7 +364,7 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
   }
 }
 
-export class ScorePhase extends PhaseBase(PhaseName.Score) {
+export class ScorePhase extends PhaseBase(Phase.Score) {
   score(): GameState<DealPhase> {
     const winner = this.state.currentPlayer;
 
