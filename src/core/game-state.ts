@@ -75,13 +75,13 @@ export interface PhaseBase {
 export class DealPhase extends PhaseBase(Phase.Deal) {
   deal(): GameState<ActionPhase> {
     this.state.drawPile = generateShuffledFullDeck();
-    this.state.primaryJoker = this.state.popDeck()!;
+    this.state.primaryJoker = this.state.popDrawPile()!;
 
     for (const [i, player] of this.state.players.entries()) {
       player.tiles = [];
 
       for (let i = 0; i < 13; i++) {
-        player.tiles.push(this.state.popDeck()!);
+        player.tiles.push(this.state.popDrawPile()!);
       }
 
       this.state.sortPlayerTiles(i);
@@ -95,7 +95,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
   @allowPlayerMessage({ currentPlayerOnly: true })
   draw(): GameState<EndActionPhase> {
     const player = this.state.currentPlayer;
-    const tile = this.state.popDeck();
+    const tile = this.state.popDrawPile();
     if (tile == null) {
       // TODO
       throw new Error("not implemented");
@@ -103,6 +103,8 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 
     player.lastDrawnTileIndex = player.tiles.length;
     player.tiles.push(tile);
+
+    this.state.lastDiscardInfo = undefined;
 
     return this.nextPhase(EndActionPhase);
   }
@@ -132,7 +134,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     tileIndex1: number,
     tileIndex2: number,
     tileIndex3: number
-  ): GameState<EndActionPhase> {
+  ): GameState<ActionPhase> {
     const player = this.state.currentPlayer;
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
@@ -151,19 +153,18 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
     player.pushMeld([tile1, tile2, tile3, discard]);
 
-    // Draw from the bottom of the deck
-    const tile = this.state.shiftDeck()!;
-    // TODO handle empty deck
-    player.lastDrawnTileIndex = player.tiles.length;
-    player.tiles.push(tile);
     this.state.scoreKong(this.state.currentPlayerIndex);
+    this.state.lastDiscardInfo = undefined;
 
-    return this.nextPhase(EndActionPhase);
+    return this.nextPhase(ActionPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
-    return new ReactionPhase(this.state).win(this.state.currentPlayerIndex);
+    const win = this.state.hasWinningHand(this.state.currentPlayerIndex);
+    if (win == null) throw new Error("Invalid win");
+
+    return this.nextPhase(ScorePhase);
   }
 }
 
@@ -191,7 +192,7 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     tileIndex2: number,
     tileIndex3: number,
     tileIndex4: number
-  ): GameState<EndActionPhase> {
+  ): GameState<ActionPhase> {
     const player = this.state.currentPlayer;
     const tile1 = player.getTile(tileIndex1);
     const tile2 = player.getTile(tileIndex2);
@@ -207,18 +208,14 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     player.removeTiles(tileIndex1, tileIndex2, tileIndex3, tileIndex4);
     player.pushMeld([tile1, tile2, tile3, tile4]);
 
-    // Draw from the bottom of the deck
-    const tile = this.state.shiftDeck()!;
-    // TODO handle empty deck
-    player.lastDrawnTileIndex = player.tiles.length;
-    player.tiles.push(tile);
-
     this.state.scoreKong(this.state.currentPlayerIndex);
-    return this.nextPhase(EndActionPhase);
+    this.state.lastDiscardInfo = undefined;
+
+    return this.nextPhase(ActionPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
-  meldKong(tileIndex: number, meldIndex: number): GameState<EndActionPhase> {
+  meldKong(tileIndex: number, meldIndex: number): GameState<ActionPhase> {
     const player = this.state.currentPlayer;
     const tile = player.getTile(tileIndex);
     const meld = player.melds[meldIndex];
@@ -234,14 +231,10 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     player.removeTiles(tileIndex);
     meld.push(tile);
 
-    // Draw from the bottom of the deck
-    const drawnTile = this.state.shiftDeck()!;
-    // TODO handle empty deck
-    player.lastDrawnTileIndex = player.tiles.length;
-    player.tiles.push(drawnTile);
-
     this.state.scoreKong(this.state.currentPlayerIndex);
-    return this.nextPhase(EndActionPhase);
+    this.state.lastDiscardInfo = undefined;
+
+    return this.nextPhase(ActionPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -253,11 +246,45 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
   }
 }
 
+export interface Reaction {
+  type: "pongKong" | "win";
+  playerIndex: number;
+  tileIndices: number[];
+}
+
+export namespace Reaction {
+  export function compare(state: GameState, a: Reaction, b: Reaction): number {
+    // Prefer wins
+    if (a.type !== b.type) {
+      return a.type === "win" ? 1 : -1;
+    }
+
+    // Prefer kong over pong
+    if (a.type !== "win" && a.tileIndices.length !== b.tileIndices.length) {
+      return a.tileIndices.length - b.tileIndices.length;
+    }
+
+    // Prefer the player who is closer to the current player
+    const nextTurnA =
+      a.playerIndex < state.currentPlayerIndex
+        ? a.playerIndex + state.players.length
+        : a.playerIndex;
+    const nextTurnB =
+      b.playerIndex < state.currentPlayerIndex
+        ? b.playerIndex + state.players.length
+        : b.playerIndex;
+
+    return nextTurnB - nextTurnA;
+  }
+}
+
 export class ReactionPhase extends PhaseBase(Phase.Reaction) {
-  reactions: {
-    playerIndex: number;
-    tileIndices: number[];
-  }[] = [];
+  reactions: Reaction[] = [];
+
+  private pushReaction(reaction: Reaction): void {
+    this.reactions.push(reaction);
+    this.reactions.sort((a, b) => Reaction.compare(this.state, a, b));
+  }
 
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
   pongKong(
@@ -267,6 +294,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
     const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");
     if (
+      tileIndices.length < 2 ||
       tileIndices.some(
         (i) =>
           player.tiles[i] == null ||
@@ -276,91 +304,77 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       throw new Error("Invalid tiles");
     }
 
-    this.reactions.push({
+    this.pushReaction({
+      type: "pongKong",
       playerIndex,
       tileIndices,
-    });
-
-    this.reactions.sort((a, b) => {
-      // Prefer kong over pong
-      if (a.tileIndices.length !== b.tileIndices.length) {
-        return a.tileIndices.length - b.tileIndices.length;
-      }
-
-      // Prefer the player who is closer to the current player
-      const nextTurnA =
-        a.playerIndex < this.state.currentPlayerIndex
-          ? a.playerIndex + this.state.players.length
-          : a.playerIndex;
-      const nextTurnB =
-        b.playerIndex < this.state.currentPlayerIndex
-          ? b.playerIndex + this.state.players.length
-          : b.playerIndex;
-
-      return nextTurnB - nextTurnA;
     });
 
     return this.state;
   }
 
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
-  win(playerIndex: number): GameState<ScorePhase> {
+  win(playerIndex: number): GameState<ReactionPhase> {
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
     const win = this.state.hasWinningHand(playerIndex);
     if (win == null) throw new Error("Invalid win");
 
-    this.state.currentPlayerIndex = playerIndex;
+    this.pushReaction({
+      type: "win",
+      playerIndex,
+      tileIndices: [],
+    });
 
-    return this.nextPhase(ScorePhase);
+    return this.state;
   }
 
-  next(): GameState<EndActionPhase | ActionPhase> {
+  next(): GameState<ActionPhase | EndActionPhase | ScorePhase> {
     if (this.reactions.length > 0) {
       const {
+        type,
         playerIndex,
         tileIndices: [tileIndex1, tileIndex2, tileIndex3],
       } = this.reactions[this.reactions.length - 1];
       const player = this.state.getPlayer(playerIndex);
-      if (this.state.lastDiscard == null) throw new Error("No discard");
 
-      const tile1 = player.getTile(tileIndex1);
-      const tile2 = player.getTile(tileIndex2);
-      const tile3 = tileIndex3 == null ? undefined : player.getTile(tileIndex3);
-      if (
-        !Tile.equal(tile1, tile2) ||
-        !Tile.equal(tile1, this.state.lastDiscard)
-      )
-        throw new Error("Invalid pong");
-      if (tile3 != null && !Tile.equal(tile1, tile3))
-        throw new Error("Invalid kong");
+      if (type === "pongKong") {
+        const tile1 = player.getTile(tileIndex1);
+        const tile2 = player.getTile(tileIndex2);
+        const tile3 =
+          tileIndex3 == null ? undefined : player.getTile(tileIndex3);
 
-      player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
-      player.lastDrawnTileIndex = undefined;
+        player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
+        player.lastDrawnTileIndex = undefined;
 
-      const discard = this.state.removeLastDiscard();
-      player.pushMeld(
-        tile3 == null ? [tile1, tile2, discard] : [tile1, tile2, tile3, discard]
-      );
+        const discard = this.state.removeLastDiscard();
+        player.pushMeld(
+          tile3 == null
+            ? [tile1, tile2, discard]
+            : [tile1, tile2, tile3, discard]
+        );
 
-      this.state.currentPlayerIndex = playerIndex;
+        this.state.currentPlayerIndex = playerIndex;
 
-      // Handle kongs
-      if (tileIndex3 != null) {
-        // Draw from the bottom of the deck
-        const tile = this.state.shiftDeck()!;
-        // TODO handle empty deck
-        player.lastDrawnTileIndex = player.tiles.length;
-        player.tiles.push(tile);
-        this.state.scoreKong(playerIndex);
+        // Handle kongs
+        if (tileIndex3 != null) {
+          this.state.scoreKong(playerIndex);
+          this.state.lastDiscardInfo = undefined;
+
+          return this.nextPhase(ActionPhase);
+        }
+
+        return this.nextPhase(EndActionPhase);
+      } else if (type === "win") {
+        this.state.currentPlayerIndex = playerIndex;
+
+        return this.nextPhase(ScorePhase);
       }
-
-      return this.nextPhase(EndActionPhase);
-    } else {
-      this.state.moveToNextPlayer();
-
-      return this.nextPhase(ActionPhase);
     }
+
+    this.state.moveToNextPlayer();
+
+    return this.nextPhase(ActionPhase);
   }
 }
 
@@ -422,7 +436,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
     );
   }
 
-  popDeck(): Tile | undefined {
+  popDrawPile(): Tile | undefined {
     return this.drawPile.pop();
   }
 

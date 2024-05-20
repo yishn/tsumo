@@ -670,7 +670,7 @@ export class GamePage extends Component("game-page", {
           }
           [part="players"] > mj-player-row {
             scroll-snap-align: center;
-            animation: 0.5s enter-player both;
+            animation: 0.5s backwards enter-player;
           }
 
           mj-reaction-window {
