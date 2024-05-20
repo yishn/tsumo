@@ -101,11 +101,19 @@ export class GamePage extends Component("game-page", {
     );
 
     useEffect(() => {
-      setSelectedTileIndices(
-        this.props.ownPlayerInfo()?.lastDrawnTileIndex == null
-          ? []
-          : [this.props.ownPlayerInfo()!.lastDrawnTileIndex!]
-      );
+      if (this.props.ownPlayerInfo()?.lastDrawnTileIndex != null) {
+        setSelectedTileIndices([
+          this.props.ownPlayerInfo()!.lastDrawnTileIndex!,
+        ]);
+      }
+    });
+
+    useEffect(() => {
+      if (
+        selectedTileIndices().some((i) => selfPlayerInfo().tiles?.[i] == null)
+      ) {
+        setSelectedTileIndices([]);
+      }
     });
 
     return (
@@ -122,7 +130,9 @@ export class GamePage extends Component("game-page", {
                 }
                 dealer={() => player().id === this.props.gameInfo()?.dealer}
                 loading={() => this.props.deadPlayers().includes(player().id)}
-                score={() => selfPlayerInfo()?.score ?? 0}
+                score={() =>
+                  this.props.gamePlayersInfo()?.[player().id]?.score ?? 0
+                }
               >
                 <TileRow slot="discards">
                   <For
@@ -365,7 +375,7 @@ export class GamePage extends Component("game-page", {
               }
             >
               <TileRow slot="tiles">
-                <For each={() => this.props.ownPlayerInfo()?.tiles ?? []}>
+                <For each={() => selfPlayerInfo().tiles ?? []}>
                   {(tile, i) => (
                     <Tile
                       animateEnter
@@ -460,6 +470,8 @@ export class GamePage extends Component("game-page", {
                       },
                     },
                   });
+
+                  setSelectedTileIndices([]);
                 }}
               >
                 <DiscardIcon alt="Discard" />
@@ -491,6 +503,8 @@ export class GamePage extends Component("game-page", {
                     },
                   },
                 });
+
+                setSelectedTileIndices([]);
               }}
             >
               <EatIcon alt="Eat" />
@@ -589,6 +603,8 @@ export class GamePage extends Component("game-page", {
                     });
                   }
                 }
+
+                setSelectedTileIndices([]);
               }}
             >
               <KongIcon alt="Kong" />
@@ -619,6 +635,8 @@ export class GamePage extends Component("game-page", {
                 webSocketHook.sendMessage({
                   game: { operation: { [phase()!]: { win: [] } } },
                 });
+
+                setSelectedTileIndices([]);
               }}
             >
               <WinIcon alt="Win" />
