@@ -8,7 +8,7 @@ export const SERVER = searchParams.get("server");
 export let SESSION = searchParams.get("session")!;
 export let SECRET = searchParams.get("secret") ?? "";
 
-if (SESSION == null) {
+if (!SESSION) {
   SESSION = uuid();
   replaceHistory();
 }

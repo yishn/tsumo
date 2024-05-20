@@ -126,7 +126,7 @@ export class GamePage extends Component("game-page", {
               >
                 <TileRow slot="discards">
                   <For
-                    each={useMemo(() => {
+                    each={() => {
                       const gamePlayerInfo =
                         this.props.gamePlayersInfo()?.[player().id];
                       const lastDiscardInfo =
@@ -150,7 +150,7 @@ export class GamePage extends Component("game-page", {
                             ? false
                             : true
                         );
-                    })}
+                    }}
                   >
                     {(tileOrMeld) => (
                       <>
@@ -311,7 +311,7 @@ export class GamePage extends Component("game-page", {
           >
             <TileRow slot="discards">
               <For
-                each={useMemo(() => {
+                each={() => {
                   const lastDiscardInfo =
                     this.props.gameInfo()?.lastDiscardInfo;
 
@@ -325,7 +325,7 @@ export class GamePage extends Component("game-page", {
                         }
                       : selfPlayerInfo()!.melds![i]
                   );
-                })}
+                }}
               >
                 {(tileOrMeld) => (
                   <>
@@ -503,9 +503,97 @@ export class GamePage extends Component("game-page", {
               tooltip="Kong"
               disabled={() =>
                 !isSelfTurn() ||
-                phase() !== PhaseName.Action ||
-                phase() !== PhaseName.EndAction
+                (phase() !== PhaseName.Action &&
+                  phase() !== PhaseName.EndAction) ||
+                selectedTileIndices().length !== 1 ||
+                (phase() === PhaseName.EndAction
+                  ? selfPlayerInfo().tiles?.filter((tile) =>
+                      TileClass.equal(
+                        tile,
+                        selfPlayerInfo().tiles![selectedTileIndices()[0]]
+                      )
+                    ).length !== 4 &&
+                    !selfPlayerInfo().melds?.some((meld) =>
+                      meld.every((tile) =>
+                        TileClass.equal(
+                          tile,
+                          selfPlayerInfo().tiles![selectedTileIndices()[0]]
+                        )
+                      )
+                    )
+                  : this.props.gameInfo()?.lastDiscard == null ||
+                    selfPlayerInfo().tiles?.filter((tile) =>
+                      TileClass.equal(tile, this.props.gameInfo()!.lastDiscard!)
+                    ).length !== 3)
               }
+              onButtonClick={() => {
+                if (phase() === PhaseName.Action) {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [PhaseName.Action]: {
+                          kong: selfPlayerInfo()
+                            .tiles!.map((tile, i) => [tile, i] as const)
+                            .filter(([tile]) =>
+                              TileClass.equal(
+                                tile,
+                                this.props.gameInfo()!.lastDiscard!
+                              )
+                            )
+                            .map(([_, i]) => i) as [number, number, number],
+                        },
+                      },
+                    },
+                  });
+                } else if (phase() === PhaseName.EndAction) {
+                  const ownKongIndices = selfPlayerInfo()
+                    .tiles!.map((tile, i) => [tile, i] as const)
+                    .filter(([tile]) =>
+                      TileClass.equal(
+                        tile,
+                        selfPlayerInfo().tiles![selectedTileIndices()[0]]
+                      )
+                    )
+                    .map(([_, i]) => i);
+
+                  if (ownKongIndices.length === 4) {
+                    webSocketHook.sendMessage({
+                      game: {
+                        operation: {
+                          [PhaseName.EndAction]: {
+                            kong: ownKongIndices as [
+                              number,
+                              number,
+                              number,
+                              number,
+                            ],
+                          },
+                        },
+                      },
+                    });
+                  } else {
+                    const meldIndex = selfPlayerInfo().melds!.findIndex(
+                      (meld) =>
+                        meld.every((tile) =>
+                          TileClass.equal(
+                            tile,
+                            selfPlayerInfo().tiles![selectedTileIndices()[0]]
+                          )
+                        )
+                    );
+
+                    webSocketHook.sendMessage({
+                      game: {
+                        operation: {
+                          [PhaseName.EndAction]: {
+                            meldKong: [selectedTileIndices()[0], meldIndex],
+                          },
+                        },
+                      },
+                    });
+                  }
+                }
+              }}
             >
               <KongIcon alt="Kong" />
             </ActionBarButton>
@@ -514,9 +602,29 @@ export class GamePage extends Component("game-page", {
               tooltip="Win"
               disabled={() =>
                 !isSelfTurn() ||
-                phase() !== PhaseName.Action ||
-                phase() !== PhaseName.EndAction
+                (phase() !== PhaseName.Action &&
+                  phase() !== PhaseName.EndAction) ||
+                TileClass.isWinningHand(
+                  phase() === PhaseName.EndAction
+                    ? selfPlayerInfo().tiles?.map(TileClass.fromJSON) ?? []
+                    : this.props.gameInfo()?.lastDiscard == null
+                      ? []
+                      : [
+                          ...(selfPlayerInfo().tiles?.map(TileClass.fromJSON) ??
+                            []),
+                          TileClass.fromJSON(
+                            this.props.gameInfo()!.lastDiscard!
+                          ),
+                        ],
+                  this.props.gameInfo()?.jokers ?? [],
+                  selfPlayerInfo().melds?.length ?? 0
+                ) == null
               }
+              onButtonClick={() => {
+                webSocketHook.sendMessage({
+                  game: { operation: { [phase()!]: { win: [] } } },
+                });
+              }}
             >
               <WinIcon alt="Win" />
             </ActionBarButton>

@@ -336,6 +336,7 @@ function useGame(session: GameSession): () => void {
           try {
             fn(state as GameState<P>);
           } catch (err) {
+            console.error(err);
             // Ignore
           }
 

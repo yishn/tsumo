@@ -305,7 +305,6 @@ export class ReactionPhase extends PhaseBase(PhaseName.Reaction) {
 
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
   win(playerIndex: number): GameState<ScorePhase> {
-    const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
     const win = this.state.hasWinningHand(playerIndex);
