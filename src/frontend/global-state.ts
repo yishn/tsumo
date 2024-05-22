@@ -33,7 +33,7 @@ function replaceHistory() {
 
 export const webSocketHook = useWebSocket<ServerMessage, ClientMessage>(
   SERVER!
-); // TODO
+);
 
 webSocketHook.onServerMessage(
   (msg) => msg.error,

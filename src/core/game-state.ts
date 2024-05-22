@@ -73,13 +73,22 @@ export interface PhaseBase {
 }
 
 export class DealPhase extends PhaseBase(Phase.Deal) {
+  constructor(state: GameState) {
+    super(state);
+
+    for (const player of this.state.players) {
+      player.tiles = [];
+      player.melds = [];
+      player.discards = [];
+      player.order = [];
+    }
+  }
+
   deal(): GameState<ActionPhase> {
     this.state.drawPile = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDrawPile()!;
 
     for (const [i, player] of this.state.players.entries()) {
-      player.tiles = [];
-
       for (let i = 0; i < 13; i++) {
         player.tiles.push(this.state.popDrawPile()!);
       }
@@ -93,12 +102,14 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
 
 export class ActionPhase extends PhaseBase(Phase.Action) {
   @allowPlayerMessage({ currentPlayerOnly: true })
-  draw(): GameState<EndActionPhase> {
+  draw(): GameState<EndActionPhase | ScorePhase> {
     const player = this.state.currentPlayer;
     const tile = this.state.popDrawPile();
+
     if (tile == null) {
-      // TODO
-      throw new Error("not implemented");
+      const result = this.nextPhase(ScorePhase);
+      result.phase.draw = true;
+      return result;
     }
 
     player.lastDrawnTileIndex = player.tiles.length;
@@ -390,12 +401,41 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
 }
 
 export class ScorePhase extends PhaseBase(Phase.Score) {
-  score(): GameState<DealPhase> {
-    const winner = this.state.currentPlayer;
+  draw = false;
+  scored = false;
 
-    // TODO
+  score(): GameState<ScorePhase> {
+    if (this.scored) throw new Error("Already scored");
 
-    this.state.moveToNextDealer();
+    if (this.draw) {
+      // TODO
+    } else {
+      const winner = this.state.currentPlayer;
+
+      for (const player of this.state.players) {
+        if (player === winner) continue;
+
+        const score = 2;
+
+        // TODO
+
+        winner.score += score;
+        player.score -= score;
+      }
+    }
+
+    this.scored = true;
+
+    return this.state;
+  }
+
+  next(): GameState<DealPhase> {
+    const winner = this.draw ? null : this.state.currentPlayer;
+
+    if (winner !== this.state.dealer) {
+      this.state.moveToNextDealer();
+    }
+
     this.state.currentPlayerIndex = this.state.dealerIndex;
 
     return this.nextPhase(DealPhase);
@@ -449,10 +489,6 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
   popDrawPile(): Tile | undefined {
     return this.drawPile.pop();
-  }
-
-  shiftDeck(): Tile | undefined {
-    return this.drawPile.shift();
   }
 
   removeLastDiscard(): Tile {

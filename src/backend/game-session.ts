@@ -24,6 +24,7 @@ import {
   Phase,
   PhaseBase,
   ReactionPhase,
+  ScorePhase,
 } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
 import { reactionTimeout } from "../shared/constants.ts";
@@ -423,12 +424,20 @@ function useGame(session: GameSession): () => void {
     useEffect(() => {
       setTimeout(() => {
         updateGameState(DealPhase, (state) => state.phase.deal());
-      });
+      }, 100);
 
       if (gameState().phase instanceof ReactionPhase) {
         setTimeout(() => {
           updateGameState(ReactionPhase, (state) => state.phase.next());
         }, reactionTimeout + 200);
+      }
+
+      if (gameState().phase instanceof ScorePhase) {
+        updateGameState(ScorePhase, (state) => state.phase.score());
+
+        setTimeout(() => {
+          updateGameState(ScorePhase, (state) => state.phase.next());
+        }, 5000);
       }
     }, [gameState]);
 

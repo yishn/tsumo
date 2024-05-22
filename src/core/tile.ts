@@ -143,7 +143,7 @@ export class Tile implements ITile {
       .filter((tile) => tile.numeric)
       .sort(Tile.compare);
 
-    for (let i = 1; i < numericTiles.length - 1; i++) {
+    for (let i = 1; i < numericTiles.length; i++) {
       if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
         return false;
       }

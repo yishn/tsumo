@@ -136,7 +136,7 @@ export class AppComponent extends Component("app") {
       if (webSocketHook.connected()) {
         webSocketHook.sendMessage({
           join: {
-            session: SESSION!, // TODO
+            session: SESSION,
             secret: SECRET,
           },
         });

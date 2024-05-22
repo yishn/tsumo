@@ -99,7 +99,7 @@ export class ReactionBar extends Component("reaction-bar", {
             left: 0;
             right: 0;
             height: 3em;
-            top: 50%;
+            top: calc(50% - 6em);
             border: 0.2em solid white;
             border-left: none;
             border-right: none;

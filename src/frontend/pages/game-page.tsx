@@ -328,7 +328,30 @@ export class GamePage extends Component("game-page", {
               <ActionBarButton
                 slot="action"
                 tooltip="Win"
-                disabled={() => isSelfTurn()}
+                disabled={() =>
+                  isSelfTurn() ||
+                  lastDiscard() == null ||
+                  TileClass.isWinningHand(
+                    [
+                      ...(selfPlayerInfo().tiles?.map(TileClass.fromJSON) ??
+                        []),
+                      TileClass.fromJSON(lastDiscard()!),
+                    ],
+                    this.props.gameInfo()?.jokers ?? [],
+                    selfPlayerInfo().melds?.length ?? 0
+                  ) == null
+                }
+                onButtonClick={() => {
+                  webSocketHook.sendMessage({
+                    game: {
+                      operation: {
+                        [Phase.Reaction]: {
+                          win: [selfPlayerInfo()!.index!],
+                        },
+                      },
+                    },
+                  });
+                }}
               >
                 <WinIcon alt="Win" />
               </ActionBarButton>
@@ -665,14 +688,12 @@ export class GamePage extends Component("game-page", {
                 TileClass.isWinningHand(
                   phase() === Phase.EndAction
                     ? selfPlayerInfo().tiles?.map(TileClass.fromJSON) ?? []
-                    : this.props.gameInfo()?.lastDiscard == null
+                    : lastDiscard() == null
                       ? []
                       : [
                           ...(selfPlayerInfo().tiles?.map(TileClass.fromJSON) ??
                             []),
-                          TileClass.fromJSON(
-                            this.props.gameInfo()!.lastDiscard!
-                          ),
+                          TileClass.fromJSON(lastDiscard()!),
                         ],
                   this.props.gameInfo()?.jokers ?? [],
                   selfPlayerInfo().melds?.length ?? 0
