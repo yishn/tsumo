@@ -27,7 +27,7 @@ import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
 import { playPopSound, playShuffleSound } from "../sounds.ts";
-import { ITile, Phase, Tile as TileClass } from "../../core/main.ts";
+import { ITile, Phase, Reaction, Tile as TileClass } from "../../core/main.ts";
 import {
   GameInfo,
   PlayerInfo,
@@ -115,6 +115,31 @@ export class GamePage extends Component("game-page", {
       ) {
         setSelectedTileIndices([]);
       }
+    });
+
+    const [reactions, setReactions] = useSignal<Reaction[]>([]);
+    let lastReaction: number | undefined;
+
+    useEffect(() => {
+      // Always allow 1s of reaction banner animation
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const nextReactions = this.props.gameInfo()?.reactions ?? [];
+
+      if (
+        nextReactions.length < reactions().length &&
+        lastReaction != null &&
+        Date.now() - lastReaction < 1000
+      ) {
+        timeoutId = setTimeout(() => setReactions(nextReactions), 1000);
+      } else {
+        setReactions(nextReactions);
+        lastReaction = nextReactions.length === 0 ? undefined : Date.now();
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     });
 
     return (
@@ -310,10 +335,10 @@ export class GamePage extends Component("game-page", {
             </ReactionWindow>
           </If>
 
-          <For each={() => this.props.gameInfo()?.reactions ?? []}>
+          <For each={reactions}>
             {(reaction) => (
               <ReactionBar
-                avatar={
+                avatar={() =>
                   avatarList[
                     [...this.props.players().values()].find(
                       (player) =>

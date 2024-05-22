@@ -1,5 +1,13 @@
-import { Component, Style, css, defineComponents, prop } from "sinho";
-import { avatarList } from "../assets";
+import {
+  Component,
+  Style,
+  css,
+  defineComponents,
+  prop,
+  useEffect,
+} from "sinho";
+import type { avatarList } from "../assets.ts";
+import { playWhooshSound } from "../sounds.ts";
 
 type Avatar = (typeof avatarList)[number];
 
@@ -49,6 +57,10 @@ export class ReactionBar extends Component("reaction-bar", {
   avatar: prop<Avatar>("rat"),
 }) {
   render() {
+    useEffect(() => {
+      playWhooshSound();
+    });
+
     return (
       <>
         <div class="banner" />

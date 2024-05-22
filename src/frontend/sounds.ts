@@ -35,3 +35,7 @@ export const playPopSound = prepareAudio("./assets/sounds/pop.mp3");
 export const playCoinSound = prepareAudio("./assets/sounds/coin.mp3");
 
 export const playClackSound = prepareAudio("./assets/sounds/clack.mp3");
+
+export const playWhooshSound = prepareAudio("./assets/sounds/whoosh.mp3");
+
+export const playStampSound = prepareAudio("./assets/sounds/stamp.mp3");
