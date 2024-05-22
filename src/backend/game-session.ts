@@ -421,13 +421,19 @@ function useGame(session: GameSession): () => void {
 
     // Game operations
 
+    const phase = useMemo(() => gameState().phase.name);
+
     useEffect(() => {
-      setTimeout(() => {
-        updateGameState(DealPhase, (state) => state.phase.deal());
-      }, 100);
+      let timeoutId: ReturnType<typeof setTimeout>;
+
+      if (gameState().phase instanceof DealPhase) {
+        timeoutId = setTimeout(() => {
+          updateGameState(DealPhase, (state) => state.phase.deal());
+        }, 100);
+      }
 
       if (gameState().phase instanceof ReactionPhase) {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           updateGameState(ReactionPhase, (state) => state.phase.next());
         }, reactionTimeout + 200);
       }
@@ -435,11 +441,15 @@ function useGame(session: GameSession): () => void {
       if (gameState().phase instanceof ScorePhase) {
         updateGameState(ScorePhase, (state) => state.phase.score());
 
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           updateGameState(ScorePhase, (state) => state.phase.next());
         }, 5000);
       }
-    }, [gameState]);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }, [phase]);
 
     onClientMessage(
       (msg) => msg.game?.operation,
