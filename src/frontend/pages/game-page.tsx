@@ -19,6 +19,7 @@ import {
   KongIcon,
   PongIcon,
   WinIcon,
+  avatarList,
   getAvatarUrl,
 } from "../assets.ts";
 import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
@@ -38,6 +39,7 @@ import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
+import { ReactionBar } from "../components/reaction-bar.tsx";
 
 export interface RemotePlayer {
   name: string;
@@ -307,6 +309,25 @@ export class GamePage extends Component("game-page", {
               </ActionBarButton>
             </ReactionWindow>
           </If>
+
+          <For each={() => this.props.gameInfo()?.reactions ?? []}>
+            {(reaction) => (
+              <ReactionBar
+                avatar={
+                  avatarList[
+                    [...this.props.players().values()].find(
+                      (player) =>
+                        player.id ===
+                        Object.entries(this.props.gamePlayersInfo() ?? {}).find(
+                          ([_, player]) =>
+                            player.index === reaction().playerIndex
+                        )?.[0]
+                    )?.avatar ?? 0
+                  ]
+                }
+              />
+            )}
+          </For>
         </div>
 
         <div part="self">
