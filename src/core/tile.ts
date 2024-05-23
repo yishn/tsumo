@@ -36,12 +36,38 @@ export class Tile implements ITile {
     return ranks[0] + 1 === ranks[1] && ranks[1] + 1 === ranks[2];
   }
 
+  static isPongKong(a: Tile, b: Tile, c: Tile, d?: Tile): boolean {
+    return (
+      Tile.equal(a, b) && Tile.equal(b, c) && (d == null || Tile.equal(c, d))
+    );
+  }
+
   static isAlmostSet(a: Tile, b: Tile): boolean {
     if (Tile.equal(a, b)) return true;
     if (a.suit !== b.suit) return false;
     if (a.honor) return true;
 
     return Math.abs(a.rank - b.rank) <= 2;
+  }
+
+  static isChaotic(tiles: Tile[]): boolean {
+    const honorTiles = tiles.filter((tile) => tile.honor).sort(Tile.compare);
+
+    for (let i = 1; i < honorTiles.length; i++) {
+      if (Tile.equal(honorTiles[i], honorTiles[i - 1])) return false;
+    }
+
+    const numericTiles = tiles
+      .filter((tile) => tile.numeric)
+      .sort(Tile.compare);
+
+    for (let i = 1; i < numericTiles.length; i++) {
+      if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   static formSetsPairs(tiles: Tile[], jokers: number): SetsPairs[] {
@@ -132,26 +158,6 @@ export class Tile implements ITile {
     return result;
   }
 
-  static isChaotic(tiles: Tile[]): boolean {
-    const honorTiles = tiles.filter((tile) => tile.honor).sort(Tile.compare);
-
-    for (let i = 1; i < honorTiles.length; i++) {
-      if (Tile.equal(honorTiles[i], honorTiles[i - 1])) return false;
-    }
-
-    const numericTiles = tiles
-      .filter((tile) => tile.numeric)
-      .sort(Tile.compare);
-
-    for (let i = 1; i < numericTiles.length; i++) {
-      if (Tile.isAlmostSet(numericTiles[i - 1], numericTiles[i])) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   static isWinningHand(
     tiles: Tile[],
     jokers: ITile[],
@@ -226,6 +232,10 @@ export class Tile implements ITile {
       suit: this.suit,
       rank: this.rank,
     };
+  }
+
+  valueOf(): string {
+    return `${this.suit[0]}${this.rank}`;
   }
 }
 

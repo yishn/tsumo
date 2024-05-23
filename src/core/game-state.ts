@@ -76,6 +76,8 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
   constructor(state: GameState) {
     super(state);
 
+    state.turn = 1;
+
     for (const player of this.state.players) {
       player.tiles = [];
       player.melds = [];
@@ -101,6 +103,8 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
 }
 
 export class ActionPhase extends PhaseBase(Phase.Action) {
+  kongBloom = false;
+
   @allowPlayerMessage({ currentPlayerOnly: true })
   draw(): GameState<EndActionPhase | ScorePhase> {
     const player = this.state.currentPlayer;
@@ -117,7 +121,9 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 
     this.state.lastDiscardInfo = undefined;
 
-    return this.nextPhase(EndActionPhase);
+    const result = this.nextPhase(EndActionPhase);
+    result.phase.kongBloom = this.kongBloom;
+    return result;
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -180,6 +186,8 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 }
 
 export class EndActionPhase extends PhaseBase(Phase.EndAction) {
+  kongBloom = false;
+
   @allowPlayerMessage({ currentPlayerOnly: true })
   discard(tileIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
@@ -188,6 +196,7 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     player.lastDrawnTileIndex = undefined;
     player.pushDiscard(tile);
 
+    this.state.turn++;
     this.state.sortPlayerTiles(this.state.currentPlayerIndex);
     this.state.lastDiscardInfo = [
       this.state.currentPlayerIndex,
@@ -253,7 +262,9 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     const win = this.state.hasWinningHand(this.state.currentPlayerIndex);
     if (win == null) throw new Error("Invalid win");
 
-    return this.nextPhase(ScorePhase);
+    const result = this.nextPhase(ScorePhase);
+    result.phase.kongBloom = this.kongBloom;
+    return result;
   }
 }
 
@@ -376,6 +387,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
             : [tile1, tile2, tile3, discard]
         );
 
+        this.state.turn++;
         this.state.currentPlayerIndex = playerIndex;
 
         // Handle kongs
@@ -400,32 +412,163 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   }
 }
 
+export enum ScoreModifierType {
+  DealerPenalty = "dealerPenalty",
+  HeavenlyWin = "heavenlyWin",
+  EarthlyWin = "earthlyWin",
+  Win = "win",
+  Dealer = "dealer",
+  SelfDraw = "selfDraw",
+  Detonator = "detonator",
+  JokerFishing = "jokerFishing",
+  KongBloom = "kongBloom",
+  StolenKong = "stolenKong",
+  AllPong = "allPong",
+  SevenPairs = "sevenPairs",
+  Chaotic = "chaotic",
+  SevenStars = "sevenStars",
+  JokerFree = "jokerFree",
+  PureJokerFree = "pureJokerFree",
+}
+
+export type ScoreModifier = [
+  type: ScoreModifierType,
+  target: number,
+  multiplier: number,
+  constant: number,
+];
+
 export class ScorePhase extends PhaseBase(Phase.Score) {
   draw = false;
   scored = false;
+  kongBloom = false;
+
+  getScoreModifiers(): ScoreModifier[][] {
+    if (this.draw) {
+      return this.state.players.map((player) => {
+        if (player === this.state.dealer) return [];
+
+        return [
+          [ScoreModifierType.DealerPenalty, this.state.dealerIndex, 0, 5],
+        ];
+      });
+    }
+
+    const winner = this.state.currentPlayer;
+    const winnerIndex = this.state.currentPlayerIndex;
+    const win = this.state.hasWinningHand(winnerIndex);
+    const jokerFreeWin = this.state.hasWinningHand(winnerIndex, true);
+    const pureJokerFree =
+      jokerFreeWin != null &&
+      this.state.players.every(
+        (player) =>
+          player === winner ||
+          !player.melds
+            .flatMap((meld) => meld)
+            .concat(player.tiles)
+            .some((tile) => this.state.isJoker(tile))
+      );
+    const winnerJokers = winner.tiles.filter((tile) =>
+      this.state.isJoker(tile)
+    );
+    const jokerFishing =
+      this.state.lastDiscard == null &&
+      winner.lastDrawnTileIndex != null &&
+      winnerJokers.length >= 1 &&
+      Tile.formSetsPairs(
+        winner.tiles.filter(
+          (tile, i) =>
+            !this.state.isJoker(tile) && i !== winner.lastDrawnTileIndex
+        ),
+        winnerJokers.length - 1
+      ).some(
+        ({ sets, pairs }) =>
+          pairs.length === 6 || sets.length + winner.melds.length === 4
+      );
+
+    return this.state.players.map((player, i) => {
+      if (winner === player) return [];
+
+      if (this.state.turn === 1) {
+        return [[ScoreModifierType.HeavenlyWin, winnerIndex, 0, -20]];
+      } else if (this.state.turn === 2 && this.state.lastDiscard != null) {
+        return [[ScoreModifierType.EarthlyWin, winnerIndex, 0, -20]];
+      }
+
+      const types: Partial<Record<ScoreModifierType, [number, number] | null>> =
+        {
+          [ScoreModifierType.Win]: [0, -1],
+          [ScoreModifierType.Dealer]:
+            this.state.dealer === winner || this.state.dealer === player
+              ? [2, 0]
+              : null,
+          [ScoreModifierType.SelfDraw]:
+            this.state.lastDiscard == null ? [2, 0] : null,
+          [ScoreModifierType.Detonator]:
+            this.state.lastDiscardInfo?.[0] === i ? [2, 0] : null,
+          [ScoreModifierType.JokerFishing]: jokerFishing ? [2, 0] : null,
+          [ScoreModifierType.KongBloom]: this.kongBloom ? [2, 0] : null,
+          // [ScoreType.StolenKong]: null,
+          [ScoreModifierType.AllPong]:
+            winner.melds.every((meld) =>
+              Tile.isPongKong(...(meld as [Tile, Tile, Tile, Tile?]))
+            ) &&
+            winner.tiles
+              .filter(
+                (tile) =>
+                  winner.tiles.filter((tile2) => Tile.equal(tile2, tile))
+                    .length !== 3
+              )
+              .some(
+                (_, __, arr) => arr.length === 2 && Tile.equal(arr[0], arr[1])
+              )
+              ? [2, 0]
+              : null,
+          [ScoreModifierType.SevenPairs]:
+            typeof win === "object" && win.pairs.length === 7 ? [2, 0] : null,
+          [ScoreModifierType.Chaotic]: win === "chaotic" ? [2, 0] : null,
+          [ScoreModifierType.SevenStars]:
+            win === "chaotic" &&
+            new Set(
+              winner.tiles
+                .filter((tile) => tile.honor)
+                .map((tile) => tile.valueOf())
+            ).size === 7
+              ? [2, 0]
+              : null,
+          [ScoreModifierType.JokerFree]:
+            jokerFreeWin != null && !pureJokerFree ? [2, -5] : null,
+          [ScoreModifierType.PureJokerFree]: pureJokerFree ? [4, -5] : null,
+        };
+
+      return Object.entries(types)
+        .filter(
+          (entry): entry is [ScoreModifierType, [number, number]] =>
+            entry[1] != null
+        )
+        .map<ScoreModifier>(([type, value]) => [type, winnerIndex, ...value]);
+    });
+  }
 
   score(): GameState<ScorePhase> {
     if (this.scored) throw new Error("Already scored");
 
-    if (this.draw) {
-      // TODO
-    } else {
-      const winner = this.state.currentPlayer;
+    const modifiers = this.getScoreModifiers();
 
-      for (const player of this.state.players) {
-        if (player === winner) continue;
+    for (const [i, player] of this.state.players.entries()) {
+      let delta = 0;
 
-        const score = 2;
+      for (const [_, target, multiplier, constant] of modifiers[i]) {
+        const newDelta = multiplier * delta + constant;
 
-        // TODO
+        player.score += newDelta - delta;
+        this.state.players[target].score -= newDelta - delta;
 
-        winner.score += score;
-        player.score -= score;
+        delta = newDelta;
       }
     }
 
     this.scored = true;
-
     return this.state;
   }
 
@@ -444,6 +587,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
 
 export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
+  turn: number = 1;
   round: number = 1;
   maxRound: number = 4;
   drawPile: Tile[] = [];
@@ -518,6 +662,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
   moveToNextDealer(): this {
     this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
+    if (this.dealerIndex === 0) this.round++;
     return this;
   }
 
@@ -536,7 +681,10 @@ export class GameState<P extends PhaseBase = PhaseBase> {
     });
   }
 
-  hasWinningHand(playerIndex: number): SetsPairs | "chaotic" | undefined {
+  hasWinningHand(
+    playerIndex: number,
+    noJokers: boolean = false
+  ): SetsPairs | "chaotic" | undefined {
     const player = this.getPlayer(playerIndex);
     const useDiscard =
       this.lastDiscard != null &&
@@ -544,7 +692,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
     return Tile.isWinningHand(
       !useDiscard ? player.tiles : [...player.tiles, this.lastDiscard],
-      [this.primaryJoker, this.secondaryJoker],
+      noJokers ? [] : [this.primaryJoker, this.secondaryJoker],
       player.melds.length
     );
   }
