@@ -27,7 +27,13 @@ import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
 import { playPopSound, playShuffleSound } from "../sounds.ts";
-import { ITile, Phase, Reaction, Tile as TileClass } from "../../core/main.ts";
+import {
+  ITile,
+  Phase,
+  Reaction,
+  Tile as TileClass,
+  TileSuit,
+} from "../../core/main.ts";
 import {
   GameInfo,
   PlayerInfo,
@@ -40,6 +46,7 @@ import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
 import { ReactionBar } from "../components/reaction-bar.tsx";
+import { ScoreScroll } from "../components/score-scroll.tsx";
 
 export interface RemotePlayer {
   name: string;
@@ -58,25 +65,28 @@ export class GamePage extends Component("game-page", {
   ownPlayerInfo: prop<GamePlayerInfo>(),
 }) {
   render() {
-    const remotePlayerInfos = useMemo(() => {
-      const sorted = [...this.props.players()].sort((a, b) =>
+    const orderedPlayers = useMemo(() =>
+      [...this.props.players()].sort((a, b) =>
         diceSort(a.dice ?? [0, 0], b.dice ?? [0, 0])
-      );
-      const ownIndex = sorted.findIndex(
+      )
+    );
+    const remotePlayerInfos = useMemo(() => {
+      const result = [...orderedPlayers()];
+      const ownIndex = result.findIndex(
         (player) => player.id === this.props.ownPlayerId()
       );
 
       if (ownIndex >= 0) {
-        const remotePlayers = sorted.filter((_, i) => i !== ownIndex);
+        const remotePlayers = result.filter((_, i) => i !== ownIndex);
 
-        for (let i = 0; i < sorted.length - ownIndex - 1; i++) {
+        for (let i = 0; i < result.length - ownIndex - 1; i++) {
           remotePlayers.unshift(remotePlayers.pop()!);
         }
 
         return remotePlayers;
       }
 
-      return sorted;
+      return result;
     });
     const selfPlayerInfo = useMemo(() => ({
       ...this.props
@@ -363,14 +373,7 @@ export class GamePage extends Component("game-page", {
               <ReactionBar
                 avatar={() =>
                   avatarList[
-                    [...this.props.players().values()].find(
-                      (player) =>
-                        player.id ===
-                        Object.entries(this.props.gamePlayersInfo() ?? {}).find(
-                          ([_, player]) =>
-                            player.index === reaction().playerIndex
-                        )?.[0]
-                    )?.avatar ?? 0
+                    orderedPlayers()[reaction().playerIndex]?.avatar ?? 0
                   ]
                 }
               />

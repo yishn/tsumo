@@ -229,11 +229,11 @@ class TileComponent extends Component("tile", {
             border: 0.15em solid transparent;
             border-top-color: var(--tile-face-light-color);
             border-radius: 0.3em;
-            box-shadow:
-              var(--tile-face-border-color) 0 var(--tile-depth),
+            --box-shadow: var(--tile-face-border-color) 0 var(--tile-depth),
               var(--tile-back-border-color) 0
                 calc(var(--tile-back-depth) + var(--tile-depth)),
               var(--tile-shadow);
+            box-shadow: var(--box-shadow);
             width: var(--_tile-width);
             height: var(--tile-height);
             background-color: var(--tile-face-color);
@@ -253,18 +253,12 @@ class TileComponent extends Component("tile", {
             from {
               box-shadow:
                 var(--tile-glow-pulse-color) 0 0 0.6em 0.3em,
-                var(--tile-face-border-color) 0 var(--tile-depth),
-                var(--tile-back-border-color) 0
-                  calc(var(--tile-back-depth) + var(--tile-depth)),
-                var(--tile-shadow);
+                var(--box-shadow);
             }
             to {
               box-shadow:
                 var(--tile-glow-color) 0 0 0.3em 0.3em,
-                var(--tile-face-border-color) 0 var(--tile-depth),
-                var(--tile-back-border-color) 0
-                  calc(var(--tile-back-depth) + var(--tile-depth)),
-                var(--tile-shadow);
+                var(--box-shadow);
             }
           }
           [part="tile"].glow {
@@ -273,8 +267,7 @@ class TileComponent extends Component("tile", {
           [part="tile"].back {
             border-color: var(--tile-back-color);
             border-top-color: var(--tile-back-light-color);
-            box-shadow:
-              var(--tile-back-border-color) 0 var(--tile-back-depth),
+            --box-shadow: var(--tile-back-border-color) 0 var(--tile-back-depth),
               var(--tile-face-border-color) 0
                 calc(var(--tile-back-depth) + var(--tile-depth)),
               var(--tile-shadow);

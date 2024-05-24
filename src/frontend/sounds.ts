@@ -39,3 +39,5 @@ export const playClackSound = prepareAudio("./assets/sounds/clack.mp3");
 export const playWhooshSound = prepareAudio("./assets/sounds/whoosh.mp3");
 
 export const playStampSound = prepareAudio("./assets/sounds/stamp.mp3");
+
+export const playRevealSound = prepareAudio("./assets/sounds/reveal.mp3");
