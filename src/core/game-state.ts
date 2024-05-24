@@ -429,6 +429,9 @@ export enum ScoreModifierType {
   SevenStars = "sevenStars",
   JokerFree = "jokerFree",
   PureJokerFree = "pureJokerFree",
+  JokerBonus = "jokerBonus",
+  LimitBreak = "limitBreak",
+  Overlord = "overlord",
 }
 
 export type ScoreModifier = [
@@ -550,15 +553,62 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     });
   }
 
+  getJokerBonusModifiers(): ScoreModifier[][] {
+    const jokerScores = this.state.players.map((player) =>
+      player.melds
+        .flatMap((meld) => meld)
+        .concat(player.tiles)
+        .map<number>((tile) =>
+          Tile.equal(tile, this.state.primaryJoker)
+            ? 2
+            : Tile.equal(tile, this.state.secondaryJoker)
+              ? 1
+              : 0
+        )
+        .reduce((sum, n) => sum + n, 0)
+    );
+    const overlord = jokerScores.filter((score) => score !== 0).length === 1;
+
+    return jokerScores.map((jokerScore, i) => {
+      if (jokerScore === 0) return [];
+
+      return this.state.players.flatMap<ScoreModifier>((_, j) =>
+        i === j
+          ? []
+          : (
+              [
+                [ScoreModifierType.JokerBonus, i, 0, -jokerScore],
+                jokerScore >= 5
+                  ? [ScoreModifierType.LimitBreak, i, jokerScore - 3, 0]
+                  : null,
+                overlord ? [ScoreModifierType.Overlord, i, 2, 0] : null,
+              ] satisfies (ScoreModifier | null)[] as (ScoreModifier | null)[]
+            ).filter((modifier): modifier is ScoreModifier => modifier != null)
+      );
+    });
+  }
+
   score(): GameState<ScorePhase> {
     if (this.scored) throw new Error("Already scored");
 
     const modifiers = this.getScoreModifiers();
+    const jokerModifiers = this.getJokerBonusModifiers();
 
     for (const [i, player] of this.state.players.entries()) {
       let delta = 0;
 
       for (const [_, target, multiplier, constant] of modifiers[i]) {
+        const newDelta = multiplier * delta + constant;
+
+        player.score += newDelta - delta;
+        this.state.players[target].score -= newDelta - delta;
+
+        delta = newDelta;
+      }
+
+      delta = 0;
+
+      for (const [_, target, multiplier, constant] of jokerModifiers[i]) {
         const newDelta = multiplier * delta + constant;
 
         player.score += newDelta - delta;
