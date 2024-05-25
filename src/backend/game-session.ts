@@ -425,9 +425,8 @@ function useGame(session: GameSession): () => void {
 
       return phase instanceof ScorePhase
         ? {
-            tiles: gameState()
-              .currentPlayer.melds.flatMap((meld) => meld)
-              .concat(gameState().currentPlayer.tiles),
+            tiles: gameState().currentPlayer.tiles,
+            melds: gameState().currentPlayer.melds,
             winModifiers: phase.winModifiers,
             jokerBonusModifiers: phase.jokerBonusModifiers,
           }
@@ -442,27 +441,42 @@ function useGame(session: GameSession): () => void {
 
     useEffect(() => {
       let timeoutId: ReturnType<typeof setTimeout>;
+      const phase = gameState().phase;
 
-      if (gameState().phase instanceof DealPhase) {
+      if (phase instanceof DealPhase) {
         timeoutId = setTimeout(() => {
           updateGameState(DealPhase, (state) => state.phase.deal());
         }, 100);
       }
 
-      if (gameState().phase instanceof ReactionPhase) {
+      if (phase instanceof ReactionPhase) {
         timeoutId = setTimeout(() => {
           updateGameState(ReactionPhase, (state) => state.phase.next());
         }, reactionTimeout + 200);
       }
 
-      // TODO
-      // if (gameState().phase instanceof ScorePhase) {
-      //   updateGameState(ScorePhase, (state) => state.phase.score());
+      if (phase instanceof ScorePhase) {
+        timeoutId = setTimeout(
+          () => {
+            updateGameState(ScorePhase, (state) => state.phase.score());
 
-      //   timeoutId = setTimeout(() => {
-      //     updateGameState(ScorePhase, (state) => state.phase.next());
-      //   }, 5000);
-      // }
+            timeoutId = setTimeout(() => {
+              updateGameState(ScorePhase, (state) => state.phase.next());
+            }, 1000);
+          },
+          2000 +
+            500 *
+              Math.max(
+                ...phase.winModifiers.map((modifiers) => modifiers.length)
+              ) +
+            500 *
+              phase.jokerBonusModifiers.filter(
+                (modifiers) => modifiers.length > 0
+              ).length +
+            500 * 3 +
+            5000
+        );
+      }
 
       return () => {
         clearTimeout(timeoutId);

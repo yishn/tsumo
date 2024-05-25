@@ -53,6 +53,7 @@ export interface GameInfo {
 
 export interface ScoreInfo {
   tiles: ITile[];
+  melds: ITile[][];
   winModifiers: ScoreModifier[][];
   jokerBonusModifiers: ScoreModifier[][];
 }

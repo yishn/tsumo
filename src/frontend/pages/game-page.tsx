@@ -720,7 +720,12 @@ export class GamePage extends Component("game-page", {
 
         <If condition={() => this.props.scoreInfo() != null}>
           <ScoreScroll
-            tiles={() => this.props.scoreInfo()?.tiles ?? []}
+            tiles={() =>
+              (this.props.scoreInfo()?.tiles ?? []).concat(
+                this.props.gameInfo()?.lastDiscard ?? []
+              )
+            }
+            melds={() => this.props.scoreInfo()?.melds ?? []}
             jokers={() => this.props.gameInfo()?.jokers ?? []}
             avatars={() => orderedPlayers().map((player) => player.avatar)}
             winModifiers={() => this.props.scoreInfo()?.winModifiers ?? []}

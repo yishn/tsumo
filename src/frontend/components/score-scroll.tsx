@@ -46,6 +46,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
 
 export class ScoreScroll extends Component("score-scroll", {
   tiles: prop<ITile[]>([]),
+  melds: prop<ITile[][]>([]),
   jokers: prop<ITile[]>([]),
   avatars: prop<number[]>([0, 1, 2, 3]),
   winModifiers: prop<ScoreModifier[][]>([]),
@@ -110,6 +111,27 @@ export class ScoreScroll extends Component("score-scroll", {
           <h1>Score</h1>
 
           <TileRow part="tiles">
+            <For each={this.props.melds}>
+              {(meld) => (
+                <TileStack>
+                  <For each={meld}>
+                    {(tile) => (
+                      <Tile
+                        back
+                        glow={() =>
+                          this.props
+                            .jokers()
+                            .some((joker) => TileClass.equal(joker, tile()))
+                        }
+                        suit={() => tile().suit}
+                        rank={() => tile().rank}
+                      />
+                    )}
+                  </For>
+                </TileStack>
+              )}
+            </For>
+
             <TileStack>
               <For each={this.props.tiles}>
                 {(tile) => (
@@ -286,7 +308,7 @@ export class ScoreScroll extends Component("score-scroll", {
               </tr>
 
               <tr class="total" style={rowAnimationDelayStyle()}>
-                <td class="type"></td>
+                <td class="type">Total</td>
                 <For
                   each={() =>
                     winModifiersResult().map(
