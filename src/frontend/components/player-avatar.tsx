@@ -9,7 +9,6 @@ import {
   useEffect,
   useRef,
 } from "sinho";
-import { DealerIcon } from "../assets.ts";
 import clsx from "clsx";
 import { Dice } from "./dice.tsx";
 import { Throbber } from "./throbber.tsx";
@@ -70,7 +69,7 @@ export class PlayerAvatar extends Component("player-avatar", {
 
         <Style>{css`
           :host {
-            --player-avatar-size: 4.2em;
+            --_player-avatar-size: var(--player-avatar-size, 4.2em);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -93,11 +92,11 @@ export class PlayerAvatar extends Component("player-avatar", {
             display: flex;
             place-content: center;
             place-items: center;
-            gap: calc(0.1 * var(--player-avatar-size));
+            gap: calc(0.1 * var(--_player-avatar-size));
             border-radius: 50%;
             outline: 0em solid #e9d883;
-            height: var(--player-avatar-size);
-            width: var(--player-avatar-size);
+            height: var(--_player-avatar-size);
+            width: var(--_player-avatar-size);
             transition:
               box-shadow 0.2s,
               outline-width 0.2s,
@@ -116,18 +115,19 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
           [part="avatar"].dice,
           [part="avatar"].loading {
-            box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+            box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 var(--_player-avatar-size)
+              inset;
           }
           @keyframes current-pulse-dark {
             from {
               box-shadow:
                 #e9d883 0 0 0 0.1em,
-                rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+                rgba(0, 0, 0, 0.5) 0 0 0 var(--_player-avatar-size) inset;
             }
             to {
               box-shadow:
                 #e9d883 0 0 0 0.3em,
-                rgba(0, 0, 0, 0.5) 0 0 0 var(--player-avatar-size) inset;
+                rgba(0, 0, 0, 0.5) 0 0 0 var(--_player-avatar-size) inset;
             }
           }
           [part="avatar"].dice.current,
@@ -135,7 +135,7 @@ export class PlayerAvatar extends Component("player-avatar", {
             animation-name: current-pulse-dark;
           }
           [part="avatar"] mj-dice {
-            --dice-size: calc(0.25 * var(--player-avatar-size));
+            --dice-size: calc(0.25 * var(--_player-avatar-size));
             opacity: 0;
             transition: opacity 0.2s;
           }
@@ -146,7 +146,7 @@ export class PlayerAvatar extends Component("player-avatar", {
             position: absolute;
             top: 50%;
             left: 50%;
-            --throbber-size: calc(0.7 * var(--player-avatar-size));
+            --throbber-size: calc(0.7 * var(--_player-avatar-size));
             transform: translate(-50%, -50%);
           }
         `}</Style>
