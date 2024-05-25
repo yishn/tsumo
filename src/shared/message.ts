@@ -5,6 +5,7 @@ import type {
   Phase,
   ReactionPhase,
   Reaction,
+  ScoreModifier,
 } from "../core/main.ts";
 
 export interface Heartbeat {
@@ -50,6 +51,12 @@ export interface GameInfo {
   reactions: Reaction[];
 }
 
+export interface ScoreInfo {
+  tiles: ITile[];
+  winModifiers: ScoreModifier[][];
+  jokerBonusModifiers: ScoreModifier[][];
+}
+
 export interface ServerMessage {
   heartbeat?: Heartbeat;
   error?: {
@@ -66,6 +73,7 @@ export interface ServerMessage {
     info?: GameInfo;
     players?: GamePlayersInfo;
     player?: GamePlayerInfo;
+    score?: ScoreInfo | null;
   };
 }
 

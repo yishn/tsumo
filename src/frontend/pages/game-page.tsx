@@ -31,6 +31,7 @@ import {
   ITile,
   Phase,
   Reaction,
+  ScoreModifierType,
   Tile as TileClass,
   TileSuit,
 } from "../../core/main.ts";
@@ -39,6 +40,7 @@ import {
   PlayerInfo,
   GamePlayersInfo,
   GamePlayerInfo,
+  ScoreInfo,
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
@@ -63,6 +65,7 @@ export class GamePage extends Component("game-page", {
   gameInfo: prop<GameInfo>(),
   gamePlayersInfo: prop<GamePlayersInfo>(),
   ownPlayerInfo: prop<GamePlayerInfo>(),
+  scoreInfo: prop<ScoreInfo>(),
 }) {
   render() {
     const orderedPlayers = useMemo(() =>
@@ -714,6 +717,18 @@ export class GamePage extends Component("game-page", {
             </ActionBarButton>
           </ActionBar>
         </div>
+
+        <If condition={() => this.props.scoreInfo() != null}>
+          <ScoreScroll
+            tiles={() => this.props.scoreInfo()?.tiles ?? []}
+            jokers={() => this.props.gameInfo()?.jokers ?? []}
+            avatars={() => orderedPlayers().map((player) => player.avatar)}
+            winModifiers={() => this.props.scoreInfo()?.winModifiers ?? []}
+            jokerBonusModifiers={() =>
+              this.props.scoreInfo()?.jokerBonusModifiers ?? []
+            }
+          />
+        </If>
 
         <Style>{css`
           :host {

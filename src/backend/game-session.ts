@@ -15,6 +15,7 @@ import {
   GameInfo,
   GamePlayersInfo,
   PlayerInfo,
+  ScoreInfo,
   ServerMessage,
 } from "../shared/message.ts";
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
@@ -419,6 +420,22 @@ function useGame(session: GameSession): () => void {
       );
     }
 
+    const scoreInfo = useMemo<ScoreInfo | null>(() => {
+      const phase = gameState().phase;
+
+      return phase instanceof ScorePhase
+        ? {
+            tiles: gameState()
+              .currentPlayer.melds.flatMap((meld) => meld)
+              .concat(gameState().currentPlayer.tiles),
+            winModifiers: phase.winModifiers,
+            jokerBonusModifiers: phase.jokerBonusModifiers,
+          }
+        : null;
+    });
+
+    useClientSignal((msg) => msg.game?.score, scoreInfo);
+
     // Game operations
 
     const phase = useMemo(() => gameState().phase.name);
@@ -438,13 +455,14 @@ function useGame(session: GameSession): () => void {
         }, reactionTimeout + 200);
       }
 
-      if (gameState().phase instanceof ScorePhase) {
-        updateGameState(ScorePhase, (state) => state.phase.score());
+      // TODO
+      // if (gameState().phase instanceof ScorePhase) {
+      //   updateGameState(ScorePhase, (state) => state.phase.score());
 
-        timeoutId = setTimeout(() => {
-          updateGameState(ScorePhase, (state) => state.phase.next());
-        }, 5000);
-      }
+      //   timeoutId = setTimeout(() => {
+      //     updateGameState(ScorePhase, (state) => state.phase.next());
+      //   }, 5000);
+      // }
 
       return () => {
         clearTimeout(timeoutId);

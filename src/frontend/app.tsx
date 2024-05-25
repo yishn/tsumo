@@ -131,6 +131,7 @@ export class AppComponent extends Component("app") {
     const ownPlayerInfo = webSocketHook.useServerSignal(
       (msg) => msg.game?.player
     );
+    const scoreInfo = webSocketHook.useServerSignal((msg) => msg.game?.score);
 
     useEffect(() => {
       if (webSocketHook.connected()) {
@@ -174,6 +175,7 @@ export class AppComponent extends Component("app") {
             gameInfo={gameInfo}
             gamePlayersInfo={gamePlayersInfo}
             ownPlayerInfo={ownPlayerInfo}
+            scoreInfo={() => scoreInfo() ?? undefined}
           />
         </ElseIf>
 

@@ -420,7 +420,7 @@ export enum ScoreModifierType {
   Dealer = "dealer",
   SelfDraw = "selfDraw",
   Detonator = "detonator",
-  JokerFishing = "jokerFishing",
+  JokerFisher = "jokerFisher",
   KongBloom = "kongBloom",
   StolenKong = "stolenKong",
   AllPong = "allPong",
@@ -429,10 +429,28 @@ export enum ScoreModifierType {
   SevenStars = "sevenStars",
   JokerFree = "jokerFree",
   PureJokerFree = "pureJokerFree",
-  JokerBonus = "jokerBonus",
-  LimitBreak = "limitBreak",
-  Overlord = "overlord",
+  Joker = "joker",
 }
+
+export const scoreModifierTypeOrder = [
+  ScoreModifierType.DealerPenalty,
+  ScoreModifierType.HeavenlyWin,
+  ScoreModifierType.EarthlyWin,
+  ScoreModifierType.Win,
+  ScoreModifierType.Dealer,
+  ScoreModifierType.SelfDraw,
+  ScoreModifierType.Detonator,
+  ScoreModifierType.JokerFisher,
+  ScoreModifierType.KongBloom,
+  ScoreModifierType.StolenKong,
+  ScoreModifierType.AllPong,
+  ScoreModifierType.SevenPairs,
+  ScoreModifierType.Chaotic,
+  ScoreModifierType.SevenStars,
+  ScoreModifierType.JokerFree,
+  ScoreModifierType.PureJokerFree,
+  ScoreModifierType.Joker,
+];
 
 export type ScoreModifier = [
   type: ScoreModifierType,
@@ -445,8 +463,10 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
   draw = false;
   scored = false;
   kongBloom = false;
+  winModifiers = this.getWinModifiers();
+  jokerBonusModifiers = this.getJokerBonusModifiers();
 
-  getScoreModifiers(): ScoreModifier[][] {
+  private getWinModifiers(): ScoreModifier[][] {
     if (this.draw) {
       return this.state.players.map((player) => {
         if (player === this.state.dealer) return [];
@@ -474,7 +494,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     const winnerJokers = winner.tiles.filter((tile) =>
       this.state.isJoker(tile)
     );
-    const jokerFishing =
+    const jokerFisher =
       this.state.lastDiscard == null &&
       winner.lastDrawnTileIndex != null &&
       winnerJokers.length >= 1 &&
@@ -500,7 +520,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
 
       const types: Partial<Record<ScoreModifierType, [number, number] | null>> =
         {
-          [ScoreModifierType.Win]: [0, -1],
+          [ScoreModifierType.Win]: [1, -1],
           [ScoreModifierType.Dealer]:
             this.state.dealer === winner || this.state.dealer === player
               ? [2, 0]
@@ -509,7 +529,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
             this.state.lastDiscard == null ? [2, 0] : null,
           [ScoreModifierType.Detonator]:
             this.state.lastDiscardInfo?.[0] === i ? [2, 0] : null,
-          [ScoreModifierType.JokerFishing]: jokerFishing ? [2, 0] : null,
+          [ScoreModifierType.JokerFisher]: jokerFisher ? [2, 0] : null,
           [ScoreModifierType.KongBloom]: this.kongBloom ? [2, 0] : null,
           // [ScoreType.StolenKong]: null,
           [ScoreModifierType.AllPong]:
@@ -553,7 +573,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     });
   }
 
-  getJokerBonusModifiers(): ScoreModifier[][] {
+  private getJokerBonusModifiers(): ScoreModifier[][] {
     const jokerScores = this.state.players.map((player) =>
       player.melds
         .flatMap((meld) => meld)
@@ -569,21 +589,18 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     );
     const overlord = jokerScores.filter((score) => score !== 0).length === 1;
 
-    return jokerScores.map((jokerScore, i) => {
-      if (jokerScore === 0) return [];
-
-      return this.state.players.flatMap<ScoreModifier>((_, j) =>
-        i === j
+    return this.state.players.map((_, i) => {
+      return jokerScores.flatMap<ScoreModifier>((jokerScore, j) =>
+        i === j || jokerScore === 0
           ? []
-          : (
+          : [
               [
-                [ScoreModifierType.JokerBonus, i, 0, -jokerScore],
-                jokerScore >= 5
-                  ? [ScoreModifierType.LimitBreak, i, jokerScore - 3, 0]
-                  : null,
-                overlord ? [ScoreModifierType.Overlord, i, 2, 0] : null,
-              ] satisfies (ScoreModifier | null)[] as (ScoreModifier | null)[]
-            ).filter((modifier): modifier is ScoreModifier => modifier != null)
+                ScoreModifierType.Joker,
+                j,
+                (jokerScore >= 5 ? jokerScore - 3 : 1) * (overlord ? 2 : 1),
+                -jokerScore,
+              ],
+            ]
       );
     });
   }
@@ -591,13 +608,13 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
   score(): GameState<ScorePhase> {
     if (this.scored) throw new Error("Already scored");
 
-    const modifiers = this.getScoreModifiers();
-    const jokerModifiers = this.getJokerBonusModifiers();
+    const winModifiers = this.winModifiers;
+    const jokerModifiers = this.jokerBonusModifiers;
 
     for (const [i, player] of this.state.players.entries()) {
       let delta = 0;
 
-      for (const [_, target, multiplier, constant] of modifiers[i]) {
+      for (const [_, target, multiplier, constant] of winModifiers[i]) {
         const newDelta = multiplier * delta + constant;
 
         player.score += newDelta - delta;

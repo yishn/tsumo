@@ -1,19 +1,93 @@
-import { Component, Style, css, defineComponents, useEffect } from "sinho";
+import {
+  Component,
+  For,
+  If,
+  Style,
+  css,
+  defineComponents,
+  prop,
+  useEffect,
+  useMemo,
+} from "sinho";
 import { delay } from "../animation.ts";
 import { Tile } from "./tile.tsx";
+import { Tile as TileClass } from "../../core/main.ts";
 import { playRevealSound } from "../sounds.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 import { getAvatarUrl } from "../assets.ts";
+import {
+  ITile,
+  ScoreModifier,
+  ScoreModifierType,
+  scoreModifierTypeOrder,
+} from "../../core/main.ts";
+import { TileRow } from "./tile-row.tsx";
+import { TileStack } from "./tile-stack.tsx";
 
-export class ScoreScroll extends Component("score-scroll") {
+const modifierTypeLabels: Record<ScoreModifierType, string> = {
+  [ScoreModifierType.DealerPenalty]: "Dealer",
+  [ScoreModifierType.HeavenlyWin]: "Heavenly Win",
+  [ScoreModifierType.EarthlyWin]: "Earthly Win",
+  [ScoreModifierType.Win]: "Win",
+  [ScoreModifierType.Dealer]: "Dealer",
+  [ScoreModifierType.SelfDraw]: "Self-Draw",
+  [ScoreModifierType.Detonator]: "Detonator",
+  [ScoreModifierType.JokerFisher]: "Joker Fisher",
+  [ScoreModifierType.KongBloom]: "Kong Bloom",
+  [ScoreModifierType.StolenKong]: "Stolen Kong",
+  [ScoreModifierType.AllPong]: "All Pong",
+  [ScoreModifierType.SevenPairs]: "Seven Pairs",
+  [ScoreModifierType.Chaotic]: "Chaotic Thirteen",
+  [ScoreModifierType.SevenStars]: "Seven Stars",
+  [ScoreModifierType.JokerFree]: "Joker-Free",
+  [ScoreModifierType.PureJokerFree]: "Pure Joker-Free",
+  [ScoreModifierType.Joker]: "Joker",
+};
+
+export class ScoreScroll extends Component("score-scroll", {
+  tiles: prop<ITile[]>([]),
+  jokers: prop<ITile[]>([]),
+  avatars: prop<number[]>([0, 1, 2, 3]),
+  winModifiers: prop<ScoreModifier[][]>([]),
+  jokerBonusModifiers: prop<ScoreModifier[][]>([]),
+}) {
   static enterAnimationDuration = 2000;
+  static enterRowAnimationDuration = 500;
 
   render() {
+    const winModifiersResult = useMemo(() => {
+      const result = this.props.winModifiers().map((_) => 0);
+
+      for (const [i, modifiers] of this.props.winModifiers().entries()) {
+        for (const [, target, multiplier, constant] of modifiers) {
+          const delta = result[i] * multiplier + constant - result[i];
+          result[i] += delta;
+          result[target] -= delta;
+        }
+      }
+
+      return result;
+    });
+
+    const jokerBonusModifiersResult = useMemo(() => {
+      const result = this.props.jokerBonusModifiers().map((_) => 0);
+
+      for (const [i, modifiers] of this.props.jokerBonusModifiers().entries()) {
+        for (const [, target, multiplier, constant] of modifiers) {
+          const delta = constant * multiplier;
+          result[i] += delta;
+          result[target] -= delta;
+        }
+      }
+
+      return result;
+    });
+
     useEffect(() => {
       // Reveal animation
 
       delay(ScoreScroll.enterAnimationDuration).then(() => {
-        [...this.querySelectorAll("[slot='tiles'] mj-tile")]
+        [...this.shadowRoot!.querySelectorAll("[part='tiles'] mj-tile")]
           .filter((tile): tile is Tile => tile instanceof Tile && tile.back)
           .forEach((tile) => {
             tile.back = false;
@@ -22,113 +96,212 @@ export class ScoreScroll extends Component("score-scroll") {
       });
     });
 
+    let row = 1;
+
+    const rowAnimationDelayStyle = () => ({
+      animationDelay: () =>
+        `${ScoreScroll.enterAnimationDuration + row++ * 500}ms`,
+    });
+
     return (
       <>
         <div part="container">
+          <img class="head" src="./assets/img/win.svg" alt="和" />
           <h1>Score</h1>
 
-          <slot name="tiles" />
+          <TileRow part="tiles">
+            <TileStack>
+              <For each={this.props.tiles}>
+                {(tile) => (
+                  <Tile
+                    back
+                    glow={() =>
+                      this.props
+                        .jokers()
+                        .some((joker) => TileClass.equal(joker, tile()))
+                    }
+                    suit={() => tile().suit}
+                    rank={() => tile().rank}
+                  />
+                )}
+              </For>
+            </TileStack>
+          </TileRow>
 
           <table part="score-table">
             <thead>
               <tr>
                 <th class="type">Type</th>
-                <th class="player">
-                  <PlayerAvatar avatar={getAvatarUrl(0)} />
-                </th>
-                <th class="player">
-                  <PlayerAvatar avatar={getAvatarUrl(1)} />
-                </th>
-                <th class="player">
-                  <PlayerAvatar avatar={getAvatarUrl(2)} />
-                </th>
-                <th class="player">
-                  <PlayerAvatar avatar={getAvatarUrl(3)} />
-                </th>
+                <For each={this.props.avatars}>
+                  {(avatar) => (
+                    <th class="player">
+                      <PlayerAvatar avatar={() => getAvatarUrl(avatar())} />
+                    </th>
+                  )}
+                </For>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td class="type">Win</td>
-                <td class="player">{-1}</td>
-                <td class="player">{-1}</td>
-                <td class="player"></td>
-                <td class="player">{-1}</td>
-              </tr>
-              <tr>
-                <td class="type">Dealer</td>
-                <td class="player">×2</td>
-                <td class="player"></td>
-                <td class="player"></td>
-                <td class="player"></td>
-              </tr>
-              <tr>
-                <td class="type">Detonator</td>
-                <td class="player"></td>
-                <td class="player">×2</td>
-                <td class="player"></td>
-                <td class="player"></td>
-              </tr>
-              <tr class="result">
+              <For
+                each={() =>
+                  scoreModifierTypeOrder.filter(
+                    (type) =>
+                      !!this.props
+                        .winModifiers()
+                        .some((modifiers) =>
+                          modifiers.some((modifier) => modifier[0] === type)
+                        )
+                  )
+                }
+              >
+                {(type) => (
+                  <tr style={rowAnimationDelayStyle()}>
+                    <td class="type">{() => modifierTypeLabels[type()]}</td>
+                    <For each={this.props.winModifiers}>
+                      {(modifiers) => {
+                        const modifier = () =>
+                          modifiers().find(
+                            (modifier) => modifier[0] === type()
+                          );
+
+                        return (
+                          <td class="player">
+                            <If
+                              condition={() =>
+                                modifier() != null && modifier()![2] !== 1
+                              }
+                            >
+                              ×{() => modifier()?.[2]}
+                            </If>
+                            <If
+                              condition={() =>
+                                modifier() != null && modifier()![3] !== 0
+                              }
+                            >
+                              {() =>
+                                modifier() != null && modifier()![3] > 0
+                                  ? "+" + modifier()![3]
+                                  : modifier()?.[3]
+                              }
+                            </If>
+                          </td>
+                        );
+                      }}
+                    </For>
+                  </tr>
+                )}
+              </For>
+
+              <tr class="result" style={rowAnimationDelayStyle()}>
                 <td class="type"></td>
-                <td class="player">{-2}</td>
-                <td class="player">{-2}</td>
-                <td class="player">{5}</td>
-                <td class="player">{-1}</td>
+                <For each={winModifiersResult}>
+                  {(total) => {
+                    return (
+                      <td class="player">
+                        {() => (total() > 0 ? "+" + total() : total())}
+                      </td>
+                    );
+                  }}
+                </For>
               </tr>
 
-              <tr>
-                <td class="type" rowSpan={4}>
-                  Joker
-                </td>
-                <td class="player">{9}</td>
-                <td class="player">{-3}</td>
-                <td class="player">{-3}</td>
-                <td class="player">{-3}</td>
-              </tr>
-              <tr>
-                <td class="player">{-1}</td>
-                <td class="player">3</td>
-                <td class="player">{-1}</td>
-                <td class="player">{-1}</td>
-              </tr>
-              <tr>
-                <td class="player">
-                  <span style={{ visibility: "hidden" }}>×2</span>
-                  {-5}×2
-                </td>
-                <td class="player">
-                  <span style={{ visibility: "hidden" }}>×2</span>
-                  {-5}×2
-                </td>
-                <td class="player">
-                  <span style={{ visibility: "hidden" }}>×2</span>15×2
-                </td>
-                <td class="player">
-                  <span style={{ visibility: "hidden" }}>×2</span>
-                  {-5}×2
-                </td>
-              </tr>
-              <tr>
-                <td class="player">{-1}</td>
-                <td class="player">{-1}</td>
-                <td class="player">{-1}</td>
-                <td class="player">3</td>
-              </tr>
-              <tr class="result">
+              <For
+                each={() =>
+                  this.props
+                    .avatars()
+                    .map((_, i) =>
+                      this.props
+                        .jokerBonusModifiers()
+                        .map((modifiers) =>
+                          modifiers.find((modifier) => modifier[1] === i)
+                        )
+                    )
+                    .filter((modifiers) =>
+                      modifiers.some((modifier) => modifier != null)
+                    )
+                }
+              >
+                {(modifiers, i, arr) => (
+                  <tr style={rowAnimationDelayStyle()}>
+                    <If condition={() => i() === 0}>
+                      <td class="type" rowSpan={arr().length}>
+                        Joker
+                      </td>
+                    </If>
+
+                    <For each={modifiers}>
+                      {(modifier) => {
+                        const sum = () =>
+                          -modifiers().reduce(
+                            (sum, modifier) =>
+                              sum +
+                              (modifier == null
+                                ? 0
+                                : modifier[3] * modifier[2]),
+                            0
+                          );
+
+                        return (
+                          <td class="player">
+                            <If condition={() => modifier() == null}>
+                              {() => (sum() > 0 ? "+" + sum() : sum())}
+                            </If>
+                            <If
+                              condition={() =>
+                                modifier() != null && modifier()![3] !== 0
+                              }
+                            >
+                              {() =>
+                                modifier() != null && modifier()![3] > 0
+                                  ? "+" + modifier()![3]
+                                  : modifier()?.[3]
+                              }
+                            </If>
+                            <If
+                              condition={() =>
+                                modifier() != null && modifier()![2] !== 1
+                              }
+                            >
+                              ×{() => modifier()?.[2]}
+                            </If>
+                          </td>
+                        );
+                      }}
+                    </For>
+                  </tr>
+                )}
+              </For>
+
+              <tr class="result" style={rowAnimationDelayStyle()}>
                 <td class="type"></td>
-                <td class="player">{-3}</td>
-                <td class="player">{-11}</td>
-                <td class="player">{25}</td>
-                <td class="player">{-11}</td>
+                <For each={jokerBonusModifiersResult}>
+                  {(total) => {
+                    return (
+                      <td class="player">
+                        {() => (total() > 0 ? "+" + total() : total())}
+                      </td>
+                    );
+                  }}
+                </For>
               </tr>
 
-              <tr class="total">
+              <tr class="total" style={rowAnimationDelayStyle()}>
                 <td class="type"></td>
-                <td class="player">{-5}</td>
-                <td class="player">{-13}</td>
-                <td class="player">{30}</td>
-                <td class="player">{-12}</td>
+                <For
+                  each={() =>
+                    winModifiersResult().map(
+                      (n, i) => n + jokerBonusModifiersResult()[i]
+                    )
+                  }
+                >
+                  {(total) => {
+                    return (
+                      <td class="player">
+                        {() => (total() > 0 ? "+" + total() : total())}
+                      </td>
+                    );
+                  }}
+                </For>
               </tr>
             </tbody>
           </table>
@@ -141,17 +314,18 @@ export class ScoreScroll extends Component("score-scroll") {
 
           @keyframes enter {
             from {
-              transform: translateY(-100%);
+              transform: translate(-50%, -100%);
             }
           }
           :host {
             display: block;
             position: fixed;
             top: 0;
-            left: 0;
-            right: 0;
+            left: 50%;
             height: 100dvh;
+            width: min(100dvw, 30em);
             overflow: hidden;
+            transform: translateX(-50%);
             background:
               linear-gradient(
                 to bottom,
@@ -174,10 +348,10 @@ export class ScoreScroll extends Component("score-scroll") {
           [part="container"] {
             box-sizing: border-box;
             position: absolute;
+            top: 4em;
             bottom: 4em;
             left: 0;
             right: 0;
-            height: calc(100dvh - 8em);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -191,6 +365,11 @@ export class ScoreScroll extends Component("score-scroll") {
             overflow: auto;
           }
 
+          img.head {
+            width: 2.5em;
+            height: 2.5em;
+            opacity: 0.9;
+          }
           h1 {
             margin: 0;
             font-weight: normal;
@@ -199,7 +378,7 @@ export class ScoreScroll extends Component("score-scroll") {
             text-align: center;
           }
 
-          ::slotted([slot="tiles"]) {
+          [part="tiles"] {
             margin: 1.2em 0;
             font-size: 0.8em;
           }
@@ -211,6 +390,17 @@ export class ScoreScroll extends Component("score-scroll") {
           }
           [part="score-table"] thead th {
             padding-bottom: 0.5em;
+          }
+          @keyframes enter-row {
+            from {
+              border-color: transparent;
+              opacity: 0;
+              transform: scale(1.1) translateY(0.5em);
+            }
+          }
+          [part="score-table"] tr {
+            animation: ${ScoreScroll.enterRowAnimationDuration}ms 2s backwards
+              enter-row;
           }
           [part="score-table"] td,
           [part="score-table"] th {

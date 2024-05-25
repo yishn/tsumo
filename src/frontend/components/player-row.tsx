@@ -207,13 +207,13 @@ export class PlayerRow extends Component("player-row", {
             gap: 0.5em;
           }
           .minimal [part="player"] mj-player-avatar {
+            --player-avatar-size: 2.2em;
             flex-direction: row;
             align-items: center;
             gap: 0.5em;
           }
           .minimal [part="player"] mj-player-avatar::part(avatar) {
             order: -1;
-            --player-avatar-size: 2.2em;
           }
 
           [part="score"] {

@@ -1,17 +1,13 @@
 import {
   Component,
-  Else,
   For,
   If,
-  Portal,
   Style,
   css,
   defineComponents,
-  event,
   prop,
   useEffect,
   useMemo,
-  useRef,
   useSignal,
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
@@ -297,6 +293,7 @@ export class LobbyPage extends Component("lobby-page", {
           }
 
           [part="avatar-chooser"] {
+            --player-avatar-size: 12em;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -321,9 +318,6 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="avatar-chooser"] .next:not(.disabled) svg {
             animation: 0.7s linear infinite alternate next-arrow-sway;
-          }
-          [part="avatar-chooser"] ::part(avatar) {
-            --player-avatar-size: 12em;
           }
 
           [part="name-chooser"] input {
