@@ -1,6 +1,7 @@
 import {
   Cleanup,
   MaybeSignal,
+  Signal,
   useEffect,
   useMemo,
   useRef,
@@ -119,7 +120,7 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
   );
 }
 
-function useHeartbeat(session: GameSession) {
+function useHeartbeat(session: GameSession): void {
   const { useClientSignal, onClientMessage, sendMessage } = useWebSockets(
     session.clients
   );
@@ -207,6 +208,29 @@ function useHeartbeat(session: GameSession) {
       clearTimeout(info.timeoutId);
     }
   );
+}
+
+function onAllReady(session: GameSession, cb: () => void): () => void {
+  const [, destroy] = useSubscope(() => {
+    const { onClientMessage } = useWebSockets(session.clients);
+    const readyClients = new Set<WebSocket>();
+
+    onClientMessage(
+      (msg) => msg.ready,
+      (evt) => {
+        readyClients.add(evt.target);
+
+        if (
+          [...session.clients()].every((client) => readyClients.has(client))
+        ) {
+          destroy();
+          cb();
+        }
+      }
+    );
+  });
+
+  return destroy;
 }
 
 function useLobby(session: GameSession): () => void {
@@ -441,6 +465,7 @@ function useGame(session: GameSession): () => void {
 
     useEffect(() => {
       let timeoutId: ReturnType<typeof setTimeout>;
+      let destroy: (() => void) | undefined;
       const phase = gameState().phase;
 
       if (phase instanceof DealPhase) {
@@ -456,30 +481,17 @@ function useGame(session: GameSession): () => void {
       }
 
       if (phase instanceof ScorePhase) {
-        timeoutId = setTimeout(
-          () => {
+        destroy = onAllReady(session, () => {
+          timeoutId = setTimeout(() => {
             updateGameState(ScorePhase, (state) => state.phase.score());
-
-            timeoutId = setTimeout(() => {
-              updateGameState(ScorePhase, (state) => state.phase.next());
-            }, 1000);
-          },
-          2000 +
-            500 *
-              Math.max(
-                ...phase.winModifiers.map((modifiers) => modifiers.length)
-              ) +
-            500 *
-              phase.jokerBonusModifiers.filter(
-                (modifiers) => modifiers.length > 0
-              ).length +
-            500 * 3 +
-            5000
-        );
+            updateGameState(ScorePhase, (state) => state.phase.next());
+          }, 1000);
+        });
       }
 
       return () => {
         clearTimeout(timeoutId);
+        destroy?.();
       };
     }, [phase]);
 
@@ -561,7 +573,7 @@ export class GameSession {
   }
 
   scope(): void {
-    const { useClientSignal, onClientClose } = useWebSockets(this.clients);
+    const { useClientSignal } = useWebSockets(this.clients);
 
     useHeartbeat(this);
 

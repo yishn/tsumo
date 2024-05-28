@@ -8,13 +8,14 @@ import {
   prop,
   useEffect,
   useMemo,
+  useSignal,
 } from "sinho";
 import { delay } from "../animation.ts";
 import { Tile } from "./tile.tsx";
-import { Tile as TileClass } from "../../core/main.ts";
+import { Tile as TileClass, TileSuit } from "../../core/main.ts";
 import { playRevealSound } from "../sounds.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
-import { getAvatarUrl } from "../assets.ts";
+import { SubmitIcon, getAvatarUrl } from "../assets.ts";
 import {
   ITile,
   ScoreModifier,
@@ -23,6 +24,7 @@ import {
 } from "../../core/main.ts";
 import { TileRow } from "./tile-row.tsx";
 import { TileStack } from "./tile-stack.tsx";
+import { webSocketHook } from "../global-state.ts";
 
 const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.DealerPenalty]: "Dealer",
@@ -84,6 +86,8 @@ export class ScoreScroll extends Component("score-scroll", {
       return result;
     });
 
+    const [ready, setReady] = useSignal(false);
+
     useEffect(() => {
       // Reveal animation
 
@@ -107,8 +111,8 @@ export class ScoreScroll extends Component("score-scroll", {
     return (
       <>
         <div part="container">
-          <img class="head" src="./assets/img/win.svg" alt="和" />
           <h1>Score</h1>
+          <img class="head" src="./assets/img/win.svg" alt="和" />
 
           <TileRow part="tiles">
             <For each={this.props.melds}>
@@ -327,6 +331,20 @@ export class ScoreScroll extends Component("score-scroll", {
               </tr>
             </tbody>
           </table>
+
+          <Tile
+            style={rowAnimationDelayStyle()}
+            class="submit"
+            sounds
+            custom
+            back={ready}
+            onclick={() => {
+              webSocketHook.sendMessage({ ready: {} });
+              setReady(true);
+            }}
+          >
+            <SubmitIcon fill="#12bb25" />
+          </Tile>
         </div>
 
         <Style>{css`
@@ -400,7 +418,8 @@ export class ScoreScroll extends Component("score-scroll", {
             text-align: center;
           }
 
-          [part="tiles"] {
+          [part="tiles"],
+          .submit {
             margin: 1.2em 0;
             font-size: 0.8em;
           }
@@ -447,9 +466,14 @@ export class ScoreScroll extends Component("score-scroll", {
           [part="score-table"] .total {
             border-top: 0.3em double rgb(22, 40, 22, 0.7);
           }
-          [part="score-table"] .result td,
-          [part="score-table"] .total td {
+          [part="score-table"] .result td {
             padding-bottom: 0.5em;
+          }
+
+          .submit {
+            cursor: pointer;
+            animation: ${ScoreScroll.enterRowAnimationDuration}ms 2s backwards
+              enter-row;
           }
         `}</Style>
       </>

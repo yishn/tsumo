@@ -84,6 +84,7 @@ type ClassToMessage<T> = {
 
 export interface ClientMessage {
   heartbeat?: Heartbeat;
+  ready?: {};
   join?: {
     session: string;
     secret?: string;

@@ -7,6 +7,7 @@ export { default as WhiteIcon } from "../../assets/icons/white.svg";
 export { default as ScoreIcon } from "../../assets/icons/score.svg";
 export { default as DealerIcon } from "../../assets/icons/dealer.svg";
 
+export { default as SubmitIcon } from "../../assets/icons/submit.svg";
 export { default as ErrorIcon } from "../../assets/icons/error.svg";
 export { default as ReloadIcon } from "../../assets/icons/reload.svg";
 export { default as InviteIcon } from "../../assets/icons/invite.svg";

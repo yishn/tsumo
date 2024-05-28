@@ -12,7 +12,7 @@ import {
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
 import { ActionBarButton } from "../components/action-bar.tsx";
-import { LeftIcon, RightIcon, avatarList, getAvatarUrl } from "../assets.ts";
+import { LeftIcon, RightIcon, SubmitIcon, avatarList, getAvatarUrl } from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { SECRET, SERVER, SESSION, webSocketHook } from "../global-state.ts";
@@ -230,13 +230,16 @@ export class LobbyPage extends Component("lobby-page", {
         <div part="ready">
           <Tile
             class={() => clsx({ hide: ready() ? true : false })}
+            custom
             animateEnter
             sounds={() => canRollInitiative() || ready()}
             back={() => !canRollInitiative() && !ready()}
             suit={TileSuit.Dragon}
             rank={2}
             onclick={() => canRollInitiative() && setReady(true)}
-          />
+          >
+            <SubmitIcon fill="#12bb25" />
+          </Tile>
         </div>
 
         <Style>{css`
