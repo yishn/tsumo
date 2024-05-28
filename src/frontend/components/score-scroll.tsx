@@ -30,6 +30,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.DealerPenalty]: "Dealer",
   [ScoreModifierType.HeavenlyWin]: "Heavenly Win",
   [ScoreModifierType.EarthlyWin]: "Earthly Win",
+  [ScoreModifierType.FalseWin]: "False Win",
   [ScoreModifierType.Win]: "Win",
   [ScoreModifierType.Dealer]: "Dealer",
   [ScoreModifierType.SelfDraw]: "Self-Draw",

@@ -341,19 +341,7 @@ export class GamePage extends Component("game-page", {
               <ActionBarButton
                 slot="action"
                 tooltip="Win"
-                disabled={() =>
-                  isSelfTurn() ||
-                  lastDiscard() == null ||
-                  TileClass.isWinningHand(
-                    [
-                      ...(selfPlayerInfo().tiles?.map(TileClass.fromJSON) ??
-                        []),
-                      TileClass.fromJSON(lastDiscard()!),
-                    ],
-                    this.props.gameInfo()?.jokers ?? [],
-                    selfPlayerInfo().melds?.length ?? 0
-                  ) == null
-                }
+                disabled={() => isSelfTurn()}
                 onButtonClick={() => {
                   webSocketHook.sendMessage({
                     game: {
@@ -691,19 +679,7 @@ export class GamePage extends Component("game-page", {
               disabled={() =>
                 !isSelfTurn() ||
                 (phase() !== Phase.Action && phase() !== Phase.EndAction) ||
-                TileClass.isWinningHand(
-                  phase() === Phase.EndAction
-                    ? selfPlayerInfo().tiles?.map(TileClass.fromJSON) ?? []
-                    : lastDiscard() == null
-                      ? []
-                      : [
-                          ...(selfPlayerInfo().tiles?.map(TileClass.fromJSON) ??
-                            []),
-                          TileClass.fromJSON(lastDiscard()!),
-                        ],
-                  this.props.gameInfo()?.jokers ?? [],
-                  selfPlayerInfo().melds?.length ?? 0
-                ) == null
+                (lastDiscard() == null && phase() === Phase.Action)
               }
               onButtonClick={() => {
                 webSocketHook.sendMessage({

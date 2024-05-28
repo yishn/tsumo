@@ -178,9 +178,6 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
-    const win = this.state.hasWinningHand(this.state.currentPlayerIndex);
-    if (win == null) throw new Error("Invalid win");
-
     return this.nextPhase(ScorePhase);
   }
 }
@@ -259,9 +256,6 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
-    const win = this.state.hasWinningHand(this.state.currentPlayerIndex);
-    if (win == null) throw new Error("Invalid win");
-
     const result = this.nextPhase(ScorePhase);
     result.phase.kongBloom = this.kongBloom;
     return result;
@@ -345,9 +339,6 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   win(playerIndex: number): GameState<ReactionPhase> {
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
-    const win = this.state.hasWinningHand(playerIndex);
-    if (win == null) throw new Error("Invalid win");
-
     this.pushReaction(playerIndex, {
       type: "win",
       playerIndex,
@@ -416,6 +407,7 @@ export enum ScoreModifierType {
   DealerPenalty = "dealerPenalty",
   HeavenlyWin = "heavenlyWin",
   EarthlyWin = "earthlyWin",
+  FalseWin = "falseWin",
   Win = "win",
   Dealer = "dealer",
   SelfDraw = "selfDraw",
@@ -436,6 +428,7 @@ export const scoreModifierTypeOrder = [
   ScoreModifierType.DealerPenalty,
   ScoreModifierType.HeavenlyWin,
   ScoreModifierType.EarthlyWin,
+  ScoreModifierType.FalseWin,
   ScoreModifierType.Win,
   ScoreModifierType.Dealer,
   ScoreModifierType.SelfDraw,
@@ -472,7 +465,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
         if (player === this.state.dealer) return [];
 
         return [
-          [ScoreModifierType.DealerPenalty, this.state.dealerIndex, 0, 5],
+          [ScoreModifierType.DealerPenalty, this.state.dealerIndex, 1, 5],
         ];
       });
     }
@@ -480,6 +473,17 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     const winner = this.state.currentPlayer;
     const winnerIndex = this.state.currentPlayerIndex;
     const win = this.state.hasWinningHand(winnerIndex);
+
+    if (win == null) {
+      // False win
+
+      return this.state.players.map((player) => {
+        if (player === winner) return [];
+
+        return [[ScoreModifierType.FalseWin, winnerIndex, 1, 10]];
+      });
+    }
+
     const jokerFreeWin = this.state.hasWinningHand(winnerIndex, true);
     const pureJokerFree =
       jokerFreeWin != null &&
@@ -513,9 +517,9 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       if (winner === player) return [];
 
       if (this.state.turn === 1) {
-        return [[ScoreModifierType.HeavenlyWin, winnerIndex, 0, -20]];
+        return [[ScoreModifierType.HeavenlyWin, winnerIndex, 1, -20]];
       } else if (this.state.turn === 2 && this.state.lastDiscard != null) {
-        return [[ScoreModifierType.EarthlyWin, winnerIndex, 0, -20]];
+        return [[ScoreModifierType.EarthlyWin, winnerIndex, 1, -20]];
       }
 
       const types: Partial<Record<ScoreModifierType, [number, number] | null>> =
