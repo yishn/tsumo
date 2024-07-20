@@ -646,7 +646,11 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
   next(): GameState<DealPhase> {
     const winner = this.draw ? null : this.state.currentPlayer;
 
-    if (winner !== this.state.dealer) {
+    if (
+      winner !== this.state.dealer ||
+      (!this.draw &&
+        this.state.hasWinningHand(this.state.currentPlayerIndex) == null)
+    ) {
       this.state.moveToNextDealer();
     }
 
