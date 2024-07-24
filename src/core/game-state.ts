@@ -263,21 +263,19 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
 }
 
 export interface Reaction {
-  type: "pongKong" | "win";
+  type: "pong" | "kong" | "win";
   playerIndex: number;
   tileIndices: number[];
 }
 
 export namespace Reaction {
   export function compare(state: GameState, a: Reaction, b: Reaction): number {
-    // Prefer wins
+    // Prefer wins, then kongs
     if (a.type !== b.type) {
-      return a.type === "win" ? 1 : -1;
-    }
-
-    // Prefer kong over pong
-    if (a.type !== "win" && a.tileIndices.length !== b.tileIndices.length) {
-      return a.tileIndices.length - b.tileIndices.length;
+      if (a.type === "win") return 1;
+      if (b.type === "win") return -1;
+      if (a.type === "kong") return 1;
+      if (b.type === "kong") return -1;
     }
 
     // Prefer the player who is closer to the current player
@@ -327,7 +325,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
     }
 
     this.pushReaction(playerIndex, {
-      type: "pongKong",
+      type: tileIndices.length >= 3 ? "kong" : "pong",
       playerIndex,
       tileIndices,
     });
@@ -358,7 +356,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       const player = this.state.getPlayer(playerIndex);
       this.reactions = [];
 
-      if (type === "pongKong") {
+      if (type === "pong" || type === "kong") {
         const tile1 = player.getTile(tileIndex1);
         const tile2 = player.getTile(tileIndex2);
         const tile3 =
