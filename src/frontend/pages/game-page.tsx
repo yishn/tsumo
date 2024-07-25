@@ -1,6 +1,7 @@
 import {
   Component,
   Else,
+  ElseIf,
   For,
   If,
   Signal,
@@ -31,9 +32,8 @@ import {
   ITile,
   Phase,
   Reaction,
-  ScoreModifierType,
+  ReactionPhase,
   Tile as TileClass,
-  TileSuit,
 } from "../../core/main.ts";
 import {
   GameInfo,
@@ -73,23 +73,29 @@ export class GamePage extends Component("game-page", {
         diceSort(a.dice ?? [0, 0], b.dice ?? [0, 0])
       )
     );
-    const remotePlayerInfos = useMemo(() => {
-      const result = [...orderedPlayers()];
-      const ownIndex = result.findIndex(
+    const ownPlayerIndex = useMemo(() =>
+      orderedPlayers().findIndex(
         (player) => player.id === this.props.ownPlayerId()
-      );
+      )
+    );
+    const remotePlayerInfos = useMemo(() => {
+      if (ownPlayerIndex() >= 0) {
+        const remotePlayers = orderedPlayers().filter(
+          (_, i) => i !== ownPlayerIndex()
+        );
 
-      if (ownIndex >= 0) {
-        const remotePlayers = result.filter((_, i) => i !== ownIndex);
-
-        for (let i = 0; i < result.length - ownIndex - 1; i++) {
+        for (
+          let i = 0;
+          i < orderedPlayers().length - ownPlayerIndex() - 1;
+          i++
+        ) {
           remotePlayers.unshift(remotePlayers.pop()!);
         }
 
         return remotePlayers;
       }
 
-      return result;
+      return [...orderedPlayers()];
     });
     const selfPlayerInfo = useMemo(() => ({
       ...this.props
@@ -103,6 +109,13 @@ export class GamePage extends Component("game-page", {
     );
     const phase = () => this.props.gameInfo()?.phase;
     const lastDiscard = () => this.props.gameInfo()?.lastDiscard;
+    const reacted = () =>
+      phase() === Phase.Reaction &&
+      !!this.props
+        .gameInfo()
+        ?.reactions.some(
+          (reaction) => reaction.playerIndex === ownPlayerIndex()
+        );
 
     useEffect(() => {
       if (this.props.gameInfo()?.phase === Phase.Deal) {
@@ -267,6 +280,7 @@ export class GamePage extends Component("game-page", {
                 tooltip="Pong"
                 disabled={() =>
                   isSelfTurn() ||
+                  reacted() ||
                   (selfPlayerInfo()?.tiles?.filter(
                     (tile) =>
                       lastDiscard() != null &&
@@ -304,6 +318,7 @@ export class GamePage extends Component("game-page", {
                 tooltip="Kong"
                 disabled={() =>
                   isSelfTurn() ||
+                  reacted() ||
                   (this.props
                     .ownPlayerInfo()
                     ?.tiles.filter(
@@ -341,7 +356,7 @@ export class GamePage extends Component("game-page", {
               <ActionBarButton
                 slot="action"
                 tooltip="Win"
-                disabled={() => isSelfTurn()}
+                disabled={() => isSelfTurn() || reacted()}
                 onButtonClick={() => {
                   webSocketHook.sendMessage({
                     game: {
@@ -359,15 +374,28 @@ export class GamePage extends Component("game-page", {
             </ReactionWindow>
           </If>
 
-          <For each={reactions}>
-            {(reaction) => (
+          <For each={reactions} key={(reaction, i) => reaction.playerIndex}>
+            {(reaction, i) => (
               <ReactionBar
+                style={{
+                  "--y-offset": i,
+                }}
                 avatar={() =>
                   avatarList[
                     orderedPlayers()[reaction().playerIndex]?.avatar ?? 0
                   ]
                 }
-              />
+              >
+                <If condition={() => reaction().type === "kong"}>
+                  <KongIcon />
+                </If>
+                <ElseIf condition={() => reaction().type === "pong"}>
+                  <PongIcon />
+                </ElseIf>
+                <ElseIf condition={() => reaction().type === "win"}>
+                  <WinIcon />
+                </ElseIf>
+              </ReactionBar>
             )}
           </For>
         </div>

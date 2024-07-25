@@ -63,7 +63,11 @@ export class ReactionBar extends Component("reaction-bar", {
 
     return (
       <>
-        <div class="banner" />
+        <div class="banner">
+          <div class="bubble">
+            <slot />
+          </div>
+        </div>
 
         <Style>{css`
           .banner {
@@ -95,14 +99,16 @@ export class ReactionBar extends Component("reaction-bar", {
             }
           }
           :host {
+            --_y-offset: var(--y-offset, 0);
             position: absolute;
             left: 0;
             right: 0;
             height: 3em;
-            top: calc(50% - 6em);
+            top: calc(50% - 6em + 2em * var(--_y-offset));
             border: 0.2em solid white;
             border-left: none;
             border-right: none;
+            box-shadow: rgba(0, 0, 0, 0.3) 0 0.5em 1em;
             transform: translateY(-50%);
             background-color: white;
             overflow: hidden;
@@ -125,6 +131,33 @@ export class ReactionBar extends Component("reaction-bar", {
             top: 0;
             height: 3em;
             animation: 1s ease-out backwards banner-enter;
+          }
+
+          @keyframes slotted-enter {
+            from {
+              opacity: 0;
+              transform: var(--base-transform) scale(0.5);
+            }
+          }
+          .bubble {
+            --base-transform: translate(calc(-50% - 8em), -50%);
+            display: inline-block;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            padding: 1em;
+            background: url("./assets/img/burstbubble.svg") center / contain
+              no-repeat;
+              line-height: 1em;
+            transform: var(--base-transform);
+            animation: 0.2s ease-out .8s backwards slotted-enter;
+          }
+          ::slotted(svg) {
+            vertical-align: bottom;
+            stroke: rgba(0, 0, 0, 0.7);
+            fill: rgba(0, 0, 0, 0.7);
+            height: 1em;
+            width: 1em;
           }
         `}</Style>
       </>
