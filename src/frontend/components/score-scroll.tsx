@@ -10,7 +10,7 @@ import {
   useMemo,
   useSignal,
 } from "sinho";
-import { delay } from "../animation.ts";
+import { delay, sakuraBlossoms } from "../animation.ts";
 import { Tile } from "./tile.tsx";
 import { Tile as TileClass, TileSuit } from "../../core/main.ts";
 import { playRevealSound } from "../sounds.ts";
@@ -54,6 +54,7 @@ export class ScoreScroll extends Component("score-scroll", {
   avatars: prop<number[]>([0, 1, 2, 3]),
   winModifiers: prop<ScoreModifier[][]>([]),
   jokerBonusModifiers: prop<ScoreModifier[][]>([]),
+  showSakura: prop<boolean>(false),
 }) {
   static enterAnimationDuration = 2000;
   static enterRowAnimationDuration = 500;
@@ -100,6 +101,16 @@ export class ScoreScroll extends Component("score-scroll", {
             delay(Tile.transitionDuration).then(playRevealSound);
           });
       });
+    });
+
+    useEffect(() => {
+      let cleanup: () => void;
+
+      if (this.props.showSakura()) {
+        cleanup = sakuraBlossoms();
+      }
+
+      return () => cleanup?.();
     });
 
     let row = 1;

@@ -20,6 +20,7 @@
     "watch-frontend": "rollup --environment NODE_ENV:dev --watch --config ./rollup.frontend.config.js"
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "sinho": "^0.3.1",
     "source-map-support": "^0.5.21",
@@ -32,6 +33,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@svgr/rollup": "^8.1.0",
     "@swc/core": "^1.4.17",
+    "@types/canvas-confetti": "^1.6.4",
     "@types/ws": "^8.5.10",
     "concurrently": "^8.2.2",
     "prettier": "^3.2.5",

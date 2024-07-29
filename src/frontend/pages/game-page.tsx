@@ -27,12 +27,12 @@ import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
 import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
-import { playPopSound, playShuffleSound } from "../sounds.ts";
+import { playPopSound, playShuffleSound, playTurnSound } from "../sounds.ts";
 import {
   ITile,
   Phase,
   Reaction,
-  ReactionPhase,
+  ScoreModifierType,
   Tile as TileClass,
 } from "../../core/main.ts";
 import {
@@ -120,6 +120,12 @@ export class GamePage extends Component("game-page", {
     useEffect(() => {
       if (this.props.gameInfo()?.phase === Phase.Deal) {
         playShuffleSound();
+      }
+    });
+
+    useEffect(() => {
+      if (isSelfTurn()) {
+        playTurnSound();
       }
     });
 
@@ -735,6 +741,14 @@ export class GamePage extends Component("game-page", {
             winModifiers={() => this.props.scoreInfo()?.winModifiers ?? []}
             jokerBonusModifiers={() =>
               this.props.scoreInfo()?.jokerBonusModifiers ?? []
+            }
+            showSakura={() =>
+              this.props.gameInfo()?.currentPlayer ===
+                this.props.ownPlayerId() &&
+              !this.props
+                .scoreInfo()
+                ?.winModifiers.flat()
+                .some((modifier) => modifier[0] === ScoreModifierType.FalseWin)
             }
           />
         </If>
