@@ -33,7 +33,9 @@ class TileComponent extends Component("tile", {
   selected: prop<boolean>(false, { attribute: () => true }),
   highlight: prop<boolean>(false, { attribute: () => true }),
   glow: prop<boolean>(false, { attribute: () => true }),
-  animateEnter: prop<boolean>(false, { attribute: () => true }),
+  animateEnter: prop<boolean | [x: number, y: number]>(false, {
+    attribute: () => true,
+  }),
   sounds: prop<boolean>(false, { attribute: () => true }),
 }) {
   static transitionDuration = 200;
@@ -61,6 +63,7 @@ class TileComponent extends Component("tile", {
     const back = useMemo(this.props.back);
     const [backVisual, setBackVisual] = useSignal(this.props.back());
     const [backTransitionInProgress, startBackTransition] = useInProgress();
+    const [measuredDimension, setMeasuredDimension] = useSignal<DOMRect>();
 
     let firstRender = true;
 
@@ -82,6 +85,12 @@ class TileComponent extends Component("tile", {
         delay(TileComponent.enterAnimationDuration).then(() => {
           playClackSound();
         });
+      }
+    }, []);
+
+    useEffect(() => {
+      if (measuredDimension() == null) {
+        setMeasuredDimension(this.getBoundingClientRect());
       }
     }, []);
 
@@ -109,6 +118,8 @@ class TileComponent extends Component("tile", {
           style={{
             transform: () =>
               !backTransitionInProgress() ? undefined : "translateY(-1em)",
+            visibility: () =>
+              measuredDimension() == null ? "hidden" : undefined,
           }}
         >
           <If condition={backVisual}>
@@ -175,12 +186,26 @@ class TileComponent extends Component("tile", {
           </ElseIf>
         </div>
 
-        <If condition={this.props.animateEnter}>
+        <If
+          condition={() =>
+            this.props.animateEnter() !== false && measuredDimension() != null
+          }
+        >
           <Style>{css`
             @keyframes enter-animation {
               from {
-                transform: translateX(1em);
                 opacity: 0;
+                transform: ${() => {
+                  const animateEnter = this.props.animateEnter();
+                  const delta: [string, string] = Array.isArray(animateEnter)
+                    ? [
+                        animateEnter[0] - measuredDimension()!.left + "px",
+                        animateEnter[1] - measuredDimension()!.top + "px",
+                      ]
+                    : ["1em", "0"];
+
+                  return `translate(${delta.join(",")})`;
+                }};
               }
             }
 
