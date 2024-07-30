@@ -20,6 +20,7 @@ import { playCoinSound } from "../sounds.ts";
 const AnimatedCounter: FunctionalComponent<{
   value?: MaybeSignal<number | undefined>;
   duration?: MaybeSignal<number | undefined>;
+  labelDuration?: MaybeSignal<number | undefined>;
 }> = (props) => {
   const elRef = useRef<HTMLSpanElement>();
   const deltaRef = useRef<HTMLSpanElement>();
@@ -44,11 +45,17 @@ const AnimatedCounter: FunctionalComponent<{
       intervalId = setInterval(() => {
         if (value.peek() === newValue) {
           clearInterval(intervalId);
-          setShowDelta(false);
         } else {
           setValue((value) => value + sign);
         }
       }, interval);
+
+      timeoutId = setTimeout(
+        () => {
+          setShowDelta(false);
+        },
+        MaybeSignal.peek(props.labelDuration) ?? 2000
+      );
     }
 
     return () => {
@@ -214,6 +221,9 @@ export class PlayerRow extends Component("player-row", {
           }
           .minimal [part="player"] mj-player-avatar::part(avatar) {
             order: -1;
+          }
+          .minimal [part="player"] mj-player-avatar::part(name) {
+            max-width: none;
           }
 
           [part="score"] {
