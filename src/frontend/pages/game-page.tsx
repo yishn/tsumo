@@ -380,7 +380,7 @@ export class GamePage extends Component("game-page", {
             </ReactionWindow>
           </If>
 
-          <For each={reactions} key={(reaction, i) => reaction.playerIndex}>
+          <For each={reactions} key={(reaction) => reaction.playerIndex}>
             {(reaction, i) => (
               <ReactionBar
                 style={{
