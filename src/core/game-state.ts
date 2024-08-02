@@ -232,7 +232,7 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
-  meldKong(tileIndex: number, meldIndex: number): GameState<ActionPhase> {
+  meldKong(tileIndex: number, meldIndex: number): GameState<ReactionPhase> {
     const player = this.state.currentPlayer;
     const tile = player.getTile(tileIndex);
     const meld = player.melds[meldIndex];
@@ -242,16 +242,17 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
       !Tile.equal(tile, meld[0]) ||
       !Tile.equal(meld[0], meld[1]) ||
       !Tile.equal(meld[1], meld[2])
-    )
+    ) {
       throw new Error("Invalid kong");
+    }
 
-    player.removeTiles(tileIndex);
-    meld.push(tile);
+    this.state.kongDiscardInfo = [
+      this.state.currentPlayerIndex,
+      tileIndex,
+      meldIndex,
+    ];
 
-    this.state.scoreKong(this.state.currentPlayerIndex);
-    this.state.lastDiscardInfo = undefined;
-
-    return this.nextPhase(ActionPhase);
+    return this.nextPhase(ReactionPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -313,6 +314,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
   ): GameState<ReactionPhase> {
     const player = this.state.getPlayer(playerIndex);
     if (this.state.lastDiscard == null) throw new Error("No discard");
+    if (this.state.kongDiscard != null) throw new Error("Cannot pong/kong");
     if (
       tileIndices.length < 2 ||
       tileIndices.some(
@@ -335,7 +337,9 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
 
   @allowPlayerMessage({ verifyPlayerIndex: 0 })
   win(playerIndex: number): GameState<ReactionPhase> {
-    if (this.state.lastDiscard == null) throw new Error("No discard");
+    if (this.state.kongDiscard == null && this.state.lastDiscard == null) {
+      throw new Error("No discard");
+    }
 
     this.pushReaction(playerIndex, {
       type: "win",
@@ -395,7 +399,22 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       }
     }
 
-    this.state.moveToNextPlayer();
+    if (this.state.kongDiscard == null) {
+      // Handle normal discard
+
+      this.state.moveToNextPlayer();
+    } else {
+      // Handle kong discard into meld
+
+      const [playerIndex, tileIndex] = this.state.kongDiscardInfo!;
+
+      this.state.players[playerIndex].removeTiles(tileIndex);
+      this.state.kongDiscardMeld!.push(this.state.kongDiscard);
+
+      this.state.scoreKong(this.state.currentPlayerIndex);
+      this.state.lastDiscardInfo = undefined;
+      this.state.kongDiscardInfo = undefined;
+    }
 
     return this.nextPhase(ActionPhase);
   }
@@ -482,6 +501,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       });
     }
 
+    const winningHand = this.state.getScoreHand(winnerIndex);
     const jokerFreeWin = this.state.hasWinningHand(winnerIndex, true);
     const pureJokerFree =
       jokerFreeWin != null &&
@@ -491,6 +511,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
           !player.melds
             .flatMap((meld) => meld)
             .concat(player.tiles)
+            .concat(player.discards)
             .some((tile) => this.state.isJoker(tile))
       );
     const winnerJokers = winner.tiles.filter((tile) =>
@@ -528,23 +549,24 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
               ? [2, 0]
               : null,
           [ScoreModifierType.SelfDraw]:
-            this.state.lastDiscard == null ? [2, 0] : null,
+            winner.lastDrawnTileIndex != null ? [2, 0] : null,
           [ScoreModifierType.Detonator]:
             this.state.lastDiscardInfo?.[0] === i ? [2, 0] : null,
           [ScoreModifierType.JokerFisher]: jokerFisher ? [2, 0] : null,
           [ScoreModifierType.KongBloom]: this.kongBloom ? [2, 0] : null,
-          // [ScoreType.StolenKong]: null,
+          [ScoreModifierType.StolenKong]:
+            this.state.kongDiscard != null ? [2, 0] : null,
           [ScoreModifierType.AllPong]:
             winner.melds.every((meld) =>
               Tile.isPongKong(...(meld as [Tile, Tile, Tile, Tile?]))
             ) &&
-            winner.tiles
+            winningHand
               .filter(
                 (tile) =>
-                  winner.tiles.filter((tile2) => Tile.equal(tile2, tile))
-                    .length !== 3
+                  winningHand.filter((tile2) => Tile.equal(tile2, tile))
+                    .length < 3
               )
-              .some(
+              .every(
                 (_, __, arr) => arr.length === 2 && Tile.equal(arr[0], arr[1])
               )
               ? [2, 0]
@@ -555,7 +577,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
           [ScoreModifierType.SevenStars]:
             win === "chaotic" &&
             new Set(
-              winner.tiles
+              winningHand
                 .filter((tile) => tile.honor)
                 .map((tile) => tile.valueOf())
             ).size === 7
@@ -627,7 +649,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
 
       delta = 0;
 
-      for (const [_, target, multiplier, constant] of jokerModifiers[i]) {
+      for (const [, target, multiplier, constant] of jokerModifiers[i]) {
         const newDelta = multiplier * delta + constant;
 
         player.score += newDelta - delta;
@@ -669,6 +691,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
   dealerIndex: number = 0;
   primaryJoker: Tile = new Tile(TileSuit.Bamboo, 1);
   lastDiscardInfo?: [playerIndex: number, discardIndex: number];
+  kongDiscardInfo?: [playerIndex: number, tileIndex: number, meldIndex: number];
 
   static newGame(): GameState<DealPhase> {
     return new GameState(DealPhase);
@@ -691,6 +714,20 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
     const [playerIndex, discardIndex] = this.lastDiscardInfo;
     return this.players[playerIndex].discards[discardIndex];
+  }
+
+  get kongDiscard(): Tile | undefined {
+    if (this.kongDiscardInfo == null) return;
+
+    const [playerIndex, tileIndex] = this.kongDiscardInfo;
+    return this.players[playerIndex].tiles[tileIndex];
+  }
+
+  get kongDiscardMeld(): Tile[] | undefined {
+    if (this.kongDiscardInfo == null) return;
+
+    const [playerIndex, , meldIndex] = this.kongDiscardInfo;
+    return this.players[playerIndex].melds[meldIndex];
   }
 
   get secondaryJoker(): Tile {
@@ -754,17 +791,32 @@ export class GameState<P extends PhaseBase = PhaseBase> {
     });
   }
 
+  getScoreHand(playerIndex: number): Tile[] {
+    const player = this.getPlayer(playerIndex);
+    const useDiscard =
+      (this.lastDiscard != null || this.kongDiscard != null) &&
+      player.tiles.length + player.melds.length * 3 === 13;
+
+    return [
+      ...player.melds.flat(),
+      ...player.tiles,
+      ...(useDiscard ? [this.kongDiscard ?? this.lastDiscard!] : []),
+    ];
+  }
+
   hasWinningHand(
     playerIndex: number,
     noJokers: boolean = false
   ): SetsPairs | "chaotic" | undefined {
     const player = this.getPlayer(playerIndex);
     const useDiscard =
-      this.lastDiscard != null &&
+      (this.lastDiscard != null || this.kongDiscard != null) &&
       player.tiles.length + player.melds.length * 3 === 13;
 
     return Tile.isWinningHand(
-      !useDiscard ? player.tiles : [...player.tiles, this.lastDiscard],
+      !useDiscard
+        ? player.tiles
+        : [...player.tiles, this.kongDiscard ?? this.lastDiscard!],
       noJokers ? [] : [this.primaryJoker, this.secondaryJoker],
       player.melds.length
     );
