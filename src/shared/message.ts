@@ -48,6 +48,7 @@ export interface GameInfo {
   maxRound: number;
   lastDiscard: ITile | null;
   lastDiscardInfo: [playerId: string, discardIndex: number] | null;
+  kongDiscard: ITile | null;
   reactions: Reaction[];
 }
 

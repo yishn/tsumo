@@ -389,6 +389,7 @@ function useGame(session: GameSession): () => void {
               orderedPlayers()[gameState().lastDiscardInfo![0]].id,
               gameState().lastDiscardInfo![1],
             ],
+      kongDiscard: gameState().kongDiscard?.toJSON() ?? null,
       reactions:
         gameState().phase.name === Phase.Reaction
           ? (gameState().phase as ReactionPhase).reactions

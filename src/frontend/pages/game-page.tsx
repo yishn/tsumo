@@ -109,6 +109,7 @@ export class GamePage extends Component("game-page", {
     );
     const phase = () => this.props.gameInfo()?.phase;
     const lastDiscard = () => this.props.gameInfo()?.lastDiscard;
+    const kongDiscard = () => this.props.gameInfo()?.kongDiscard;
     const reacted = () =>
       phase() === Phase.Reaction &&
       !!this.props
@@ -277,8 +278,8 @@ export class GamePage extends Component("game-page", {
 
           <If condition={() => phase() === Phase.Reaction}>
             <ReactionWindow
-              suit={() => lastDiscard()?.suit}
-              rank={() => lastDiscard()?.rank}
+              suit={() => kongDiscard()?.suit ?? lastDiscard()?.suit}
+              rank={() => kongDiscard()?.rank ?? lastDiscard()?.rank}
               timeout={reactionTimeout}
             >
               <ActionBarButton
@@ -732,7 +733,9 @@ export class GamePage extends Component("game-page", {
           <ScoreScroll
             tiles={() =>
               (this.props.scoreInfo()?.tiles ?? []).concat(
-                this.props.gameInfo()?.lastDiscard ?? []
+                this.props.gameInfo()?.kongDiscard ??
+                  this.props.gameInfo()?.lastDiscard ??
+                  []
               )
             }
             melds={() => this.props.scoreInfo()?.melds ?? []}
