@@ -14,6 +14,20 @@ export class PlayerStatistics {
   detonatorCount = 0;
   jokers = 0;
   overlordCount = 0;
+  thinkingTime = 0;
+
+  private _startThinkingTime: Date | undefined;
+
+  startThinking(): void {
+    this._startThinkingTime = new Date();
+  }
+
+  stopThinking(): void {
+    if (this._startThinkingTime == null) return;
+
+    this.thinkingTime += Date.now() - this._startThinkingTime.getTime();
+    this._startThinkingTime = undefined;
+  }
 }
 
 export class Player {

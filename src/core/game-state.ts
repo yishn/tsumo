@@ -105,6 +105,12 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
 export class ActionPhase extends PhaseBase(Phase.Action) {
   kongBloom = false;
 
+  constructor(state: GameState<any>) {
+    super(state);
+
+    state.currentPlayer.statistics.startThinking();
+  }
+
   @allowPlayerMessage({ currentPlayerOnly: true })
   draw(): GameState<EndActionPhase | ScorePhase> {
     const player = this.state.currentPlayer;
@@ -143,6 +149,9 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     player.pushMeld([tile1, tile2, lastDiscard]);
     player.lastDrawnTileIndex = undefined;
 
+    player.statistics.eats++;
+    player.statistics.stolenDiscards++;
+
     return this.nextPhase(EndActionPhase);
   }
 
@@ -173,6 +182,9 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     this.state.scoreKong(this.state.currentPlayerIndex);
     this.state.lastDiscardInfo = undefined;
 
+    player.statistics.kongs++;
+    player.statistics.stolenDiscards++;
+
     return this.nextPhase(ActionPhase);
   }
 
@@ -180,10 +192,24 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
   win(): GameState<ScorePhase> {
     return this.nextPhase(ScorePhase);
   }
+
+  nextPhase<P extends PhaseBase>(
+    phase: new (state: GameState) => P
+  ): GameState<P> {
+    this.state.currentPlayer.statistics.stopThinking();
+
+    return super.nextPhase(phase);
+  }
 }
 
 export class EndActionPhase extends PhaseBase(Phase.EndAction) {
   kongBloom = false;
+
+  constructor(state: GameState<any>) {
+    super(state);
+
+    state.currentPlayer.statistics.startThinking();
+  }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   discard(tileIndex: number): GameState<ReactionPhase> {
@@ -228,6 +254,9 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     this.state.scoreKong(this.state.currentPlayerIndex);
     this.state.lastDiscardInfo = undefined;
 
+    player.statistics.kongs++;
+    player.statistics.stolenDiscards++;
+
     return this.nextPhase(ActionPhase);
   }
 
@@ -260,6 +289,14 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     const result = this.nextPhase(ScorePhase);
     result.phase.kongBloom = this.kongBloom;
     return result;
+  }
+
+  nextPhase<P extends PhaseBase>(
+    phase: new (state: GameState) => P
+  ): GameState<P> {
+    this.state.currentPlayer.statistics.stopThinking();
+
+    return super.nextPhase(phase);
   }
 }
 
@@ -383,15 +420,24 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
         this.state.turn++;
         this.state.currentPlayerIndex = playerIndex;
 
-        // Handle kongs
         if (tileIndex3 != null) {
+          // Handle kongs
+
           this.state.scoreKong(playerIndex);
           this.state.lastDiscardInfo = undefined;
 
-          return this.nextPhase(ActionPhase);
-        }
+          player.statistics.kongs++;
+          player.statistics.stolenDiscards++;
 
-        return this.nextPhase(EndActionPhase);
+          return this.nextPhase(ActionPhase);
+        } else {
+          // Handle pongs
+
+          player.statistics.pongs++;
+          player.statistics.stolenDiscards++;
+
+          return this.nextPhase(EndActionPhase);
+        }
       } else if (type === "win") {
         this.state.currentPlayerIndex = playerIndex;
 
@@ -414,6 +460,8 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       this.state.scoreKong(this.state.currentPlayerIndex);
       this.state.lastDiscardInfo = undefined;
       this.state.kongDiscardInfo = undefined;
+
+      this.state.currentPlayer.statistics.kongs++;
     }
 
     return this.nextPhase(ActionPhase);
@@ -439,28 +487,34 @@ export enum ScoreModifierType {
   JokerFree = "jokerFree",
   PureJokerFree = "pureJokerFree",
   Joker = "joker",
+  Overlord = "overlordJoker",
 }
 
-export const scoreModifierTypeOrder = [
-  ScoreModifierType.DealerPenalty,
-  ScoreModifierType.HeavenlyWin,
-  ScoreModifierType.EarthlyWin,
-  ScoreModifierType.FalseWin,
-  ScoreModifierType.Win,
-  ScoreModifierType.Dealer,
-  ScoreModifierType.SelfDraw,
-  ScoreModifierType.Detonator,
-  ScoreModifierType.JokerFisher,
-  ScoreModifierType.KongBloom,
-  ScoreModifierType.StolenKong,
-  ScoreModifierType.AllPong,
-  ScoreModifierType.SevenPairs,
-  ScoreModifierType.Chaotic,
-  ScoreModifierType.SevenStars,
-  ScoreModifierType.JokerFree,
-  ScoreModifierType.PureJokerFree,
-  ScoreModifierType.Joker,
-];
+export namespace ScoreModifierType {
+  export function list(): ScoreModifierType[] {
+    return [
+      ScoreModifierType.DealerPenalty,
+      ScoreModifierType.HeavenlyWin,
+      ScoreModifierType.EarthlyWin,
+      ScoreModifierType.FalseWin,
+      ScoreModifierType.Win,
+      ScoreModifierType.Dealer,
+      ScoreModifierType.SelfDraw,
+      ScoreModifierType.Detonator,
+      ScoreModifierType.JokerFisher,
+      ScoreModifierType.KongBloom,
+      ScoreModifierType.StolenKong,
+      ScoreModifierType.AllPong,
+      ScoreModifierType.SevenPairs,
+      ScoreModifierType.Chaotic,
+      ScoreModifierType.SevenStars,
+      ScoreModifierType.JokerFree,
+      ScoreModifierType.PureJokerFree,
+      ScoreModifierType.Joker,
+      ScoreModifierType.Overlord,
+    ];
+  }
+}
 
 export type ScoreModifier = [
   type: ScoreModifierType,
@@ -508,16 +562,13 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       this.state.players.every(
         (player) =>
           player === winner ||
-          !player.melds
-            .flatMap((meld) => meld)
-            .concat(player.tiles)
-            .concat(player.discards)
-            .some((tile) => this.state.isJoker(tile))
+          !player.getAllTiles().some((tile) => this.state.isJoker(tile))
       );
     const winnerJokers = winner.tiles.filter((tile) =>
       this.state.isJoker(tile)
     );
     const jokerFisher =
+      this.state.kongDiscard == null &&
       this.state.lastDiscard == null &&
       winner.lastDrawnTileIndex != null &&
       winnerJokers.length >= 1 &&
@@ -562,8 +613,8 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
             ) &&
             winningHand
               .filter(
-                (tile) =>
-                  winningHand.filter((tile2) => Tile.equal(tile2, tile))
+                (tile1) =>
+                  winningHand.filter((tile2) => Tile.equal(tile1, tile2))
                     .length < 3
               )
               .every(
@@ -611,7 +662,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
         )
         .reduce((sum, n) => sum + n, 0)
     );
-    const overlord = jokerScores.filter((score) => score !== 0).length === 1;
+    const overlord = jokerScores.filter((score) => score > 0).length === 1;
 
     return this.state.players.map((_, i) => {
       return jokerScores.flatMap<ScoreModifier>((jokerScore, j) =>
@@ -619,7 +670,9 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
           ? []
           : [
               [
-                ScoreModifierType.Joker,
+                !overlord
+                  ? ScoreModifierType.Joker
+                  : ScoreModifierType.Overlord,
                 j,
                 (jokerScore >= 5 ? jokerScore - 3 : 1) * (overlord ? 2 : 1),
                 -jokerScore,
@@ -660,6 +713,65 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     }
 
     this.scored = true;
+
+    // Update statistics
+
+    const scoreModifierTypes = new Set(
+      winModifiers.flatMap((modifiers) =>
+        modifiers.map((modifier) => modifier[0])
+      )
+    );
+
+    if (scoreModifierTypes.has(ScoreModifierType.FalseWin)) {
+      this.state.currentPlayer.statistics.falseWins++;
+    } else if (scoreModifierTypes.has(ScoreModifierType.Win)) {
+      this.state.currentPlayer.statistics.wins++;
+
+      if (this.state.currentPlayer === this.state.dealer) {
+        this.state.currentPlayer.statistics.dealerWins++;
+      }
+
+      if (
+        this.state.lastDiscardInfo == null &&
+        this.state.kongDiscard == null
+      ) {
+        this.state.currentPlayer.statistics.selfDrawnWins++;
+      } else if (this.state.lastDiscardInfo != null) {
+        this.state.currentPlayer.statistics.stolenDiscards++;
+        this.state.getPlayer(this.state.lastDiscardInfo[0]).statistics
+          .detonatorCount++;
+      } else if (scoreModifierTypes.has(ScoreModifierType.StolenKong)) {
+        this.state.currentPlayer.statistics.stolenDiscards++;
+      }
+
+      if (
+        [
+          ScoreModifierType.HeavenlyWin,
+          ScoreModifierType.EarthlyWin,
+          ScoreModifierType.AllPong,
+          ScoreModifierType.SevenPairs,
+          ScoreModifierType.Chaotic,
+        ].some((type) => scoreModifierTypes.has(type))
+      ) {
+        this.state.currentPlayer.statistics.specialHandWins++;
+      }
+    }
+
+    for (const player of this.state.players) {
+      player.statistics.jokers += player.tiles.filter((tile) =>
+        this.state.isJoker(tile)
+      ).length;
+    }
+
+    const overlordPLayerIndex = this.jokerBonusModifiers.findIndex(
+      (modifiers) =>
+        modifiers.some(([type]) => type === ScoreModifierType.Overlord)
+    );
+
+    if (overlordPLayerIndex >= 0) {
+      this.state.getPlayer(overlordPLayerIndex).statistics.overlordCount++;
+    }
+
     return this.state;
   }
 
@@ -806,7 +918,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
   hasWinningHand(
     playerIndex: number,
-    noJokers: boolean = false
+    ignoreJokers: boolean = false
   ): SetsPairs | "chaotic" | undefined {
     const player = this.getPlayer(playerIndex);
     const useDiscard =
@@ -817,7 +929,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
       !useDiscard
         ? player.tiles
         : [...player.tiles, this.kongDiscard ?? this.lastDiscard!],
-      noJokers ? [] : [this.primaryJoker, this.secondaryJoker],
+      ignoreJokers ? [] : [this.primaryJoker, this.secondaryJoker],
       player.melds.length
     );
   }

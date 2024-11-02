@@ -12,16 +12,11 @@ import {
 } from "sinho";
 import { delay, sakuraBlossoms } from "../animation.ts";
 import { Tile } from "./tile.tsx";
-import { Tile as TileClass, TileSuit } from "../../core/main.ts";
+import { Tile as TileClass } from "../../core/main.ts";
 import { playRevealSound } from "../sounds.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 import { SubmitIcon, getAvatarUrl } from "../assets.ts";
-import {
-  ITile,
-  ScoreModifier,
-  ScoreModifierType,
-  scoreModifierTypeOrder,
-} from "../../core/main.ts";
+import { ITile, ScoreModifier, ScoreModifierType } from "../../core/main.ts";
 import { TileRow } from "./tile-row.tsx";
 import { TileStack } from "./tile-stack.tsx";
 import { webSocketHook } from "../global-state.ts";
@@ -45,6 +40,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.JokerFree]: "Joker-Free",
   [ScoreModifierType.PureJokerFree]: "Pure Joker-Free",
   [ScoreModifierType.Joker]: "Joker",
+  [ScoreModifierType.Overlord]: "Joker (Overlord)",
 };
 
 export class ScoreScroll extends Component("score-scroll", {
@@ -182,7 +178,7 @@ export class ScoreScroll extends Component("score-scroll", {
             <tbody>
               <For
                 each={() =>
-                  scoreModifierTypeOrder.filter(
+                  ScoreModifierType.list().filter(
                     (type) =>
                       !!this.props
                         .winModifiers()
