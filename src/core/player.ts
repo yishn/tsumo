@@ -1,6 +1,23 @@
 import { Tile } from "./tile.ts";
 
-export class PlayerStatistics {
+export interface PlayerStatisticsData {
+  score: number;
+  pongs: number;
+  kongs: number;
+  eats: number;
+  stolenDiscards: number;
+  wins: number;
+  dealerWins: number;
+  selfDrawWins: number;
+  specialHandWins: number;
+  falseWins: number;
+  detonatorCount: number;
+  jokers: number;
+  overlordCount: number;
+  thinkingTime: number;
+}
+
+export class PlayerStatistics implements PlayerStatisticsData {
   score = 50;
   pongs = 0;
   kongs = 0;
@@ -8,7 +25,7 @@ export class PlayerStatistics {
   stolenDiscards = 0;
   wins = 0;
   dealerWins = 0;
-  selfDrawnWins = 0;
+  selfDrawWins = 0;
   specialHandWins = 0;
   falseWins = 0;
   detonatorCount = 0;
