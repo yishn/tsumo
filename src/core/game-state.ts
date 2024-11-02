@@ -190,6 +190,8 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 
   @allowPlayerMessage({ currentPlayerOnly: true })
   win(): GameState<ScorePhase> {
+    if (this.state.lastDiscard == null) throw new Error("No discard");
+
     return this.nextPhase(ScorePhase);
   }
 
@@ -255,7 +257,6 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     this.state.lastDiscardInfo = undefined;
 
     player.statistics.kongs++;
-    player.statistics.stolenDiscards++;
 
     return this.nextPhase(ActionPhase);
   }
@@ -735,7 +736,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
         this.state.lastDiscardInfo == null &&
         this.state.kongDiscard == null
       ) {
-        this.state.currentPlayer.statistics.selfDrawnWins++;
+        this.state.currentPlayer.statistics.selfDrawWins++;
       } else if (this.state.lastDiscardInfo != null) {
         this.state.currentPlayer.statistics.stolenDiscards++;
         this.state.getPlayer(this.state.lastDiscardInfo[0]).statistics
