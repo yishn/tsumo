@@ -798,11 +798,9 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
 }
 
 export class EndPhase extends PhaseBase(Phase.End) {
-  getAchievements(): (Achievement | null)[] {
-    return distributeAchievements(
-      this.state.players.map((player) => player.statistics)
-    );
-  }
+  achievements = distributeAchievements(
+    this.state.players.map((player) => player.statistics)
+  );
 }
 
 export class GameState<P extends PhaseBase = PhaseBase> {

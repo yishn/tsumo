@@ -7,6 +7,7 @@ import type {
   Reaction,
   ScoreModifier,
 } from "../core/main.ts";
+import { Achievement } from "./achievements.ts";
 
 export interface Heartbeat {
   now: number;
@@ -59,6 +60,13 @@ export interface ScoreInfo {
   jokerBonusModifiers: ScoreModifier[][];
 }
 
+export type GameEndInfo = Record<
+  string,
+  {
+    achievement: Achievement | null;
+  }
+>;
+
 export interface ServerMessage {
   heartbeat?: Heartbeat;
   error?: {
@@ -76,6 +84,7 @@ export interface ServerMessage {
     players?: GamePlayersInfo;
     player?: GamePlayerInfo;
     score?: ScoreInfo | null;
+    end?: GameEndInfo | null;
   };
 }
 

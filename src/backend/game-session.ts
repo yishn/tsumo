@@ -13,6 +13,7 @@ import { useWebSockets as useWebSocketsTemplate } from "./websockets-hook.ts";
 import {
   AppMode,
   ClientMessage,
+  GameEndInfo,
   GameInfo,
   GamePlayersInfo,
   PlayerInfo,
@@ -22,6 +23,7 @@ import {
 import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
 import {
   DealPhase,
+  EndPhase,
   GameState,
   Phase,
   PhaseBase,
@@ -459,6 +461,23 @@ function useGame(session: GameSession): () => void {
     });
 
     useClientSignal((msg) => msg.game?.score, scoreInfo);
+
+    const endInfo = useMemo<GameEndInfo | null>(() => {
+      const phase = gameState().phase;
+      const result: GameEndInfo = {};
+
+      if (!(phase instanceof EndPhase)) return null;
+
+      for (const [i, player] of orderedPlayers().entries()) {
+        result[player.id] = {
+          achievement: phase.achievements[i],
+        };
+      }
+
+      return result;
+    });
+
+    useClientSignal((msg) => msg.game?.end, endInfo);
 
     // Game operations
 

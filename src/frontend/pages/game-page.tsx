@@ -41,6 +41,7 @@ import {
   GamePlayersInfo,
   GamePlayerInfo,
   ScoreInfo,
+  GameEndInfo,
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
@@ -66,6 +67,7 @@ export class GamePage extends Component("game-page", {
   gamePlayersInfo: prop<GamePlayersInfo>(),
   ownPlayerInfo: prop<GamePlayerInfo>(),
   scoreInfo: prop<ScoreInfo>(),
+  endInfo: prop<GameEndInfo>(),
 }) {
   render() {
     const orderedPlayers = useMemo(() =>
