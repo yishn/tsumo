@@ -36,5 +36,19 @@ export const avatarList = [
 ] as const;
 
 export function getAvatarUrl(avatar: number): string {
-  return `./assets/avatars/${avatarList[avatar % avatarList.length]}.png`;
+  return `./assets/avatars/${avatarList[(avatar + avatarList.length) % avatarList.length]}.png`;
+}
+
+export function getAvatarColor(avatar: number): string {
+  return [
+    "#4e3f63",
+    "#85874e",
+    "#b7b2b4",
+    "#189662",
+    "#8dbced",
+    "#c45c3f",
+    "#f0e56e",
+    "#9c6850",
+    "#1b728f",
+  ][(avatar + avatarList.length) % avatarList.length];
 }

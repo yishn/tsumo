@@ -108,6 +108,10 @@ export function getAchievementData(achievement: Achievement): AchievementData {
   return achievementData[achievement];
 }
 
+export function getAchievementImageUrl(achievement: Achievement): string {
+  return `./assets/img/achievements/${achievement}.png`;
+}
+
 export function distributeAchievements(
   playerStatistics: PlayerStatisticsData[]
 ): (Achievement | null)[] {

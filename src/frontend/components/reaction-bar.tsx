@@ -6,57 +6,29 @@ import {
   prop,
   useEffect,
 } from "sinho";
-import type { avatarList } from "../assets.ts";
+import { avatarList, getAvatarColor, getAvatarUrl } from "../assets.ts";
 import { playWhooshSound } from "../sounds.ts";
 
 type Avatar = (typeof avatarList)[number];
 
-const avatarData: Record<
-  (typeof avatarList)[number],
-  { color: string; top: number }
-> = {
-  rat: {
-    color: "#4e3f63",
-    top: 39,
-  },
-  ox: {
-    color: "#85874e",
-    top: 53,
-  },
-  tiger: {
-    color: "#b7b2b4",
-    top: 47,
-  },
-  rabbit: {
-    color: "#189662",
-    top: 56,
-  },
-  dragon: {
-    color: "#8dbced",
-    top: 48,
-  },
-  monkey: {
-    color: "#c45c3f",
-    top: 53,
-  },
-  rooster: {
-    color: "#f0e56e",
-    top: 40,
-  },
-  dog: {
-    color: "#9c6850",
-    top: 44,
-  },
-  boar: {
-    color: "#1b728f",
-    top: 52,
-  },
+const avatarData: Record<(typeof avatarList)[number], { top: number }> = {
+  rat: { top: 39 },
+  ox: { top: 53 },
+  tiger: { top: 47 },
+  rabbit: { top: 56 },
+  dragon: { top: 48 },
+  monkey: { top: 53 },
+  rooster: { top: 40 },
+  dog: { top: 44 },
+  boar: { top: 52 },
 };
 
 export class ReactionBar extends Component("reaction-bar", {
   avatar: prop<Avatar>("rat"),
 }) {
   render() {
+    const avatarIndex = () => avatarList.indexOf(this.props.avatar());
+
     useEffect(() => {
       playWhooshSound();
     });
@@ -71,7 +43,7 @@ export class ReactionBar extends Component("reaction-bar", {
 
         <Style>{css`
           .banner {
-            --bg-color: ${() => avatarData[this.props.avatar()].color};
+            --bg-color: ${() => getAvatarColor(avatarIndex())};
             --avatar-size: 20em;
             --avatar-left: calc(50% - var(--avatar-size) / 2 + 1em);
             --avatar-right: calc(50% + var(--avatar-size) / 2 - 1em);
@@ -84,8 +56,7 @@ export class ReactionBar extends Component("reaction-bar", {
                 transparent calc(var(--avatar-right) - 2em),
                 var(--bg-color) var(--avatar-right)
               ),
-              var(--bg-color)
-                url(${() => `./assets/avatars/${this.props.avatar()}.png`})
+              var(--bg-color) url(${() => getAvatarUrl(avatarIndex())}) /* */
                 center ${() => avatarData[this.props.avatar()].top}% /
                 var(--avatar-size) no-repeat;
           }
@@ -148,9 +119,9 @@ export class ReactionBar extends Component("reaction-bar", {
             padding: 1em;
             background: url("./assets/img/burstbubble.svg") center / contain
               no-repeat;
-              line-height: 1em;
+            line-height: 1em;
             transform: var(--base-transform);
-            animation: 0.2s ease-out .8s backwards slotted-enter;
+            animation: 0.2s ease-out 0.8s backwards slotted-enter;
           }
           ::slotted(svg) {
             vertical-align: bottom;
