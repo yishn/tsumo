@@ -350,7 +350,7 @@ function useGame(session: GameSession): () => void {
     );
 
     const [gameState, setGameState] = useSignal<GameState>(
-      GameState.newGame(),
+      GameState.createNewGame(),
       { force: true }
     );
 

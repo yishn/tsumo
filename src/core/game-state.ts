@@ -1,3 +1,4 @@
+import { Achievement, distributeAchievements } from "../shared/achievements.ts";
 import { Player } from "./player.ts";
 import { SetsPairs, Tile, TileSuit } from "./tile.ts";
 
@@ -41,10 +42,11 @@ function allowPlayerMessage(opts: AllowPlayerMessageOptions = {}) {
 
 export enum Phase {
   Deal = "deal",
-  Action = "action",
-  EndAction = "endaction",
+  Pull = "pull",
+  Push = "push",
   Reaction = "reaction",
   Score = "score",
+  End = "end",
 }
 
 export function PhaseBase<N extends Phase>(name: N) {
@@ -54,7 +56,7 @@ export function PhaseBase<N extends Phase>(name: N) {
 
     constructor(public state: GameState<any>) {}
 
-    nextPhase<P extends PhaseBase>(
+    protected nextPhase<P extends PhaseBase>(
       phase: new (state: GameState) => P
     ): GameState<P> {
       this.state.phase = new phase(this.state);
@@ -66,10 +68,6 @@ export function PhaseBase<N extends Phase>(name: N) {
 export interface PhaseBase {
   name: Phase;
   allowPlayerMessageFns: Map<string, AllowPlayerMessageOptions>;
-
-  nextPhase<P extends PhaseBase>(
-    phase: new (state: GameState) => P
-  ): GameState<P>;
 }
 
 export class DealPhase extends PhaseBase(Phase.Deal) {
@@ -77,6 +75,8 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
     super(state);
 
     state.turn = 1;
+    state.lastDiscardInfo = undefined;
+    state.kongDiscardInfo = undefined;
 
     for (const player of this.state.players) {
       player.tiles = [];
@@ -86,7 +86,7 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
     }
   }
 
-  deal(): GameState<ActionPhase> {
+  deal(): GameState<PullPhase> {
     this.state.drawPile = generateShuffledFullDeck();
     this.state.primaryJoker = this.state.popDrawPile()!;
 
@@ -98,11 +98,11 @@ export class DealPhase extends PhaseBase(Phase.Deal) {
       this.state.sortPlayerTiles(i);
     }
 
-    return this.nextPhase(ActionPhase);
+    return this.nextPhase(PullPhase);
   }
 }
 
-export class ActionPhase extends PhaseBase(Phase.Action) {
+export class PullPhase extends PhaseBase(Phase.Pull) {
   kongBloom = false;
 
   constructor(state: GameState<any>) {
@@ -112,7 +112,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
-  draw(): GameState<EndActionPhase | ScorePhase> {
+  draw(): GameState<PushPhase | ScorePhase> {
     const player = this.state.currentPlayer;
     const tile = this.state.popDrawPile();
 
@@ -127,13 +127,13 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
 
     this.state.lastDiscardInfo = undefined;
 
-    const result = this.nextPhase(EndActionPhase);
+    const result = this.nextPhase(PushPhase);
     result.phase.kongBloom = this.kongBloom;
     return result;
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
-  eat(tileIndex1: number, tileIndex2: number): GameState<EndActionPhase> {
+  eat(tileIndex1: number, tileIndex2: number): GameState<PushPhase> {
     const player = this.state.currentPlayer;
     const lastDiscard = this.state.lastDiscard;
     if (lastDiscard == null) throw new Error("No discard");
@@ -152,7 +152,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     player.statistics.eats++;
     player.statistics.stolenDiscards++;
 
-    return this.nextPhase(EndActionPhase);
+    return this.nextPhase(PushPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -160,7 +160,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     tileIndex1: number,
     tileIndex2: number,
     tileIndex3: number
-  ): GameState<ActionPhase> {
+  ): GameState<PullPhase> {
     const player = this.state.currentPlayer;
     if (this.state.lastDiscard == null) throw new Error("No discard");
 
@@ -185,7 +185,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
     player.statistics.kongs++;
     player.statistics.stolenDiscards++;
 
-    return this.nextPhase(ActionPhase);
+    return this.nextPhase(PullPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -204,7 +204,7 @@ export class ActionPhase extends PhaseBase(Phase.Action) {
   }
 }
 
-export class EndActionPhase extends PhaseBase(Phase.EndAction) {
+export class PushPhase extends PhaseBase(Phase.Push) {
   kongBloom = false;
 
   constructor(state: GameState<any>) {
@@ -237,7 +237,7 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
     tileIndex2: number,
     tileIndex3: number,
     tileIndex4: number
-  ): GameState<ActionPhase> {
+  ): GameState<PullPhase> {
     const player = this.state.currentPlayer;
     const tile1 = player.getTile(tileIndex1);
     const tile2 = player.getTile(tileIndex2);
@@ -258,7 +258,7 @@ export class EndActionPhase extends PhaseBase(Phase.EndAction) {
 
     player.statistics.kongs++;
 
-    return this.nextPhase(ActionPhase);
+    return this.nextPhase(PullPhase);
   }
 
   @allowPlayerMessage({ currentPlayerOnly: true })
@@ -388,7 +388,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
     return this.state;
   }
 
-  next(): GameState<ActionPhase | EndActionPhase | ScorePhase> {
+  next(): GameState<PullPhase | PushPhase | ScorePhase> {
     if (this.reactions.length > 0) {
       const {
         type,
@@ -430,14 +430,14 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
           player.statistics.kongs++;
           player.statistics.stolenDiscards++;
 
-          return this.nextPhase(ActionPhase);
+          return this.nextPhase(PullPhase);
         } else {
           // Handle pongs
 
           player.statistics.pongs++;
           player.statistics.stolenDiscards++;
 
-          return this.nextPhase(EndActionPhase);
+          return this.nextPhase(PushPhase);
         }
       } else if (type === "win") {
         this.state.currentPlayerIndex = playerIndex;
@@ -465,7 +465,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       this.state.currentPlayer.statistics.kongs++;
     }
 
-    return this.nextPhase(ActionPhase);
+    return this.nextPhase(PullPhase);
   }
 }
 
@@ -776,7 +776,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     return this.state;
   }
 
-  next(): GameState<DealPhase> {
+  next(): GameState<DealPhase | EndPhase> {
     const winner = this.draw ? null : this.state.currentPlayer;
 
     if (
@@ -787,9 +787,21 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       this.state.moveToNextDealer();
     }
 
-    this.state.currentPlayerIndex = this.state.dealerIndex;
+    if (this.state.round > this.state.maxRound) {
+      return this.nextPhase(EndPhase);
+    } else {
+      this.state.currentPlayerIndex = this.state.dealerIndex;
 
-    return this.nextPhase(DealPhase);
+      return this.nextPhase(DealPhase);
+    }
+  }
+}
+
+export class EndPhase extends PhaseBase(Phase.End) {
+  getAchievements(): (Achievement | null)[] {
+    return distributeAchievements(
+      this.state.players.map((player) => player.statistics)
+    );
   }
 }
 
@@ -797,7 +809,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
   turn: number = 1;
   round: number = 1;
-  maxRound: number = 4;
+  maxRound: number = 1;
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;
@@ -806,7 +818,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
   lastDiscardInfo?: [playerIndex: number, discardIndex: number];
   kongDiscardInfo?: [playerIndex: number, tileIndex: number, meldIndex: number];
 
-  static newGame(): GameState<DealPhase> {
+  static createNewGame(): GameState<DealPhase> {
     return new GameState(DealPhase);
   }
 

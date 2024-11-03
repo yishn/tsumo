@@ -1,7 +1,7 @@
 import type {
   ITile,
-  ActionPhase,
-  EndActionPhase,
+  PullPhase,
+  PushPhase,
   Phase,
   ReactionPhase,
   Reaction,
@@ -100,8 +100,8 @@ export interface ClientMessage {
   };
   game?: {
     operation?: {
-      [Phase.Action]?: ClassToMessage<ActionPhase>;
-      [Phase.EndAction]?: ClassToMessage<EndActionPhase>;
+      [Phase.Pull]?: ClassToMessage<PullPhase>;
+      [Phase.Push]?: ClassToMessage<PushPhase>;
       [Phase.Reaction]?: ClassToMessage<ReactionPhase>;
     };
   };
