@@ -66,6 +66,7 @@ export function useTransition(
     inProgress,
     (duration) => {
       const currentId = ++id;
+      setInProgress(true);
       requestAnimationFrame(() => frame(currentId, Date.now(), duration));
     },
     () => setInProgress(false),

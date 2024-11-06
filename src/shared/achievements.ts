@@ -68,7 +68,7 @@ const achievementData: Record<Achievement, AchievementData> = {
   },
   [Achievement.Thief]: {
     name: "Thief",
-    poem: "Thief in night, tiles in your grip\nStole discards, a fruitful trip",
+    poem: "Thief in night, tiles in your grip\nStole discards, one fruitful trip",
     priority: 4,
     value: (statistics) => statistics.stolenDiscards,
   },

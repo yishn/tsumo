@@ -46,7 +46,7 @@ export class EndScreen extends Component("end-screen", {
 
     useEffect(() => {
       if (showAchievement() && this.props.achievement() != null) {
-        startAchievementTransition(2000);
+        startAchievementTransition(3000);
 
         return () => stopAchievementTransition();
       }
@@ -111,14 +111,14 @@ export class EndScreen extends Component("end-screen", {
               <div class="inner">
                 <img
                   src={() => getAchievementImageUrl(this.props.achievement()!)}
-                  alt={achievementData()?.name}
+                  alt={() => achievementData()?.name}
                 />
               </div>
             </div>
 
-            <h2>{achievementData()?.name}</h2>
+            <h2>{() => achievementData()?.name}</h2>
 
-            <p>“{achievementData()?.poem}”</p>
+            <p>“{() => achievementData()?.poem}”</p>
           </div>
         </If>
 
@@ -137,7 +137,7 @@ export class EndScreen extends Component("end-screen", {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
           }
 
           [part="achievement"] {
@@ -145,7 +145,7 @@ export class EndScreen extends Component("end-screen", {
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            grid-gap: 2em;
+            grid-gap: 1em;
           }
 
           @keyframes enter-badge {
@@ -154,9 +154,14 @@ export class EndScreen extends Component("end-screen", {
             }
           }
           [part="achievement"] .badge {
-            filter: drop-shadow(rgba(53, 22, 0, 0.9) 0 1em 1em)
+            --_border-color: rgb(114, 75, 2);
+            filter: drop-shadow(var(--_border-color) 0.2em 0 0)
+              drop-shadow(var(--_border-color) -0.2em 0 0)
+              drop-shadow(var(--_border-color) 0 0.2em 0)
+              drop-shadow(var(--_border-color) 0 -0.2em 0)
+              drop-shadow(rgba(53, 22, 0, 0.9) 0 1em 1em)
               url(#${this.#filterName});
-            animation: 3s backwards enter-badge;
+            animation: 3s backwards ease-out enter-badge;
           }
 
           [part="achievement"] .badge .inner {
@@ -197,16 +202,18 @@ export class EndScreen extends Component("end-screen", {
           }
 
           [part="achievement"] h2 {
+            margin-top: 1em;
             font-weight: normal;
             font-size: 1.6em;
             text-shadow: rgba(255, 255, 255, 0.7) 0 0 0.5em;
-            animation: 3s backwards enter-text;
+            animation: 3s 2s backwards enter-text;
           }
 
           [part="achievement"] p {
-            white-space: pre-line;
+            font-style: italic;
             text-align: center;
-            animation: 3s backwards enter-text;
+            white-space: pre-line;
+            animation: 3s 2s backwards enter-text;
           }
         `}</Style>
       </>
