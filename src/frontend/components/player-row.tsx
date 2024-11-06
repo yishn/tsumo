@@ -178,7 +178,6 @@ export class PlayerRow extends Component("player-row", {
             padding: 0.5em;
             padding-left: max(0.5em, env(safe-area-inset-left));
             padding-right: env(safe-area-inset-left);
-            color: white;
             transition: background-color 0.2s;
           }
           [part="container"].minimal {
