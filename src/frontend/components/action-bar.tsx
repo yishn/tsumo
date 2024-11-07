@@ -50,6 +50,7 @@ export class ActionBarButton extends Component("action-bar-button", {
           ::slotted(svg) {
             fill: var(--_action-bar-icon-color);
             stroke: var(--_action-bar-icon-color);
+            stroke-width: 0;
             width: 1.8em;
             height: 1.8em;
             overflow: visible;
