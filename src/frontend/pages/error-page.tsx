@@ -1,12 +1,4 @@
-import {
-  Component,
-  Style,
-  css,
-  defineComponents,
-  prop,
-  useEffect,
-  useSignal,
-} from "sinho";
+import { Component, Style, css, defineComponents, prop } from "sinho";
 import { Tile } from "../components/tile.tsx";
 import { ErrorIcon, ReloadIcon } from "../assets.ts";
 import { ActionBarButton } from "../components/action-bar.tsx";

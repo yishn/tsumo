@@ -155,7 +155,6 @@ export class EndScreen extends Component("end-screen", {
 
           mj-action-bar {
             margin-top: 2em;
-            --action-bar-icon-color: rgba(255, 255, 255, 0.6);
           }
 
           [part="achievement"] {
@@ -231,6 +230,7 @@ export class EndScreen extends Component("end-screen", {
             font-style: italic;
             text-align: center;
             white-space: pre-line;
+            opacity: 0.7;
             animation: 3s 2s backwards enter-text;
           }
 

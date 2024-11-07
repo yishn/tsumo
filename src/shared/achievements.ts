@@ -62,7 +62,7 @@ const achievementData: Record<Achievement, AchievementData> = {
   },
   [Achievement.Lucky]: {
     name: "Lucky",
-    poem: "Jokers abound, fortune true\nLucky draws, the game’s for you",
+    poem: "Jokers abound, fortune true\nLucky draws, this game’s for you",
     priority: 6,
     value: (statistics) => statistics.jokers,
   },
