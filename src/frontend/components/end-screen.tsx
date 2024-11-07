@@ -14,6 +14,8 @@ import {
   getAchievementImageUrl,
 } from "../../shared/achievements.ts";
 import { easeOutCubic, useTransition } from "../animation.ts";
+import { ActionBar, ActionBarButton } from "./action-bar.tsx";
+import { ContinueIcon } from "../assets.ts";
 
 export class EndScreen extends Component("end-screen", {
   achievement: prop<Achievement>(undefined, {
@@ -119,6 +121,17 @@ export class EndScreen extends Component("end-screen", {
             <h2>{() => achievementData()?.name}</h2>
 
             <p>“{() => achievementData()?.poem}”</p>
+
+            <ActionBar>
+              <ActionBarButton
+                tooltip="Continue"
+                onButtonClick={() => {
+                  setShowAchievement(false);
+                }}
+              >
+                <ContinueIcon alt="Continue" />
+              </ActionBarButton>
+            </ActionBar>
           </div>
         </If>
 
@@ -138,6 +151,11 @@ export class EndScreen extends Component("end-screen", {
             justify-content: center;
             align-items: center;
             background: rgba(0, 0, 0, 0.8);
+          }
+
+          mj-action-bar {
+            margin-top: 2em;
+            --action-bar-icon-color: rgba(255, 255, 255, 0.6);
           }
 
           [part="achievement"] {
@@ -214,6 +232,10 @@ export class EndScreen extends Component("end-screen", {
             text-align: center;
             white-space: pre-line;
             animation: 3s 2s backwards enter-text;
+          }
+
+          [part="achievement"] mj-action-bar {
+            animation: 3s 2.5s backwards enter-text;
           }
         `}</Style>
       </>
