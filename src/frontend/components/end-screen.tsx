@@ -2,10 +2,14 @@ import {
   Component,
   css,
   defineComponents,
+  Else,
+  event,
+  For,
   If,
   prop,
   Style,
   useEffect,
+  useMemo,
   useSignal,
 } from "sinho";
 import {
@@ -15,20 +19,34 @@ import {
 } from "../../shared/achievements.ts";
 import { easeOutCubic, useTransition } from "../animation.ts";
 import { ActionBar, ActionBarButton } from "./action-bar.tsx";
-import { ContinueIcon } from "../assets.ts";
+import { ContinueIcon, ReloadIcon } from "../assets.ts";
+import { PlayerAvatar } from "./player-avatar.tsx";
+import { PlayerScore } from "./player-score.tsx";
 
 export class EndScreen extends Component("end-screen", {
-  achievement: prop<Achievement>(undefined, {
+  players: prop<
+    {
+      avatar?: string;
+      name?: string;
+      score?: number;
+      achievement?: Achievement | null;
+    }[]
+  >([]),
+  achievement: prop<Achievement | null>(null, {
     attribute: (value) =>
       Object.values<string>(Achievement).includes(value)
         ? (value as Achievement)
-        : undefined,
+        : null,
   }),
+  onFinished: event(MouseEvent),
 }) {
   #filterName = `dissolve-filter-${crypto.randomUUID()}`;
 
   render() {
     const [showAchievement, setShowAchievement] = useSignal(false);
+    const orderedPlayers = useMemo(() =>
+      [...this.props.players()].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+    );
 
     const achievementData = () =>
       this.props.achievement() == null
@@ -134,6 +152,42 @@ export class EndScreen extends Component("end-screen", {
             </ActionBar>
           </div>
         </If>
+        <Else>
+          <div part="players">
+            <For each={orderedPlayers}>
+              {(item, i) => (
+                <div class="player" style={{ "--_i": i }}>
+                  <PlayerAvatar
+                    avatar={() => item().avatar ?? PlayerAvatar.emptyAvatar}
+                  />
+
+                  <h2>{() => item().name}</h2>
+
+                  <PlayerScore score={() => item().score ?? 0} />
+
+                  <span class="achievement">
+                    {() =>
+                      item().achievement == null
+                        ? ""
+                        : getAchievementData(item().achievement!).name
+                    }
+                  </span>
+                </div>
+              )}
+            </For>
+
+            <ActionBar>
+              <ActionBarButton
+                tooltip="New Game"
+                onButtonClick={(evt) => {
+                  this.events.onFinished(evt);
+                }}
+              >
+                <ReloadIcon alt="New Game" />
+              </ActionBarButton>
+            </ActionBar>
+          </div>
+        </Else>
 
         <Style>{css`
           * {
@@ -150,7 +204,14 @@ export class EndScreen extends Component("end-screen", {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8);
+            padding: 1.5em;
+            background: rgba(0, 0, 0, 0.9);
+          }
+
+          h2 {
+            font-weight: normal;
+            font-size: 1.6em;
+            text-shadow: rgba(255, 255, 255, 0.7) 0 0 0.5em;
           }
 
           mj-action-bar {
@@ -220,9 +281,6 @@ export class EndScreen extends Component("end-screen", {
 
           [part="achievement"] h2 {
             margin-top: 1em;
-            font-weight: normal;
-            font-size: 1.6em;
-            text-shadow: rgba(255, 255, 255, 0.7) 0 0 0.5em;
             animation: 3s 2s backwards enter-text;
           }
 
@@ -236,6 +294,53 @@ export class EndScreen extends Component("end-screen", {
 
           [part="achievement"] mj-action-bar {
             animation: 3s 2.5s backwards enter-text;
+          }
+
+          [part="players"] {
+            display: flex;
+            flex-direction: column;
+            justify-items: start;
+            justify-content: center;
+            grid-gap: 1.5em;
+          }
+
+          @keyframes enter-player {
+            from {
+              opacity: 0;
+              transform: translateY(2em);
+            }
+          }
+          [part="players"] .player {
+            display: grid;
+            grid-template-areas: "avatar name name" "avatar score achievement";
+            grid-template-columns: auto 1fr auto;
+            column-gap: 1em;
+            animation: 1s backwards enter-player;
+            animation-delay: calc(var(--_i, 0) * 0.3s);
+          }
+
+          [part="players"] .player mj-player-avatar {
+            grid-area: avatar;
+          }
+
+          [part="players"] .player h2 {
+            grid-area: name;
+            align-self: end;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          [part="players"] .player mj-player-score {
+            grid-area: score;
+          }
+
+          [part="players"] .player .achievement {
+            grid-area: achievement;
+            opacity: 0.7;
+          }
+
+          [part="players"] mj-action-bar {
+            animation: 1s backwards 1.5s enter-player;
           }
         `}</Style>
       </>

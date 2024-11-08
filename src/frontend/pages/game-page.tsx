@@ -50,6 +50,7 @@ import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
 import { ReactionBar } from "../components/reaction-bar.tsx";
 import { ScoreScroll } from "../components/score-scroll.tsx";
+import { EndScreen } from "../components/end-screen.tsx";
 
 export interface RemotePlayer {
   name: string;
@@ -754,6 +755,23 @@ export class GamePage extends Component("game-page", {
                 .scoreInfo()
                 ?.winModifiers.flat()
                 .some((modifier) => modifier[0] === ScoreModifierType.FalseWin)
+            }
+          />
+        </If>
+
+        <If condition={() => phase() === Phase.End}>
+          <EndScreen
+            achievement={() =>
+              this.props.endInfo()?.[this.props.ownPlayerId()!].achievement ??
+              null
+            }
+            players={() =>
+              orderedPlayers().map((player) => ({
+                name: player.name,
+                avatar: getAvatarUrl(player.avatar),
+                score: this.props.gamePlayersInfo()?.[player.id]?.score,
+                achievement: this.props.endInfo()?.[player.id]?.achievement,
+              }))
             }
           />
         </If>
