@@ -44,8 +44,9 @@ export class EndScreen extends Component("end-screen", {
 
   render() {
     const [showAchievement, setShowAchievement] = useSignal(false);
+    const achievement = useMemo(this.props.achievement);
     const orderedPlayers = useMemo(() =>
-      [...this.props.players()].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+      [...this.props.players()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     );
 
     const achievementData = () =>
@@ -61,11 +62,11 @@ export class EndScreen extends Component("end-screen", {
     ] = useTransition(easeOutCubic);
 
     useEffect(() => {
-      setShowAchievement(this.props.achievement() != null);
-    }, []);
+      setShowAchievement(achievement() != null);
+    });
 
     useEffect(() => {
-      if (showAchievement() && this.props.achievement() != null) {
+      if (showAchievement() && achievement() != null) {
         startAchievementTransition(3000);
 
         return () => stopAchievementTransition();
@@ -121,16 +122,12 @@ export class EndScreen extends Component("end-screen", {
           </defs>
         </svg>
 
-        <If
-          condition={() =>
-            showAchievement() && this.props.achievement() != null
-          }
-        >
+        <If condition={() => showAchievement() && achievement() != null}>
           <div part="achievement">
             <div class="badge">
               <div class="inner">
                 <img
-                  src={() => getAchievementImageUrl(this.props.achievement()!)}
+                  src={() => getAchievementImageUrl(achievement()!)}
                   alt={() => achievementData()?.name}
                 />
               </div>

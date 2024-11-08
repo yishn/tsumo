@@ -762,7 +762,7 @@ export class GamePage extends Component("game-page", {
         <If condition={() => phase() === Phase.End}>
           <EndScreen
             achievement={() =>
-              this.props.endInfo()?.[this.props.ownPlayerId()!].achievement ??
+              this.props.endInfo()?.[this.props.ownPlayerId()!]?.achievement ??
               null
             }
             players={() =>
