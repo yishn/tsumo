@@ -13,18 +13,18 @@ import clsx from "clsx";
 import { Dice } from "./dice.tsx";
 import { Throbber } from "./throbber.tsx";
 
+const emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>";
+
 export class PlayerAvatar extends Component("player-avatar", {
   name: prop<string>("", { attribute: String }),
-  avatar: prop<string>("data:image/svg+xml;utf8,<svg></svg>", {
-    attribute: String,
-  }),
+  avatar: prop<string>(emptyAvatar, { attribute: String }),
   dice: prop<[number, number]>(),
   sound: prop<boolean>(false, { attribute: () => true }),
   current: prop<boolean>(false, { attribute: () => true }),
   loading: prop<boolean>(false, { attribute: () => true }),
   onAvatarClick: event(MouseEvent),
 }) {
-  static emptyAvatar = "data:image/svg+xml;utf8,<svg></svg>" as const;
+  static emptyAvatar = emptyAvatar;
 
   render() {
     const dice1 = useRef<Dice>();
