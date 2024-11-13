@@ -20,7 +20,12 @@ import {
   ScoreInfo,
   ServerMessage,
 } from "../shared/message.ts";
-import { allClients, allGameSessions, clientInfoMap } from "./global-state.ts";
+import {
+  allClients,
+  allGameSessions,
+  clientInfoMap,
+  maxSessions,
+} from "./global-state.ts";
 import {
   DealPhase,
   EndPhase,
@@ -57,6 +62,18 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
       let session = allGameSessions.get(sessionId);
 
       if (session == null) {
+        if (allGameSessions.size >= maxSessions) {
+          console.log(
+            `[GameSession] Number of sessions exceeded maximum ${maxSessions}`
+          );
+
+          sendMessage(evt.target, {
+            error: { message: "Maximum number of sessions exceeded" },
+          });
+          evt.target.close();
+          return;
+        }
+
         session = new GameSession(sessionId);
         allGameSessions.set(sessionId, session);
       }
@@ -67,9 +84,7 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
         );
 
         sendMessage(evt.target, {
-          error: {
-            message: "Session is full",
-          },
+          error: { message: "Session is full" },
         });
         evt.target.close();
         return;
@@ -85,9 +100,7 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
           `[GameSession] Peer tries to join session ${session.id} with invalid secret`
         );
         sendMessage(evt.target, {
-          error: {
-            message: "Invalid secret",
-          },
+          error: { message: "Invalid secret" },
         });
         evt.target.close();
         return;
@@ -106,11 +119,12 @@ export function useJoinSession(clients: MaybeSignal<Set<WebSocket>>) {
         session.peers().get(secret)?.ws.close();
       }
 
-      session.peers.set((peers) => {
-        const result = new Map(peers);
-        result.set(secret, { id, ws: evt.target });
-        return result;
-      });
+      session.peers.set((peers) =>
+        new Map(peers).set(secret, {
+          id,
+          ws: evt.target,
+        })
+      );
 
       sendMessage(evt.target, {
         joined: {
