@@ -1,6 +1,5 @@
 import {
   Children,
-  FunctionalComponent,
   If,
   MaybeSignal,
   SignalLike,
@@ -9,21 +8,26 @@ import {
 } from "sinho";
 import { delay } from "../animation";
 
-export const AnimatedIf: FunctionalComponent<{
-  condition?: MaybeSignal<boolean>;
-  hideDelay?: MaybeSignal<number>;
-  children?: (condition: SignalLike<boolean>) => Children;
-}> = (props) => {
-  const condition = MaybeSignal.upgrade(props.condition ?? false);
-  const [show, setShow] = useSignal(condition());
+export function AnimatedIf<T extends {} | null>(props: {
+  hideDelay?: number;
+  value?: MaybeSignal<T | undefined>;
+  children?: (
+    value: SignalLike<T | undefined>,
+    show: SignalLike<boolean>
+  ) => Children;
+}) {
+  const valueRaw = MaybeSignal.upgrade(props.value ?? undefined);
+  const [show, setShow] = useSignal(valueRaw() !== undefined);
+  const [value, setValue] = useSignal(valueRaw());
 
   useEffect(() => {
     let cancelled = false;
 
-    if (condition()) {
+    if (valueRaw() !== undefined) {
+      setValue(() => valueRaw());
       setShow(true);
     } else {
-      delay(MaybeSignal.peek(props.hideDelay ?? 0)).then(() => {
+      delay(props.hideDelay ?? 0).then(() => {
         if (cancelled) return;
         setShow(false);
       });
@@ -32,5 +36,9 @@ export const AnimatedIf: FunctionalComponent<{
     return () => (cancelled = true);
   });
 
-  return <If condition={show}>{props.children?.(condition)}</If>;
-};
+  return (
+    <If condition={show}>
+      {props.children?.(value, () => valueRaw() !== undefined)}
+    </If>
+  );
+}
