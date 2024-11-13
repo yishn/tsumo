@@ -70,7 +70,7 @@ jobs:
           ssh staging "
             cd apps/mj &&
             npm ci &&
-            npm run build
+            npm run build-backend
           "
       - name: Restart application
         run: ssh staging "supervisorctl restart mj"
