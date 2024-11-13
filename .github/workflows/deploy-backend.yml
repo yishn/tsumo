@@ -24,7 +24,6 @@ jobs:
             HostName $SSH_HOST
             User $SSH_USER
             IdentityFile ~/.ssh/staging.key
-            StrictHostKeyChecking no
           END
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
