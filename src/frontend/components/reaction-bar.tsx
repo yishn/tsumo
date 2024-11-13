@@ -125,10 +125,11 @@ export class ReactionBar extends Component("reaction-bar", {
           }
           ::slotted(svg) {
             vertical-align: bottom;
-            stroke: rgba(0, 0, 0, 0.7);
             fill: rgba(0, 0, 0, 0.7);
-            height: 1em;
-            width: 1em;
+            stroke: rgba(0, 0, 0, 0.7);
+            stroke-width: 0;
+            height: 1.2em;
+            width: 1.2em;
           }
         `}</Style>
       </>
