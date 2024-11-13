@@ -462,19 +462,18 @@ function useGame(session: GameSession): () => void {
 
     useClientSignal((msg) => msg.game?.score, scoreInfo);
 
+    const nextGameId = uuid();
     const endInfo = useMemo<GameEndInfo | null>(() => {
       const phase = gameState().phase;
-      const result: GameEndInfo = {};
+      const achievements: GameEndInfo["achievements"] = {};
 
       if (!(phase instanceof EndPhase)) return null;
 
       for (const [i, player] of orderedPlayers().entries()) {
-        result[player.id] = {
-          achievement: phase.achievements[i],
-        };
+        achievements[player.id] = phase.achievements[i];
       }
 
-      return result;
+      return { achievements, nextSession: nextGameId };
     });
 
     useClientSignal((msg) => msg.game?.end, endInfo);

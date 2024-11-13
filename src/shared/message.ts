@@ -60,12 +60,10 @@ export interface ScoreInfo {
   jokerBonusModifiers: ScoreModifier[][];
 }
 
-export type GameEndInfo = Record<
-  string,
-  {
-    achievement: Achievement | null;
-  }
->;
+export interface GameEndInfo {
+  achievements: Record<string, Achievement | null>;
+  nextSession: string;
+}
 
 export interface ServerMessage {
   heartbeat?: Heartbeat;

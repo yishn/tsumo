@@ -44,7 +44,7 @@ import {
   GameEndInfo,
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
-import { webSocketHook } from "../global-state.ts";
+import { SERVER, webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
@@ -69,6 +69,7 @@ export class GamePage extends Component("game-page", {
   ownPlayerInfo: prop<GamePlayerInfo>(),
   scoreInfo: prop<ScoreInfo>(),
   endInfo: prop<GameEndInfo>(),
+  nextGameId: prop<string>(),
 }) {
   render() {
     const orderedPlayers = useMemo(() =>
@@ -762,7 +763,7 @@ export class GamePage extends Component("game-page", {
         <If condition={() => phase() === Phase.End}>
           <EndScreen
             achievement={() =>
-              this.props.endInfo()?.[this.props.ownPlayerId()!]?.achievement ??
+              this.props.endInfo()?.achievements[this.props.ownPlayerId()!] ??
               null
             }
             players={() =>
@@ -770,9 +771,19 @@ export class GamePage extends Component("game-page", {
                 name: player.name,
                 avatar: getAvatarUrl(player.avatar),
                 score: this.props.gamePlayersInfo()?.[player.id]?.score,
-                achievement: this.props.endInfo()?.[player.id]?.achievement,
+                achievement: this.props.endInfo()?.achievements[player.id],
               }))
             }
+            onFinished={() => {
+              const nextSession = this.props.endInfo()?.nextSession ?? "";
+
+              window.location.href =
+                "?" +
+                new URLSearchParams({
+                  server: SERVER ?? "",
+                  session: nextSession,
+                }).toString();
+            }}
           />
         </If>
 
