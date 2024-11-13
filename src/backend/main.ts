@@ -3,8 +3,7 @@ import { WebSocketServer } from "ws";
 import { clientInfoMap, allClients } from "./global-state.ts";
 import { useJoinSession } from "./game-session.ts";
 
-const port = 8080;
-
+const port = process.env.PORT ? +process.env.PORT : 8080;
 const wss = new WebSocketServer({ port });
 
 wss.on("error", (err) => console.error("[Server]", err));
