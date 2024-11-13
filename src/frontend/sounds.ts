@@ -43,3 +43,5 @@ export const playStampSound = prepareAudio("./assets/sounds/stamp.mp3");
 export const playTurnSound = prepareAudio("./assets/sounds/turn.mp3");
 
 export const playRevealSound = prepareAudio("./assets/sounds/reveal.mp3");
+
+export const playScrollSound = prepareAudio("./assets/sounds/scroll.mp3")

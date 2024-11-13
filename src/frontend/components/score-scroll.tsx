@@ -13,7 +13,7 @@ import {
 import { delay, sakuraBlossoms } from "../animation.ts";
 import { Tile } from "./tile.tsx";
 import { Tile as TileClass } from "../../core/main.ts";
-import { playRevealSound } from "../sounds.ts";
+import { playRevealSound, playScrollSound } from "../sounds.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 import { SubmitIcon, getAvatarUrl } from "../assets.ts";
 import { ITile, ScoreModifier, ScoreModifierType } from "../../core/main.ts";
@@ -88,6 +88,8 @@ export class ScoreScroll extends Component("score-scroll", {
 
     useEffect(() => {
       // Reveal animation
+
+      playScrollSound();
 
       delay(ScoreScroll.enterAnimationDuration).then(() => {
         [...this.shadowRoot!.querySelectorAll("[part='tiles'] mj-tile")]
