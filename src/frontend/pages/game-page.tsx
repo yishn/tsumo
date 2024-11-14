@@ -755,7 +755,11 @@ export class GamePage extends Component("game-page", {
               !this.props
                 .scoreInfo()
                 ?.winModifiers.flat()
-                .some((modifier) => modifier[0] === ScoreModifierType.FalseWin)
+                .some(
+                  (modifier) =>
+                    modifier[0] === ScoreModifierType.FalseWin ||
+                    modifier[0] === ScoreModifierType.Draw
+                )
             }
           />
         </If>

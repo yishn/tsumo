@@ -470,7 +470,7 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
 }
 
 export enum ScoreModifierType {
-  DealerPenalty = "dealerPenalty",
+  Draw = "draw",
   HeavenlyWin = "heavenlyWin",
   EarthlyWin = "earthlyWin",
   FalseWin = "falseWin",
@@ -494,7 +494,7 @@ export enum ScoreModifierType {
 export namespace ScoreModifierType {
   export function list(): ScoreModifierType[] {
     return [
-      ScoreModifierType.DealerPenalty,
+      ScoreModifierType.Draw,
       ScoreModifierType.HeavenlyWin,
       ScoreModifierType.EarthlyWin,
       ScoreModifierType.FalseWin,
@@ -537,7 +537,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
         if (player === this.state.dealer) return [];
 
         return [
-          [ScoreModifierType.DealerPenalty, this.state.dealerIndex, 1, 5],
+          [ScoreModifierType.Draw, this.state.dealerIndex, 1, 5],
         ];
       });
     }

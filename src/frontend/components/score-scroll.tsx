@@ -22,7 +22,7 @@ import { TileStack } from "./tile-stack.tsx";
 import { webSocketHook } from "../global-state.ts";
 
 const modifierTypeLabels: Record<ScoreModifierType, string> = {
-  [ScoreModifierType.DealerPenalty]: "Dealer",
+  [ScoreModifierType.Draw]: "Draw",
   [ScoreModifierType.HeavenlyWin]: "Heavenly Win",
   [ScoreModifierType.EarthlyWin]: "Earthly Win",
   [ScoreModifierType.FalseWin]: "False Win",
