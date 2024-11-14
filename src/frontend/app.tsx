@@ -70,6 +70,7 @@ function useError(): Signal<Error | undefined> {
           }
       );
     } else if (webSocketHook.error() != null) {
+      console.error("[WebSocket]", webSocketHook.error());
       setError(
         (err) =>
           err ?? {
