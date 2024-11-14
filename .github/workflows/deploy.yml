@@ -24,8 +24,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
       - name: Build
         run: npm run build-frontend
         env:
