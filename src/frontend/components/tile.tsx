@@ -274,20 +274,10 @@ class TileComponent extends Component("tile", {
           [part="tile"].selected {
             transform: translateY(-0.3em);
           }
-          @keyframes glow-pulse {
-            from {
-              box-shadow:
-                var(--tile-glow-pulse-color) 0 0 0.6em 0.3em,
-                var(--box-shadow);
-            }
-            to {
-              box-shadow:
-                var(--tile-glow-color) 0 0 0.3em 0.3em,
-                var(--box-shadow);
-            }
-          }
           [part="tile"].glow {
-            animation: 1s linear infinite alternate-reverse glow-pulse;
+            box-shadow:
+              var(--tile-glow-pulse-color) 0 0 0.6em 0.3em,
+              var(--box-shadow);
           }
           [part="tile"].back {
             border-color: var(--tile-back-color);
