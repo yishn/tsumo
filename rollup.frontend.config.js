@@ -3,6 +3,7 @@ import alias from "@rollup/plugin-alias";
 import svgr from "@svgr/rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
+import injectProcessEnv from "rollup-plugin-inject-process-env";
 
 const isDev = process.env.NODE_ENV === "dev";
 
@@ -49,6 +50,10 @@ export default {
           },
         },
       },
+    }),
+    injectProcessEnv({
+      NODE_ENV: process.env.NODE_ENV,
+      MJ_SERVER: isDev ? "ws://localhost:8080" : process.env.MJ_SERVER,
     }),
     !isDev && terser(),
   ],

@@ -66,7 +66,7 @@ function useError(): Signal<Error | undefined> {
         (err) =>
           err ?? {
             name: "WebSocketError",
-            message: "Server not specified",
+            message: "Server not configured",
           }
       );
     } else if (webSocketHook.error() != null) {

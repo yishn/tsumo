@@ -44,7 +44,7 @@ import {
   GameEndInfo,
 } from "../../shared/message.ts";
 import { diceSort } from "../../shared/utils.ts";
-import { SERVER, webSocketHook } from "../global-state.ts";
+import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
 import { reactionTimeout } from "../../shared/constants.ts";
@@ -782,11 +782,7 @@ export class GamePage extends Component("game-page", {
               const nextSession = this.props.endInfo()?.nextSession ?? "";
 
               window.location.href =
-                "?" +
-                new URLSearchParams({
-                  server: SERVER ?? "",
-                  session: nextSession,
-                }).toString();
+                "?" + new URLSearchParams({ session: nextSession }).toString();
             }}
           />
         </If>

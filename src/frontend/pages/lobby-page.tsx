@@ -12,10 +12,16 @@ import {
 } from "sinho";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
 import { ActionBarButton } from "../components/action-bar.tsx";
-import { LeftIcon, RightIcon, SubmitIcon, avatarList, getAvatarUrl } from "../assets.ts";
+import {
+  LeftIcon,
+  RightIcon,
+  SubmitIcon,
+  avatarList,
+  getAvatarUrl,
+} from "../assets.ts";
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
-import { SECRET, SERVER, SESSION, webSocketHook } from "../global-state.ts";
+import { SECRET, SESSION, webSocketHook } from "../global-state.ts";
 import clsx from "clsx";
 
 export class LobbyPage extends Component("lobby-page", {
@@ -165,7 +171,6 @@ export class LobbyPage extends Component("lobby-page", {
                   new URL(
                     "?" +
                       new URLSearchParams({
-                        server: SERVER ?? "",
                         session: SESSION ?? "",
                       }).toString(),
                     location.href

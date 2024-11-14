@@ -28,17 +28,21 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build-frontend
+        env:
+          MJ_SERVER: ${{ vars.MJ_SERVER }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: '.'
+          path: "."
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
   deploy-backend:
+    environment:
+      name: github-pages
     runs-on: ubuntu-latest
     steps:
       - name: Configure SSH
@@ -72,5 +76,7 @@ jobs:
             npm ci &&
             npm run build-backend
           "
+        env:
+          MJ_SERVER: ${{ vars.MJ_SERVER }}
       - name: Restart application
         run: ssh staging "supervisorctl restart mj"
