@@ -15,11 +15,7 @@ wss.on("listening", () => {
 useJoinSession(allClients);
 
 wss.on("connection", (ws) => {
-  allClients.set((clients) => {
-    const result = new Set(clients);
-    result.add(ws);
-    return result;
-  });
+  allClients.set((clients) => new Set(clients).add(ws));
   clientInfoMap.set(ws, {});
 
   ws.on("error", (err) => {

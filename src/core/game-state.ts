@@ -1,4 +1,4 @@
-import { Achievement, distributeAchievements } from "../shared/achievements.ts";
+import { distributeAchievements } from "../shared/achievements.ts";
 import { Player } from "./player.ts";
 import { SetsPairs, Tile, TileSuit } from "./tile.ts";
 
@@ -536,9 +536,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       return this.state.players.map((player) => {
         if (player === this.state.dealer) return [];
 
-        return [
-          [ScoreModifierType.Draw, this.state.dealerIndex, 1, 5],
-        ];
+        return [[ScoreModifierType.Draw, this.state.dealerIndex, 1, 5]];
       });
     }
 
