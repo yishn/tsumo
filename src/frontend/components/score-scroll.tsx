@@ -60,10 +60,10 @@ export class ScoreScroll extends Component("score-scroll", {
       const result = this.props.winModifiers().map((_) => 0);
 
       for (const [i, modifiers] of this.props.winModifiers().entries()) {
-        for (const [, target, multiplier, constant] of modifiers) {
+        for (const [, source, multiplier, constant] of modifiers) {
           const delta = result[i] * multiplier + constant - result[i];
           result[i] += delta;
-          result[target] -= delta;
+          result[source] -= delta;
         }
       }
 
@@ -74,10 +74,10 @@ export class ScoreScroll extends Component("score-scroll", {
       const result = this.props.jokerBonusModifiers().map((_) => 0);
 
       for (const [i, modifiers] of this.props.jokerBonusModifiers().entries()) {
-        for (const [, target, multiplier, constant] of modifiers) {
+        for (const [, source, multiplier, constant] of modifiers) {
           const delta = constant * multiplier;
           result[i] += delta;
-          result[target] -= delta;
+          result[source] -= delta;
         }
       }
 

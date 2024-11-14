@@ -519,7 +519,7 @@ export namespace ScoreModifierType {
 
 export type ScoreModifier = [
   type: ScoreModifierType,
-  target: number,
+  source: number,
   multiplier: number,
   constant: number,
 ];
@@ -690,24 +690,20 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     for (const [i, player] of this.state.players.entries()) {
       let delta = 0;
 
-      for (const [_, target, multiplier, constant] of winModifiers[i]) {
+      for (const [_, source, multiplier, constant] of winModifiers[i]) {
         const newDelta = multiplier * delta + constant;
 
         player.score += newDelta - delta;
-        this.state.players[target].score -= newDelta - delta;
+        this.state.players[source].score -= newDelta - delta;
 
         delta = newDelta;
       }
 
-      delta = 0;
+      for (const [, source, multiplier, constant] of jokerModifiers[i]) {
+        const delta = multiplier * constant;
 
-      for (const [, target, multiplier, constant] of jokerModifiers[i]) {
-        const newDelta = multiplier * delta + constant;
-
-        player.score += newDelta - delta;
-        this.state.players[target].score -= newDelta - delta;
-
-        delta = newDelta;
+        player.score += delta;
+        this.state.players[source].score -= delta;
       }
     }
 
