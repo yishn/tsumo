@@ -75,7 +75,7 @@ export class EndScreen extends Component("end-screen", {
 
     return (
       <>
-        <svg style={{ display: "none" }}>
+        <svg style={{ position: "absolute", height: 0, top: "-999em" }}>
           <defs>
             <filter
               id={this.#filterName}
