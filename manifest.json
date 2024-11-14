@@ -1,6 +1,5 @@
 {
   "name": "Mahjong",
-  "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "portrait"
 }
