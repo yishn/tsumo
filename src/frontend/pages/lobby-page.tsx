@@ -263,10 +263,10 @@ export class LobbyPage extends Component("lobby-page", {
           :host::before {
             content: "";
             position: fixed;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: -0.5em;
+            left: -1em;
+            right: -1em;
+            top: -1em;
+            bottom: -1em;
             background: linear-gradient(
                 to bottom,
                 transparent,
