@@ -66,6 +66,8 @@ export class PlayerRow extends Component("player-row", {
             padding: 0.5em;
             padding-left: max(0.5em, env(safe-area-inset-left));
             padding-right: env(safe-area-inset-left);
+            -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
             transition: background-color 0.2s;
           }
           [part="container"].minimal {
