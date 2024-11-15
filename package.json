@@ -5,7 +5,6 @@
   "type": "module",
   "main": "./dist/backend/main.js",
   "author": "Yichuan Shen",
-  "license": "MIT",
   "scripts": {
     "start": "node ./dist/backend/main.js",
     "serve": "concurrently --group \"npm run start\" \"serve\"",
