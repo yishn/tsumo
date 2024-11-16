@@ -525,6 +525,34 @@ export type ScoreModifier = [
 ];
 
 export class ScorePhase extends PhaseBase(Phase.Score) {
+  static getWinResult(data: ScoreModifier[][]): number[] {
+    const result = data.map((_) => 0);
+
+    for (const [i, modifiers] of data.entries()) {
+      for (const [, source, multiplier, constant] of modifiers) {
+        const delta = result[i] * multiplier + constant - result[i];
+        result[i] += delta;
+        result[source] -= delta;
+      }
+    }
+
+    return result;
+  }
+
+  static getJokerBonusResult(data: ScoreModifier[][]): number[] {
+    const result = data.map((_) => 0);
+
+    for (const [i, modifiers] of data.entries()) {
+      for (const [, source, multiplier, constant] of modifiers) {
+        const delta = constant * multiplier;
+        result[i] += delta;
+        result[source] -= delta;
+      }
+    }
+
+    return result;
+  }
+
   draw = false;
   scored = false;
   kongBloom = false;
@@ -684,27 +712,13 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
   score(): GameState<ScorePhase> {
     if (this.scored) throw new Error("Already scored");
 
-    const winModifiers = this.winModifiers;
-    const jokerModifiers = this.jokerBonusModifiers;
+    const winResult = ScorePhase.getWinResult(this.winModifiers);
+    const jokerBonusResult = ScorePhase.getJokerBonusResult(
+      this.jokerBonusModifiers
+    );
 
     for (const [i, player] of this.state.players.entries()) {
-      let delta = 0;
-
-      for (const [_, source, multiplier, constant] of winModifiers[i]) {
-        const newDelta = multiplier * delta + constant;
-
-        player.score += newDelta - delta;
-        this.state.players[source].score -= newDelta - delta;
-
-        delta = newDelta;
-      }
-
-      for (const [, source, multiplier, constant] of jokerModifiers[i]) {
-        const delta = multiplier * constant;
-
-        player.score += delta;
-        this.state.players[source].score -= delta;
-      }
+      player.score += winResult[i] + jokerBonusResult[i];
     }
 
     this.scored = true;
@@ -712,7 +726,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
     // Update statistics
 
     const scoreModifierTypes = new Set(
-      winModifiers.flatMap((modifiers) =>
+      this.winModifiers.flatMap((modifiers) =>
         modifiers.map((modifier) => modifier[0])
       )
     );

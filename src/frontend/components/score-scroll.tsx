@@ -12,7 +12,7 @@ import {
 } from "sinho";
 import { delay, sakuraBlossoms } from "../animation.ts";
 import { Tile } from "./tile.tsx";
-import { Tile as TileClass } from "../../core/main.ts";
+import { ScorePhase, Tile as TileClass } from "../../core/main.ts";
 import { playRevealSound, playScrollSound } from "../sounds.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 import { SubmitIcon, getAvatarUrl } from "../assets.ts";
@@ -56,33 +56,13 @@ export class ScoreScroll extends Component("score-scroll", {
   static enterRowAnimationDuration = 500;
 
   render() {
-    const winModifiersResult = useMemo(() => {
-      const result = this.props.winModifiers().map((_) => 0);
+    const winResult = useMemo(() =>
+      ScorePhase.getWinResult(this.props.winModifiers())
+    );
 
-      for (const [i, modifiers] of this.props.winModifiers().entries()) {
-        for (const [, source, multiplier, constant] of modifiers) {
-          const delta = result[i] * multiplier + constant - result[i];
-          result[i] += delta;
-          result[source] -= delta;
-        }
-      }
-
-      return result;
-    });
-
-    const jokerBonusModifiersResult = useMemo(() => {
-      const result = this.props.jokerBonusModifiers().map((_) => 0);
-
-      for (const [i, modifiers] of this.props.jokerBonusModifiers().entries()) {
-        for (const [, source, multiplier, constant] of modifiers) {
-          const delta = constant * multiplier;
-          result[i] += delta;
-          result[source] -= delta;
-        }
-      }
-
-      return result;
-    });
+    const jokerBonusResult = useMemo(() =>
+      ScorePhase.getJokerBonusResult(this.props.jokerBonusModifiers())
+    );
 
     const [ready, setReady] = useSignal(false);
 
@@ -230,7 +210,7 @@ export class ScoreScroll extends Component("score-scroll", {
 
               <tr class="result" style={rowAnimationDelayStyle()}>
                 <td class="type"></td>
-                <For each={winModifiersResult}>
+                <For each={winResult}>
                   {(total) => {
                     return (
                       <td class="player">
@@ -310,7 +290,7 @@ export class ScoreScroll extends Component("score-scroll", {
 
               <tr class="result" style={rowAnimationDelayStyle()}>
                 <td class="type"></td>
-                <For each={jokerBonusModifiersResult}>
+                <For each={jokerBonusResult}>
                   {(total) => {
                     return (
                       <td class="player">
@@ -325,9 +305,7 @@ export class ScoreScroll extends Component("score-scroll", {
                 <td class="type">Total</td>
                 <For
                   each={() =>
-                    winModifiersResult().map(
-                      (n, i) => n + jokerBonusModifiersResult()[i]
-                    )
+                    winResult().map((n, i) => n + jokerBonusResult()[i])
                   }
                 >
                   {(total) => {
