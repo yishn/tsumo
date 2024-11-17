@@ -65,18 +65,18 @@ jobs:
       - name: Pull changes
         run: >
           ssh staging "
-            cd apps/mj &&
+            cd apps/tsumo &&
             git fetch &&
             git reset --hard origin/main
           "
       - name: Install dependencies and build
         run: >
           ssh staging "
-            cd apps/mj &&
+            cd apps/tsumo &&
             npm ci &&
             npm run build-backend
           "
         env:
           MJ_SERVER: ${{ vars.MJ_SERVER }}
       - name: Restart application
-        run: ssh staging "supervisorctl restart mj"
+        run: ssh staging "supervisorctl restart tsumo"
