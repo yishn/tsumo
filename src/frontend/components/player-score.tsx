@@ -21,13 +21,15 @@ const AnimatedCounter: FunctionalComponent<{
 }> = (props) => {
   const elRef = useRef<HTMLSpanElement>();
   const deltaRef = useRef<HTMLSpanElement>();
-  const [value, setValue] = useSignal(MaybeSignal.get(props.value) ?? 0);
+  const valueProp = useMemo(() => MaybeSignal.get(props.value) ?? 0);
+  const [value, setValue] = useSignal(valueProp());
   const [delta, setDelta] = useSignal(0);
   const [showDelta, setShowDelta] = useSignal(false);
 
   useEffect(() => {
-    const newValue = MaybeSignal.get(props.value) ?? 0;
-    const delta = newValue - value.peek();
+    const oldValue = value.peek();
+    const newValue = valueProp();
+    const delta = newValue - oldValue;
     const sign = Math.sign(delta);
 
     let intervalId: NodeJS.Timeout | number | undefined;
@@ -57,6 +59,11 @@ const AnimatedCounter: FunctionalComponent<{
     }
 
     return () => {
+      if (showDelta()) {
+        // Reset value to old value for correct delta display
+        setValue(oldValue, { silent: true });
+      }
+
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };
