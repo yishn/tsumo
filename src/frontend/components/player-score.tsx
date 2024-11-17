@@ -29,14 +29,15 @@ const AnimatedCounter: FunctionalComponent<{
     const newValue = MaybeSignal.get(props.value) ?? 0;
     const delta = newValue - value.peek();
     const sign = Math.sign(delta);
-    const interval =
-      (MaybeSignal.peek(props.duration) ?? 500) / Math.abs(delta);
 
     let intervalId: NodeJS.Timeout | number | undefined;
     let timeoutId: NodeJS.Timeout | number | undefined;
 
-    if (value.peek() !== newValue) {
-      setDelta(newValue - value.peek());
+    if (delta !== 0) {
+      const interval =
+        (MaybeSignal.peek(props.duration) ?? 500) / Math.abs(delta);
+
+      setDelta(delta);
       setShowDelta(true);
 
       intervalId = setInterval(() => {
