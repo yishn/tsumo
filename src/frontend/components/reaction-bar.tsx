@@ -11,7 +11,7 @@ import { playWhooshSound } from "../sounds.ts";
 
 type Avatar = (typeof avatarList)[number];
 
-const avatarData: Record<(typeof avatarList)[number], { top: number }> = {
+const avatarData: Record<Avatar, { top: number }> = {
   rat: { top: 39 },
   ox: { top: 53 },
   tiger: { top: 47 },
@@ -26,6 +26,9 @@ const avatarData: Record<(typeof avatarList)[number], { top: number }> = {
 export class ReactionBar extends Component("reaction-bar", {
   avatar: prop<Avatar>("rat"),
 }) {
+  static enterDuration = 500;
+  static leaveDuration = 500;
+
   render() {
     const avatarIndex = () => avatarList.indexOf(this.props.avatar());
 
@@ -69,21 +72,31 @@ export class ReactionBar extends Component("reaction-bar", {
               transform: translate(-100dvw, -50%);
             }
           }
+          @keyframes leave {
+            to {
+              height: 0;
+              width: 0;
+              transform: translate(100dvw, -50%);
+            }
+          }
           :host {
             --_y-offset: var(--y-offset, 0);
             position: absolute;
             left: 0;
-            right: 0;
+            width: 100%;
             height: 3em;
             top: calc(50% - 6em + 2em * var(--_y-offset));
             border: 0.2em solid white;
             border-left: none;
             border-right: none;
             box-shadow: rgba(0, 0, 0, 0.3) 0 0.5em 1em;
-            transform: translateY(-50%);
+            transform: translate(0, -50%);
             background-color: white;
             overflow: hidden;
-            animation: 0.5s ease-in backwards enter;
+            animation: ${ReactionBar.enterDuration}ms ease-in backwards enter;
+          }
+          :host(.leave) {
+            animation: ${ReactionBar.leaveDuration}ms ease-in forwards leave;
           }
 
           @keyframes banner-enter {
@@ -95,6 +108,11 @@ export class ReactionBar extends Component("reaction-bar", {
               background-position-x: calc(50% + 3em);
             }
           }
+          @keyframes banner-leave {
+            to {
+              opacity: 0;
+            }
+          }
           .banner {
             position: absolute;
             left: 0;
@@ -103,8 +121,12 @@ export class ReactionBar extends Component("reaction-bar", {
             height: 3em;
             animation: 1s ease-out backwards banner-enter;
           }
+          :host(.leave) .banner {
+            animation: ${ReactionBar.leaveDuration}ms ease-out forwards
+              banner-leave;
+          }
 
-          @keyframes slotted-enter {
+          @keyframes bubble-enter {
             from {
               opacity: 0;
               transform: var(--base-transform) scale(0.5);
@@ -121,7 +143,7 @@ export class ReactionBar extends Component("reaction-bar", {
               no-repeat;
             line-height: 1em;
             transform: var(--base-transform);
-            animation: 0.2s ease-out 0.8s backwards slotted-enter;
+            animation: 0.2s ease-out 0.8s backwards bubble-enter;
           }
           ::slotted(svg) {
             vertical-align: bottom;

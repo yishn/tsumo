@@ -6,14 +6,14 @@ import {
   useEffect,
   useSignal,
 } from "sinho";
-import { delay } from "../animation";
+import { delay } from "../animation.ts";
 
 export function AnimatedIf<T extends {} | null>(props: {
   hideDelay?: number;
   value?: MaybeSignal<T | undefined>;
   children?: (
     value: SignalLike<T | undefined>,
-    show: SignalLike<boolean>
+    leave: SignalLike<boolean>
   ) => Children;
 }) {
   const valueRaw = MaybeSignal.upgrade(props.value ?? undefined);
@@ -38,7 +38,7 @@ export function AnimatedIf<T extends {} | null>(props: {
 
   return (
     <If condition={show}>
-      {props.children?.(value, () => valueRaw() !== undefined)}
+      {props.children?.(value, () => valueRaw() === undefined)}
     </If>
   );
 }

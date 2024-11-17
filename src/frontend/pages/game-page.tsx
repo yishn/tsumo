@@ -13,6 +13,7 @@ import {
   useMemo,
   useSignal,
 } from "sinho";
+import clsx from "clsx";
 import {
   DiscardIcon,
   DrawIcon,
@@ -51,6 +52,7 @@ import { reactionTimeout } from "../../shared/constants.ts";
 import { ReactionBar } from "../components/reaction-bar.tsx";
 import { ScoreScroll } from "../components/score-scroll.tsx";
 import { EndScreen } from "../components/end-screen.tsx";
+import { AnimatedIf } from "../components/animated-if.tsx";
 
 export interface RemotePlayer {
   name: string;
@@ -385,30 +387,39 @@ export class GamePage extends Component("game-page", {
             </ReactionWindow>
           </If>
 
-          <For each={reactions} key={(reaction) => reaction.playerIndex}>
-            {(reaction, i) => (
-              <ReactionBar
-                style={{
-                  "--y-offset": i,
-                }}
-                avatar={() =>
-                  avatarList[
-                    orderedPlayers()[reaction().playerIndex]?.avatar ?? 0
-                  ]
-                }
+          <AnimatedIf
+            value={() => (reactions().length === 0 ? undefined : reactions())}
+            hideDelay={ReactionBar.leaveDuration}
+          >
+            {(reactions, leave) => (
+              <For
+                each={() => reactions() ?? []}
+                key={(reaction) => reaction.playerIndex}
               >
-                <If condition={() => reaction().type === "kong"}>
-                  <KongIcon />
-                </If>
-                <ElseIf condition={() => reaction().type === "pong"}>
-                  <PongIcon />
-                </ElseIf>
-                <ElseIf condition={() => reaction().type === "win"}>
-                  <WinIcon />
-                </ElseIf>
-              </ReactionBar>
+                {(reaction, i) => (
+                  <ReactionBar
+                    class={() => clsx({ leave: leave() })}
+                    style={{ "--y-offset": i }}
+                    avatar={() =>
+                      avatarList[
+                        orderedPlayers()[reaction().playerIndex]?.avatar ?? 0
+                      ]
+                    }
+                  >
+                    <If condition={() => reaction().type === "kong"}>
+                      <KongIcon />
+                    </If>
+                    <ElseIf condition={() => reaction().type === "pong"}>
+                      <PongIcon />
+                    </ElseIf>
+                    <ElseIf condition={() => reaction().type === "win"}>
+                      <WinIcon />
+                    </ElseIf>
+                  </ReactionBar>
+                )}
+              </For>
             )}
-          </For>
+          </AnimatedIf>
         </div>
 
         <div part="self">
