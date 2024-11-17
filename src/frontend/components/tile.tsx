@@ -155,17 +155,22 @@ class TileComponent extends Component("tile", {
           </ElseIf>
           <ElseIf condition={() => tile()!.suit === TileSuit.Wind}>
             <div part="suit">
-              <WindIcon
-                style={{
-                  transform: () =>
-                    `rotate(${[0, 0, 90, 180, 270][tile()?.rank ?? 0]}deg)`,
-                }}
+              <svg
+                viewBox="0 0 24 24"
                 alt={() =>
                   ["Unknown", "East", "South", "West", "North"][
                     tile()?.rank ?? 0
                   ]
                 }
-              />
+              >
+                <g
+                  transform={`rotate(${
+                    [0, 0, 90, 180, 270][tile()?.rank ?? 0]
+                  } 12 12)`}
+                >
+                  <WindIcon width="24" height="24" />
+                </g>
+              </svg>
             </div>
             <div part="rank">
               {() => ["?", "東", "南", "西", "北"][tile()?.rank ?? 0]}
