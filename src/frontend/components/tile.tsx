@@ -164,9 +164,9 @@ class TileComponent extends Component("tile", {
                 }
               >
                 <g
-                  transform={`rotate(${
-                    [0, 0, 90, 180, 270][tile()?.rank ?? 0]
-                  } 12 12)`}
+                  transform={() =>
+                    `rotate(${[0, 0, 90, 180, 270][tile()?.rank ?? 0]} 12 12)`
+                  }
                 >
                   <WindIcon width="24" height="24" />
                 </g>
