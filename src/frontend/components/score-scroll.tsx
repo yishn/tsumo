@@ -40,7 +40,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.JokerFree]: "Joker-Free",
   [ScoreModifierType.PureJokerFree]: "Pure Joker-Free",
   [ScoreModifierType.Joker]: "Joker",
-  [ScoreModifierType.Overlord]: "Joker (Overlord)",
+  [ScoreModifierType.Overlord]: "Overlord",
 };
 
 export class ScoreScroll extends Component("score-scroll", {
@@ -238,53 +238,85 @@ export class ScoreScroll extends Component("score-scroll", {
                 }
               >
                 {(modifiers, i, arr) => (
-                  <tr style={rowAnimationDelayStyle()}>
-                    <If condition={() => i() === 0}>
-                      <td class="type" rowSpan={arr().length}>
-                        Joker
-                      </td>
-                    </If>
+                  <>
+                    <tr style={rowAnimationDelayStyle()}>
+                      <If condition={() => i() === 0}>
+                        <td class="type" rowSpan={arr().length}>
+                          Joker
+                        </td>
+                      </If>
 
-                    <For each={modifiers}>
-                      {(modifier) => {
-                        const sum = () =>
-                          -modifiers().reduce(
-                            (sum, modifier) =>
-                              sum +
-                              (modifier == null
-                                ? 0
-                                : modifier[3] * modifier[2]),
-                            0
+                      <For each={modifiers}>
+                        {(modifier) => {
+                          const overlord = () =>
+                            modifiers().some(
+                              (modifier) =>
+                                modifier?.[0] === ScoreModifierType.Overlord
+                            );
+                          const sum = () =>
+                            -modifiers().reduce(
+                              (sum, modifier) =>
+                                sum +
+                                (modifier == null
+                                  ? 0
+                                  : modifier[3] * modifier[2]),
+                              0
+                            );
+
+                          return (
+                            <td class="player">
+                              <If condition={() => modifier() == null}>
+                                {() =>
+                                  (sum() > 0 ? "+" : "") +
+                                  sum() * (overlord() ? 0.5 : 1)
+                                }
+                              </If>
+                              <If
+                                condition={() =>
+                                  modifier() != null && modifier()![3] !== 0
+                                }
+                              >
+                                {() =>
+                                  modifier() != null && modifier()![3] > 0
+                                    ? "+"
+                                    : "" + modifier()![3]
+                                }
+                              </If>
+                              <If
+                                condition={() =>
+                                  modifier() != null &&
+                                  modifier()![2] * (overlord() ? 0.5 : 1) !== 1
+                                }
+                              >
+                                ×
+                                {() =>
+                                  (modifier()?.[2] ?? 1) *
+                                  (overlord() ? 0.5 : 1)
+                                }
+                              </If>
+                            </td>
                           );
+                        }}
+                      </For>
+                    </tr>
 
-                        return (
-                          <td class="player">
-                            <If condition={() => modifier() == null}>
-                              {() => (sum() > 0 ? "+" + sum() : sum())}
-                            </If>
-                            <If
-                              condition={() =>
-                                modifier() != null && modifier()![3] !== 0
-                              }
-                            >
-                              {() =>
-                                modifier() != null && modifier()![3] > 0
-                                  ? "+" + modifier()![3]
-                                  : modifier()?.[3]
-                              }
-                            </If>
-                            <If
-                              condition={() =>
-                                modifier() != null && modifier()![2] !== 1
-                              }
-                            >
-                              ×{() => modifier()?.[2]}
-                            </If>
-                          </td>
-                        );
-                      }}
-                    </For>
-                  </tr>
+                    <If
+                      condition={() =>
+                        modifiers().some(
+                          (modifier) =>
+                            modifier?.[0] === ScoreModifierType.Overlord
+                        )
+                      }
+                    >
+                      <tr style={rowAnimationDelayStyle()}>
+                        <td class="type">Overlord</td>
+
+                        <For each={modifiers}>
+                          {() => <td class="player">×2</td>}
+                        </For>
+                      </tr>
+                    </If>
+                  </>
                 )}
               </For>
 
