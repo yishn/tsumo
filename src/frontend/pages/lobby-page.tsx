@@ -334,7 +334,7 @@ export class LobbyPage extends Component("lobby-page", {
             border: none;
             margin-bottom: 1em;
             background-color: rgba(0, 0, 0, 0.7);
-            font: 1.5em var(--app-heiti-font-stack);
+            font-size: 1.5em;
             text-align: center;
           }
           [part="name-chooser"] input:disabled {
