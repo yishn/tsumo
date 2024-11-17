@@ -12,8 +12,8 @@
     "typecheck-backend": "tsc --project ./src/backend/tsconfig.json",
     "typecheck-frontend": "tsc --project ./src/frontend/tsconfig.json",
     "build": "npm run build-backend && npm run build-frontend",
-    "build-backend": "rollup --config ./rollup.backend.config.js && tsc --project ./src/backend/tsconfig.json",
-    "build-frontend": "rollup --config ./rollup.frontend.config.js && tsc --project ./src/frontend/tsconfig.json",
+    "build-backend": "npm run typecheck-backend && rollup --config ./rollup.backend.config.js",
+    "build-frontend": "npm run typecheck-frontend && rollup --config ./rollup.frontend.config.js",
     "watch": "concurrently \"npm run watch-backend\" \"npm run watch-frontend\"",
     "watch-backend": "rollup --environment NODE_ENV:dev --watch --config ./rollup.backend.config.js",
     "watch-frontend": "rollup --environment NODE_ENV:dev --watch --config ./rollup.frontend.config.js"
