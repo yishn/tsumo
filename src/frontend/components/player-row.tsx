@@ -133,6 +133,11 @@ export class PlayerRow extends Component("player-row", {
             --tile-width: 1.8em;
             font-size: 0.5em;
           }
+          @media (max-width: 355px) {
+            ::slotted([slot="tiles"]) {
+              --tile-width: 1.4em;
+            }
+          }
         `}</Style>
       </div>
     );

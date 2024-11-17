@@ -815,6 +815,12 @@ export class GamePage extends Component("game-page", {
             scroll-snap-align: center;
             animation: 0.5s backwards enter-player;
           }
+          @media (max-height: 761px) {
+            [part="players"] > mj-player-row {
+              --player-avatar-size: 3.5em;
+              --tile-width: 1.95em;
+            }
+          }
 
           mj-reaction-window {
             position: absolute;
@@ -856,6 +862,11 @@ export class GamePage extends Component("game-page", {
             order: 2;
             margin-bottom: 0.5em;
             font-size: 0.9em;
+          }
+          @media (max-width: 325px) or (max-height: 722px) {
+            [part="self"] [slot="tiles"] {
+              --tile-width: 2em;
+            }
           }
           [part="self"] [slot="tiles"] > mj-tile {
             cursor: pointer;
