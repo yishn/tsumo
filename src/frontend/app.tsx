@@ -185,6 +185,7 @@ export class AppComponent extends Component("app") {
         <Style light>{css`
           ${() => ""}
           @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap");
+          @import url("https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC:wght@400;700&display=swap");
 
           * {
             margin: 0;
@@ -192,7 +193,8 @@ export class AppComponent extends Component("app") {
           }
 
           html {
-            --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
+            --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC",
+              "LXGW WenKai Mono TC", serif;
             --app-background: linear-gradient(
                 to bottom,
                 #714634,
@@ -205,7 +207,7 @@ export class AppComponent extends Component("app") {
             background: var(--app-background);
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font-size: 1.2em;
+            font: 1.2em var(--app-kaiti-font-stack);
             color: #eee;
             cursor: default;
             -webkit-user-select: none;
