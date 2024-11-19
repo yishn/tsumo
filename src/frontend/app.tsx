@@ -183,8 +183,16 @@ export class AppComponent extends Component("app") {
         </ElseIf>
 
         <Style light>{css`
-          ${() => ""}
-          @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap");
+          @font-face {
+            font-family: "Alegreya";
+            src: url("./assets/font/alegreya/Alegreya-VariableFont_wght.ttf");
+          }
+
+          @font-face {
+            font-family: "Alegreya";
+            font-style: italic;
+            src: url("./assets/font/alegreya/Alegreya-Italic-VariableFont_wght.ttf");
+          }
 
           * {
             margin: 0;
