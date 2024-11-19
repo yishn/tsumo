@@ -17,7 +17,6 @@ import {
   getAchievementData,
   getAchievementImageUrl,
 } from "../../shared/achievements.ts";
-import { easeOutCubic, useTransition } from "../animation.ts";
 import { ActionBar, ActionBarButton } from "./action-bar.tsx";
 import { ContinueIcon, ReloadIcon } from "../assets.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
@@ -40,8 +39,6 @@ export class EndScreen extends Component("end-screen", {
   }),
   onFinished: event(MouseEvent),
 }) {
-  #filterName = `dissolve-filter-${crypto.randomUUID()}`;
-
   render() {
     const [showAchievement, setShowAchievement] = useSignal(false);
     const achievement = useMemo(this.props.achievement);
@@ -54,74 +51,12 @@ export class EndScreen extends Component("end-screen", {
         ? null
         : getAchievementData(this.props.achievement()!);
 
-    const [
-      achievementTransition,
-      ,
-      startAchievementTransition,
-      stopAchievementTransition,
-    ] = useTransition(easeOutCubic);
-
     useEffect(() => {
       setShowAchievement(achievement() != null);
     });
 
-    useEffect(() => {
-      if (showAchievement() && achievement() != null) {
-        startAchievementTransition(3000);
-
-        return () => stopAchievementTransition();
-      }
-    });
-
     return (
       <>
-        <svg style={{ position: "absolute", height: 0, top: "-999em" }}>
-          <defs>
-            <filter
-              id={this.#filterName}
-              x="-200%"
-              y="-200%"
-              width="500%"
-              height="500%"
-              color-interpolation-filters="sRGB"
-              overflow="visible"
-            >
-              <feTurbulence
-                type="fractalNoise"
-                baseFrequency="1"
-                numOctaves="1"
-                result="fineNoise"
-              />
-
-              <feTurbulence
-                type="fractalNoise"
-                baseFrequency="0.004"
-                numOctaves="1"
-                seed={Math.random() * 1000}
-                result="bigNoise"
-              />
-
-              <feComponentTransfer in="bigNoise" result="bigNoiseAdjusted">
-                <feFuncR type="linear" slope="3" intercept="-1" />
-                <feFuncG type="linear" slope="3" intercept="-1" />
-              </feComponentTransfer>
-
-              <feMerge result="mergedNoise">
-                <feMergeNode in="bigNoiseAdjusted" />
-                <feMergeNode in="fineNoise" />
-              </feMerge>
-
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="mergedNoise"
-                scale={() => 800 * (1 - achievementTransition())}
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-          </defs>
-        </svg>
-
         <If condition={() => showAchievement() && achievement() != null}>
           <div part="achievement">
             <div class="badge">
@@ -149,6 +84,7 @@ export class EndScreen extends Component("end-screen", {
             </ActionBar>
           </div>
         </If>
+
         <Else>
           <div part="players">
             <For each={orderedPlayers}>
@@ -226,6 +162,11 @@ export class EndScreen extends Component("end-screen", {
           @keyframes enter-badge {
             from {
               opacity: 0;
+              transform: scale(0.5);
+              filter: drop-shadow(var(--_border-color) 0.2em 0 0)
+                drop-shadow(var(--_border-color) -0.2em 0 0)
+                drop-shadow(var(--_border-color) 0 0.2em 0)
+                drop-shadow(var(--_border-color) 0 -0.2em 0);
             }
           }
           [part="achievement"] .badge {
@@ -234,9 +175,9 @@ export class EndScreen extends Component("end-screen", {
               drop-shadow(var(--_border-color) -0.2em 0 0)
               drop-shadow(var(--_border-color) 0 0.2em 0)
               drop-shadow(var(--_border-color) 0 -0.2em 0)
-              drop-shadow(rgba(53, 22, 0, 0.9) 0 1em 1em)
-              url(#${this.#filterName});
-            animation: 3s backwards ease-out enter-badge;
+              drop-shadow(rgba(235, 167, 118, 0.7) 0 0.5em 2em);
+            animation: 2s backwards cubic-bezier(0.26, 1.14, 0.78, 1.5)
+              enter-badge;
           }
 
           [part="achievement"] .badge .inner {
