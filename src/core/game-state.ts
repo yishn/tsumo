@@ -815,7 +815,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
   turn: number = 1;
   round: number = 1;
-  maxRound: number = 1;
+  maxRound: number = 2;
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;
