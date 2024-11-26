@@ -254,7 +254,7 @@ export class LobbyPage extends Component("lobby-page", {
             display: flex;
             flex-direction: column;
             justify-content: safe center;
-            align-items: center;
+            align-items: safe center;
             gap: 0.5em;
             padding: 0.5em 0;
             padding-bottom: env(safe-area-inset-bottom);
@@ -279,7 +279,7 @@ export class LobbyPage extends Component("lobby-page", {
 
           [part="players"] {
             display: flex;
-            justify-content: center;
+            justify-content: safe center;
             gap: 1em;
             margin-bottom: 1em;
           }
@@ -303,8 +303,8 @@ export class LobbyPage extends Component("lobby-page", {
           [part="avatar-chooser"] {
             --player-avatar-size: 12em;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
             gap: 0.5em;
           }
           [part="avatar-chooser"] .prev,

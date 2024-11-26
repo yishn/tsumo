@@ -72,7 +72,7 @@ export class PlayerAvatar extends Component("player-avatar", {
             --_player-avatar-size: var(--player-avatar-size, 4.2em);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: safe center;
             gap: 0.15em;
           }
 
@@ -90,8 +90,8 @@ export class PlayerAvatar extends Component("player-avatar", {
           [part="avatar"] {
             position: relative;
             display: flex;
-            place-content: center;
-            place-items: center;
+            place-content: safe center;
+            place-items: safe center;
             gap: calc(0.1 * var(--_player-avatar-size));
             border-radius: 50%;
             outline: 0em solid #e9d883;

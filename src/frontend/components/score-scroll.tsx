@@ -423,7 +423,7 @@ export class ScoreScroll extends Component("score-scroll", {
             right: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: safe center;
             justify-content: safe center;
             border: 0.2em solid rgb(22, 40, 22, 0.7);
             border-left: none;

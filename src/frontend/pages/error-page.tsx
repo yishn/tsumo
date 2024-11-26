@@ -39,7 +39,7 @@ export class ErrorPage extends Component("error-page", {
             --action-bar-icon-disabled-color: rgb(255, 211, 163, 0.5);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: safe center;
             padding-top: 4em;
             padding-bottom: 4em;
             background: linear-gradient(

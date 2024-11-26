@@ -140,8 +140,8 @@ export class EndScreen extends Component("end-screen", {
             right: 0;
             bottom: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
             padding: 1.5em;
             background: rgba(0, 0, 0, 0.9);
             animation: 0.5s backwards enter;
@@ -160,8 +160,8 @@ export class EndScreen extends Component("end-screen", {
           [part="achievement"] {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
             grid-gap: 1em;
           }
 
@@ -189,8 +189,8 @@ export class EndScreen extends Component("end-screen", {
           [part="achievement"] .badge .inner {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
             height: 6em;
             width: 6em;
             padding: 1em;
@@ -244,7 +244,7 @@ export class EndScreen extends Component("end-screen", {
             display: flex;
             flex-direction: column;
             justify-items: start;
-            justify-content: center;
+            justify-content: safe center;
             grid-gap: 1.5em;
           }
 

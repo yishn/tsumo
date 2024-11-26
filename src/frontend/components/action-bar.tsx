@@ -70,7 +70,7 @@ export class ActionBar extends Component("action-bar") {
         <Style>{css`
           :host {
             display: flex;
-            justify-content: center;
+            justify-content: safe center;
             gap: 2em;
             padding: 0 0.5em;
           }

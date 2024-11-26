@@ -92,7 +92,7 @@ export class ReactionWindow extends Component("reaction-window", {
             --clip-cutoff-size: calc(var(--border-size) * 3 / 4);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: safe center;
             background-color: rgba(63, 5, 21, 0.9);
             border: var(--border-size) solid transparent;
             border-image: url("./assets/img/lattice.svg") 45%;

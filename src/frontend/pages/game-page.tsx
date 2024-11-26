@@ -549,8 +549,8 @@ export class GamePage extends Component("game-page", {
 
             <div slot="player-extra" style={{ flex: 1 }} />
             <span slot="player-extra" class="rounds">
-              {() => this.props.gameInfo()?.round ?? 1}/
-              {() => this.props.gameInfo()?.maxRound ?? 1}
+              Rotation {() => this.props.gameInfo()?.rotation ?? 1}/
+              {() => this.props.gameInfo()?.maxRotation ?? 1}
             </span>
             <Tile
               sounds
@@ -898,7 +898,7 @@ export class GamePage extends Component("game-page", {
           }
           [part="self"] [slot="tiles"] {
             --tile-width: initial;
-            align-self: center;
+            align-self: safe center;
             order: 2;
             margin-bottom: 0.5em;
             font-size: 0.9em;

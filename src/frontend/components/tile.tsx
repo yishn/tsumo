@@ -302,8 +302,8 @@ class TileComponent extends Component("tile", {
           [part="rank"] {
             flex: 1;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
             font-size: 1.2em;
             font-weight: 500;
             color: var(--tile-text-color);
@@ -345,8 +345,8 @@ class TileComponent extends Component("tile", {
           [part="suit"] {
             flex: 1;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: safe center;
+            align-items: safe center;
           }
           [part="suit"] svg,
           [part="rank"] svg,

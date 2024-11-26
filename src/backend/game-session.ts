@@ -395,8 +395,8 @@ function useGame(session: GameSession): () => void {
       currentPlayer: orderedPlayers()[gameState().currentPlayerIndex].id,
       dealer: orderedPlayers()[gameState().dealerIndex].id,
       jokers: [gameState().primaryJoker, gameState().secondaryJoker],
-      round: gameState().round,
-      maxRound: gameState().maxRound,
+      rotation: gameState().rotation,
+      maxRotation: gameState().maxRotation,
       lastDiscard: gameState().lastDiscard?.toJSON() ?? null,
       lastDiscardInfo:
         gameState().lastDiscardInfo == null

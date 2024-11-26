@@ -795,7 +795,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
       this.state.moveToNextDealer();
     }
 
-    if (this.state.round > this.state.maxRound) {
+    if (this.state.rotation > this.state.maxRotation) {
       return this.nextPhase(EndPhase);
     } else {
       this.state.currentPlayerIndex = this.state.dealerIndex;
@@ -814,8 +814,8 @@ export class EndPhase extends PhaseBase(Phase.End) {
 export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
   turn: number = 1;
-  round: number = 1;
-  maxRound: number = 2;
+  rotation: number = 1;
+  maxRotation: number = 2;
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;
@@ -903,7 +903,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
 
   moveToNextDealer(): this {
     this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
-    if (this.dealerIndex === 0) this.round++;
+    if (this.dealerIndex === 0) this.rotation++;
     return this;
   }
 

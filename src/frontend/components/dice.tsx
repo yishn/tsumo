@@ -94,7 +94,7 @@ export class Dice extends Component("dice", {
             display: block;
             width: var(--dice-size);
             height: var(--dice-size);
-            transform-origin: center center calc(-0.5 * var(--dice-size));
+            transform-origin: safe center center calc(-0.5 * var(--dice-size));
             transform-style: preserve-3d;
             transition: transform 0.8s ease-out;
           }
@@ -103,7 +103,7 @@ export class Dice extends Component("dice", {
             position: absolute;
             display: grid;
             grid: repeat(3, 1fr) / repeat(3, 1fr);
-            place-items: center;
+            place-items: safe center;
             place-content: stretch;
             box-sizing: border-box;
             border: calc(0.07 * var(--dice-size)) solid #d3d7d4;

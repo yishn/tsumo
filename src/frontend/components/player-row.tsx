@@ -79,7 +79,7 @@ export class PlayerRow extends Component("player-row", {
           [part="player"] {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: safe center;
             gap: 0.15em;
           }
           @keyframes dealer-enter {
@@ -99,13 +99,13 @@ export class PlayerRow extends Component("player-row", {
           }
           .minimal [part="player"] {
             flex-direction: row;
-            justify-content: center;
+            justify-content: safe center;
             gap: 0.5em;
           }
           .minimal [part="player"] mj-player-avatar {
             --player-avatar-size: 2.2em;
             flex-direction: row;
-            align-items: center;
+            align-items: safe center;
             gap: 0.5em;
           }
           .minimal [part="player"] mj-player-avatar::part(avatar) {
