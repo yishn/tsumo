@@ -486,7 +486,7 @@ export enum ScoreModifierType {
   Chaotic = "chaotic",
   SevenStars = "sevenStars",
   JokerFree = "jokerFree",
-  PureJokerFree = "pureJokerFree",
+  AllJokerFree = "allJokerFree",
   Joker = "joker",
   Overlord = "overlordJoker",
 }
@@ -510,7 +510,7 @@ export namespace ScoreModifierType {
       ScoreModifierType.Chaotic,
       ScoreModifierType.SevenStars,
       ScoreModifierType.JokerFree,
-      ScoreModifierType.PureJokerFree,
+      ScoreModifierType.AllJokerFree,
       ScoreModifierType.Joker,
       ScoreModifierType.Overlord,
     ];
@@ -663,7 +663,7 @@ export class ScorePhase extends PhaseBase(Phase.Score) {
               : null,
           [ScoreModifierType.JokerFree]:
             jokerFreeWin != null && !pureJokerFree ? [2, -5] : null,
-          [ScoreModifierType.PureJokerFree]: pureJokerFree ? [4, -5] : null,
+          [ScoreModifierType.AllJokerFree]: pureJokerFree ? [4, -5] : null,
         };
 
       return Object.entries(types)

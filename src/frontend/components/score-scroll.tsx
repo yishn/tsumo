@@ -38,7 +38,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.Chaotic]: "Chaotic Thirteen",
   [ScoreModifierType.SevenStars]: "Seven Stars",
   [ScoreModifierType.JokerFree]: "Joker-Free",
-  [ScoreModifierType.PureJokerFree]: "Pure Joker-Free",
+  [ScoreModifierType.AllJokerFree]: "All Joker-Free",
   [ScoreModifierType.Joker]: "Joker",
   [ScoreModifierType.Overlord]: "Overlord",
 };
