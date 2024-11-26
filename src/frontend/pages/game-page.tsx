@@ -293,11 +293,11 @@ export class GamePage extends Component("game-page", {
                       rank: kongDiscard()?.rank ?? lastDiscard()?.rank,
                     }
             )}
-            hideDelay={ReactionWindow.hideDuration}
+            hideDelay={ReactionWindow.leaveDuration}
           >
-            {(value, hide) => (
+            {(value, leave) => (
               <ReactionWindow
-                class={() => clsx({ hide: hide() })}
+                class={() => clsx({ leave: leave() })}
                 suit={() => value()?.suit}
                 rank={() => value()?.rank}
                 timeout={reactionTimeout}
@@ -759,36 +759,50 @@ export class GamePage extends Component("game-page", {
           </ActionBar>
         </div>
 
-        <If condition={() => this.props.scoreInfo() != null}>
-          <ScoreScroll
-            tiles={() =>
-              (this.props.scoreInfo()?.tiles ?? []).concat(
-                this.props.gameInfo()?.kongDiscard ??
-                  this.props.gameInfo()?.lastDiscard ??
-                  []
-              )
-            }
-            melds={() => this.props.scoreInfo()?.melds ?? []}
-            jokers={() => this.props.gameInfo()?.jokers ?? []}
-            avatars={() => orderedPlayers().map((player) => player.avatar)}
-            winModifiers={() => this.props.scoreInfo()?.winModifiers ?? []}
-            jokerBonusModifiers={() =>
-              this.props.scoreInfo()?.jokerBonusModifiers ?? []
-            }
-            showSakura={() =>
-              this.props.gameInfo()?.currentPlayer ===
-                this.props.ownPlayerId() &&
-              !this.props
-                .scoreInfo()
-                ?.winModifiers.flat()
-                .some(
-                  (modifier) =>
-                    modifier[0] === ScoreModifierType.FalseWin ||
-                    modifier[0] === ScoreModifierType.Draw
+        <AnimatedIf
+          value={useMemo<
+            { scoreInfo?: ScoreInfo; gameInfo?: GameInfo } | undefined
+          >(() =>
+            this.props.scoreInfo() == null
+              ? undefined
+              : structuredClone({
+                  scoreInfo: this.props.scoreInfo(),
+                  gameInfo: this.props.gameInfo(),
+                })
+          )}
+          hideDelay={ScoreScroll.leaveAnimationDuration}
+        >
+          {(value, leave) => (
+            <ScoreScroll
+              class={() => clsx({ leave: leave() })}
+              tiles={() =>
+                (value()?.scoreInfo?.tiles ?? []).concat(
+                  value()?.gameInfo?.kongDiscard ??
+                    value()?.gameInfo?.lastDiscard ??
+                    []
                 )
-            }
-          />
-        </If>
+              }
+              melds={() => value()?.scoreInfo?.melds ?? []}
+              jokers={() => value()?.gameInfo?.jokers ?? []}
+              avatars={() => orderedPlayers().map((player) => player.avatar)}
+              winModifiers={() => value()?.scoreInfo?.winModifiers ?? []}
+              jokerBonusModifiers={() =>
+                value()?.scoreInfo?.jokerBonusModifiers ?? []
+              }
+              showSakura={() =>
+                value()?.scoreInfo != null &&
+                value()?.gameInfo?.currentPlayer === this.props.ownPlayerId() &&
+                !value()
+                  ?.scoreInfo?.winModifiers.flat()
+                  .some(
+                    (modifier) =>
+                      modifier[0] === ScoreModifierType.FalseWin ||
+                      modifier[0] === ScoreModifierType.Draw
+                  )
+              }
+            />
+          )}
+        </AnimatedIf>
 
         <If condition={() => phase() === Phase.End}>
           <EndScreen

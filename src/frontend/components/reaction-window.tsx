@@ -19,7 +19,7 @@ export class ReactionWindow extends Component("reaction-window", {
   timeout: prop<number>(5000, { attribute: Number }),
 }) {
   static showDuration = 500;
-  static hideDuration = 200;
+  static leaveDuration = 200;
 
   render() {
     const [showTile, setShowTile] = useSignal(false);
@@ -79,7 +79,7 @@ export class ReactionWindow extends Component("reaction-window", {
             filter: drop-shadow(rgba(0, 0, 0, 0.8) 0 1em 1em);
           }
 
-          @keyframes show-window {
+          @keyframes enter {
             from {
               background-color: transparent;
               border-image: none;
@@ -106,18 +106,18 @@ export class ReactionWindow extends Component("reaction-window", {
               100% var(--clip-cutoff-size),
               calc(100% - var(--clip-cutoff-size)) 0
             );
-            animation: ${ReactionWindow.showDuration}ms backwards show-window
+            animation: ${ReactionWindow.showDuration}ms backwards enter
               0.2s;
           }
-          @keyframes hide-window {
+          @keyframes leave {
             to {
               border-image: none;
               opacity: 0;
               transform: scale(0.9);
             }
           }
-          :host(.hide) [part="container"] {
-            animation: ${ReactionWindow.hideDuration}ms forwards hide-window;
+          :host(.leave) [part="container"] {
+            animation: ${ReactionWindow.leaveDuration}ms forwards leave;
           }
 
           h1 {

@@ -54,6 +54,7 @@ export class ScoreScroll extends Component("score-scroll", {
 }) {
   static enterAnimationDuration = 2000;
   static enterRowAnimationDuration = 500;
+  static leaveAnimationDuration = 1000;
 
   render() {
     const winResult = useMemo(() =>
@@ -403,6 +404,14 @@ export class ScoreScroll extends Component("score-scroll", {
               #162816 url("./assets/img/pattern.svg") center / 15em;
             box-shadow: rgba(4, 14, 4, 0.3) 0 1em 1em;
             animation: ${ScoreScroll.enterAnimationDuration}ms backwards enter;
+          }
+          @keyframes leave {
+            to {
+              transform: translate(-50%, -100%);
+            }
+          }
+          :host(.leave) {
+            animation: ${ScoreScroll.leaveAnimationDuration}ms forwards leave;
           }
 
           [part="container"] {

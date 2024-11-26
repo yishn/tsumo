@@ -128,6 +128,11 @@ export class EndScreen extends Component("end-screen", {
             padding: 0;
           }
 
+          @keyframes enter {
+            from {
+              opacity: 0;
+            }
+          }
           :host {
             position: fixed;
             top: 0;
@@ -139,6 +144,7 @@ export class EndScreen extends Component("end-screen", {
             align-items: center;
             padding: 1.5em;
             background: rgba(0, 0, 0, 0.9);
+            animation: 0.5s backwards enter;
           }
 
           h2 {
