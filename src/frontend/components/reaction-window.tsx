@@ -18,6 +18,9 @@ export class ReactionWindow extends Component("reaction-window", {
   rank: prop<number>(undefined, { attribute: Number }),
   timeout: prop<number>(5000, { attribute: Number }),
 }) {
+  static showDuration = 500;
+  static hideDuration = 200;
+
   render() {
     const [showTile, setShowTile] = useSignal(false);
     const [progress, setProgress] = useSignal(this.props.timeout());
@@ -103,7 +106,18 @@ export class ReactionWindow extends Component("reaction-window", {
               100% var(--clip-cutoff-size),
               calc(100% - var(--clip-cutoff-size)) 0
             );
-            animation: 0.5s backwards show-window 0.2s;
+            animation: ${ReactionWindow.showDuration}ms backwards show-window
+              0.2s;
+          }
+          @keyframes hide-window {
+            to {
+              border-image: none;
+              opacity: 0;
+              transform: scale(0.9);
+            }
+          }
+          :host(.hide) [part="container"] {
+            animation: ${ReactionWindow.hideDuration}ms forwards hide-window;
           }
 
           h1 {

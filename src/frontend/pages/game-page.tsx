@@ -35,6 +35,7 @@ import {
   Reaction,
   ScoreModifierType,
   Tile as TileClass,
+  TileSuit,
 } from "../../core/main.ts";
 import {
   GameInfo,
@@ -282,110 +283,124 @@ export class GamePage extends Component("game-page", {
             )}
           </For>
 
-          <If condition={() => phase() === Phase.Reaction}>
-            <ReactionWindow
-              suit={() => kongDiscard()?.suit ?? lastDiscard()?.suit}
-              rank={() => kongDiscard()?.rank ?? lastDiscard()?.rank}
-              timeout={reactionTimeout}
-            >
-              <ActionBarButton
-                slot="action"
-                tooltip="Pong"
-                disabled={() =>
-                  isSelfTurn() ||
-                  reacted() ||
-                  (selfPlayerInfo()?.tiles?.filter(
-                    (tile) =>
-                      lastDiscard() != null &&
-                      TileClass.equal(tile, lastDiscard()!)
-                  ).length ?? 0) < 2
-                }
-                onclick={() => {
-                  webSocketHook.sendMessage({
-                    game: {
-                      operation: {
-                        [Phase.Reaction]: {
-                          pongKong: [
-                            selfPlayerInfo()!.index!,
-                            ...selfPlayerInfo()!
-                              .tiles!.map((tile, i) => [tile, i] as const)
-                              .filter(
-                                ([tile]) =>
-                                  lastDiscard() != null &&
-                                  TileClass.equal(tile, lastDiscard()!)
-                              )
-                              .map(([_, i]) => i)
-                              .slice(0, 2),
-                          ],
-                        },
-                      },
-                    },
-                  });
-                }}
+          <AnimatedIf
+            value={useMemo<{ suit?: TileSuit; rank?: number } | undefined>(
+              () =>
+                phase() !== Phase.Reaction
+                  ? undefined
+                  : {
+                      suit: kongDiscard()?.suit ?? lastDiscard()?.suit,
+                      rank: kongDiscard()?.rank ?? lastDiscard()?.rank,
+                    }
+            )}
+            hideDelay={ReactionWindow.hideDuration}
+          >
+            {(value, hide) => (
+              <ReactionWindow
+                class={() => clsx({ hide: hide() })}
+                suit={() => value()?.suit}
+                rank={() => value()?.rank}
+                timeout={reactionTimeout}
               >
-                <PongIcon alt="Pong" />
-              </ActionBarButton>
-
-              <ActionBarButton
-                slot="action"
-                tooltip="Kong"
-                disabled={() =>
-                  isSelfTurn() ||
-                  reacted() ||
-                  (this.props
-                    .ownPlayerInfo()
-                    ?.tiles.filter(
+                <ActionBarButton
+                  slot="action"
+                  tooltip="Pong"
+                  disabled={() =>
+                    isSelfTurn() ||
+                    reacted() ||
+                    (selfPlayerInfo()?.tiles?.filter(
                       (tile) =>
                         lastDiscard() != null &&
                         TileClass.equal(tile, lastDiscard()!)
-                    ).length ?? 0) < 3
-                }
-                onclick={() => {
-                  webSocketHook.sendMessage({
-                    game: {
-                      operation: {
-                        [Phase.Reaction]: {
-                          pongKong: [
-                            selfPlayerInfo()!.index!,
-                            ...selfPlayerInfo()!
-                              .tiles!.map((tile, i) => [tile, i] as const)
-                              .filter(
-                                ([tile]) =>
-                                  lastDiscard() != null &&
-                                  TileClass.equal(tile, lastDiscard()!)
-                              )
-                              .map(([_, i]) => i)
-                              .slice(0, 3),
-                          ],
+                    ).length ?? 0) < 2
+                  }
+                  onclick={() => {
+                    webSocketHook.sendMessage({
+                      game: {
+                        operation: {
+                          [Phase.Reaction]: {
+                            pongKong: [
+                              selfPlayerInfo()!.index!,
+                              ...selfPlayerInfo()!
+                                .tiles!.map((tile, i) => [tile, i] as const)
+                                .filter(
+                                  ([tile]) =>
+                                    lastDiscard() != null &&
+                                    TileClass.equal(tile, lastDiscard()!)
+                                )
+                                .map(([_, i]) => i)
+                                .slice(0, 2),
+                            ],
+                          },
                         },
                       },
-                    },
-                  });
-                }}
-              >
-                <KongIcon alt="Kong" />
-              </ActionBarButton>
+                    });
+                  }}
+                >
+                  <PongIcon alt="Pong" />
+                </ActionBarButton>
 
-              <ActionBarButton
-                slot="action"
-                tooltip="Win"
-                disabled={() => isSelfTurn() || reacted()}
-                onButtonClick={() => {
-                  webSocketHook.sendMessage({
-                    game: {
-                      operation: {
-                        [Phase.Reaction]: {
-                          win: [selfPlayerInfo()!.index!],
+                <ActionBarButton
+                  slot="action"
+                  tooltip="Kong"
+                  disabled={() =>
+                    isSelfTurn() ||
+                    reacted() ||
+                    (this.props
+                      .ownPlayerInfo()
+                      ?.tiles.filter(
+                        (tile) =>
+                          lastDiscard() != null &&
+                          TileClass.equal(tile, lastDiscard()!)
+                      ).length ?? 0) < 3
+                  }
+                  onclick={() => {
+                    webSocketHook.sendMessage({
+                      game: {
+                        operation: {
+                          [Phase.Reaction]: {
+                            pongKong: [
+                              selfPlayerInfo()!.index!,
+                              ...selfPlayerInfo()!
+                                .tiles!.map((tile, i) => [tile, i] as const)
+                                .filter(
+                                  ([tile]) =>
+                                    lastDiscard() != null &&
+                                    TileClass.equal(tile, lastDiscard()!)
+                                )
+                                .map(([_, i]) => i)
+                                .slice(0, 3),
+                            ],
+                          },
                         },
                       },
-                    },
-                  });
-                }}
-              >
-                <WinIcon alt="Win" />
-              </ActionBarButton>
-            </ReactionWindow>
-          </If>
+                    });
+                  }}
+                >
+                  <KongIcon alt="Kong" />
+                </ActionBarButton>
+
+                <ActionBarButton
+                  slot="action"
+                  tooltip="Win"
+                  disabled={() => isSelfTurn() || reacted()}
+                  onButtonClick={() => {
+                    webSocketHook.sendMessage({
+                      game: {
+                        operation: {
+                          [Phase.Reaction]: {
+                            win: [selfPlayerInfo()!.index!],
+                          },
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <WinIcon alt="Win" />
+                </ActionBarButton>
+              </ReactionWindow>
+            )}
+          </AnimatedIf>
 
           <AnimatedIf
             value={() => (reactions().length === 0 ? undefined : reactions())}
