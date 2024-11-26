@@ -107,12 +107,14 @@ export class PlayerRow extends Component("player-row", {
             flex-direction: row;
             align-items: safe center;
             gap: 0.5em;
+            max-width: 50%;
           }
           .minimal [part="player"] mj-player-avatar::part(avatar) {
             order: -1;
           }
           .minimal [part="player"] mj-player-avatar::part(name) {
             max-width: none;
+            overflow: hidden;
           }
 
           mj-player-score {

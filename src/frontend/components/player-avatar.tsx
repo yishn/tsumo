@@ -88,6 +88,7 @@ export class PlayerAvatar extends Component("player-avatar", {
           }
 
           [part="avatar"] {
+            flex: none;
             position: relative;
             display: flex;
             place-content: safe center;
