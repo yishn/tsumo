@@ -21,6 +21,7 @@ import { ActionBar, ActionBarButton } from "./action-bar.tsx";
 import { ContinueIcon, ReloadIcon } from "../assets.ts";
 import { PlayerAvatar } from "./player-avatar.tsx";
 import { PlayerScore } from "./player-score.tsx";
+import { playDingSound } from "../sounds.ts";
 
 export class EndScreen extends Component("end-screen", {
   players: prop<
@@ -53,6 +54,20 @@ export class EndScreen extends Component("end-screen", {
 
     useEffect(() => {
       setShowAchievement(achievement() != null);
+    });
+
+    useEffect(() => {
+      const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+
+      if (!showAchievement()) {
+        for (let i = 0; i < orderedPlayers.peek().length; i++) {
+          timeoutIds.push(setTimeout(() => playDingSound(), i * 300 + 500));
+        }
+      }
+
+      return () => {
+        timeoutIds.forEach((id) => clearTimeout(id));
+      };
     });
 
     return (
@@ -168,8 +183,8 @@ export class EndScreen extends Component("end-screen", {
           @keyframes enter-badge {
             from {
               opacity: 0;
-              transform: scale(0.5);
-              filter: drop-shadow(var(--_border-color) 0.2em 0 0)
+              transform: scale(0.4);
+              filter: blur(1.5em) drop-shadow(var(--_border-color) 0.2em 0 0)
                 drop-shadow(var(--_border-color) -0.2em 0 0)
                 drop-shadow(var(--_border-color) 0 0.2em 0)
                 drop-shadow(var(--_border-color) 0 -0.2em 0);
@@ -177,7 +192,7 @@ export class EndScreen extends Component("end-screen", {
           }
           [part="achievement"] .badge {
             --_border-color: rgb(114, 75, 2);
-            filter: drop-shadow(var(--_border-color) 0.2em 0 0)
+            filter: blur(0) drop-shadow(var(--_border-color) 0.2em 0 0)
               drop-shadow(var(--_border-color) -0.2em 0 0)
               drop-shadow(var(--_border-color) 0 0.2em 0)
               drop-shadow(var(--_border-color) 0 -0.2em 0)
