@@ -154,15 +154,17 @@ export class AppComponent extends Component("app") {
       }
     );
 
+    useEffect(() => {
+      // Preload assets
+
+      for (let i = 0; i < avatarList.length; i++) {
+        const image = new Image();
+        image.src = getAvatarUrl(i);
+      }
+    }, []);
+
     return (
       <>
-        <Portal mount={document.head}>
-          <link rel="prefetch" href="./assets/img/sparrow.png" />
-          {avatarList.map((_, i) => (
-            <link rel="prefetch" href={getAvatarUrl(i)} />
-          ))}
-        </Portal>
-
         <If condition={() => !!error()}>
           <ErrorPage message={() => error()?.message ?? "Unknown error"} />
         </If>
