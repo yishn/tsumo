@@ -227,6 +227,11 @@ export class LobbyPage extends Component("lobby-page", {
             placeholder="Your name"
             value={ownName}
             oninput={(evt) => setOwnName(evt.currentTarget.value)}
+            onkeypress={(evt) => {
+              if (evt.key === "Enter") {
+                canRollInitiative() && setReady(true);
+              }
+            }}
           />
         </div>
 
