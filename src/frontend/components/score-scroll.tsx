@@ -33,7 +33,7 @@ const modifierTypeLabels: Record<ScoreModifierType, string> = {
   [ScoreModifierType.JokerFisher]: "Joker Fisher",
   [ScoreModifierType.KongBloom]: "Kong Bloom",
   [ScoreModifierType.StolenKong]: "Stolen Kong",
-  [ScoreModifierType.AllPong]: "All Pong",
+  [ScoreModifierType.AllPong]: "All Pongs",
   [ScoreModifierType.SevenPairs]: "Seven Pairs",
   [ScoreModifierType.Chaotic]: "Chaotic Thirteen",
   [ScoreModifierType.SevenStars]: "Seven Stars",
