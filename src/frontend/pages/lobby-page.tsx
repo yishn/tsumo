@@ -14,6 +14,7 @@ import clsx from "clsx";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
 import { ActionBarButton } from "../components/action-bar.tsx";
 import {
+  HelpIcon,
   LeftIcon,
   RightIcon,
   SubmitIcon,
@@ -244,11 +245,10 @@ export class LobbyPage extends Component("lobby-page", {
 
         <div part="status">{status}</div>
 
-        <div part="ready">
+        <div part="ready" class={() => clsx({ hide: ready() ? true : false })}>
           <Tile
-            class={() => clsx({ hide: ready() ? true : false })}
+            title="Ready"
             custom
-            animateEnter
             sounds={() => canRollInitiative() || ready()}
             back={() => !canRollInitiative() && !ready()}
             suit={TileSuit.Dragon}
@@ -257,6 +257,10 @@ export class LobbyPage extends Component("lobby-page", {
           >
             <SubmitIcon fill="#12bb25" />
           </Tile>
+
+          <ActionBarButton tooltip="How To Play">
+            <HelpIcon />
+          </ActionBarButton>
         </div>
 
         <Style>{css`
@@ -358,11 +362,15 @@ export class LobbyPage extends Component("lobby-page", {
             margin-bottom: 1em;
           }
 
-          [part="ready"] mj-tile {
-            margin-bottom: 1em;
+          [part="ready"] {
+            display: flex;
+            align-items: center;
+            gap: 1em;
             transition: opacity 0.2s;
+            padding-bottom: 1em;
+            padding-left: calc(1em + 24px);
           }
-          [part="ready"] mj-tile.hide {
+          [part="ready"].hide {
             opacity: 0;
           }
         `}</Style>

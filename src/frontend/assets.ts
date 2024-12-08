@@ -9,6 +9,7 @@ export { default as DealerIcon } from "../../assets/icons/dealer.svg";
 
 export { default as ContinueIcon } from "../../assets/icons/continue.svg";
 export { default as SubmitIcon } from "../../assets/icons/submit.svg";
+export { default as HelpIcon } from "../../assets/icons/help.svg";
 export { default as ErrorIcon } from "../../assets/icons/error.svg";
 export { default as ReloadIcon } from "../../assets/icons/reload.svg";
 export { default as InviteIcon } from "../../assets/icons/invite.svg";
