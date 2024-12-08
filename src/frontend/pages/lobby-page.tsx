@@ -10,6 +10,7 @@ import {
   useMemo,
   useSignal,
 } from "sinho";
+import clsx from "clsx";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
 import { ActionBarButton } from "../components/action-bar.tsx";
 import {
@@ -22,7 +23,7 @@ import {
 import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { SECRET, SESSION, webSocketHook } from "../global-state.ts";
-import clsx from "clsx";
+import { LocalStorage } from "../local-storage.ts";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -44,10 +45,16 @@ export class LobbyPage extends Component("lobby-page", {
         []
     );
 
-    const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(
-      Math.floor(Math.random() * avatarList.length)
-    );
-    const [ownName, setOwnName] = useSignal("");
+    const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(LocalStorage.avatar);
+    const [ownName, setOwnName] = useSignal(LocalStorage.name);
+
+    useEffect(() => {
+      LocalStorage.avatar = ownAvatarIndex();
+    });
+
+    useEffect(() => {
+      LocalStorage.name = ownName();
+    });
 
     const ownDice = () =>
       players()?.find((player) => player.id === ownPlayerId())?.dice;
