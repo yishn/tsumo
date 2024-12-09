@@ -29,7 +29,7 @@ jobs:
       - name: Build
         run: npm run build-frontend
         env:
-          MJ_SERVER: ${{ vars.MJ_SERVER }}
+          TSUMO_SERVER: ${{ vars.TSUMO_SERVER }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
@@ -77,6 +77,6 @@ jobs:
             npm run build-backend
           "
         env:
-          MJ_SERVER: ${{ vars.MJ_SERVER }}
+          TSUMO_SERVER: ${{ vars.TSUMO_SERVER }}
       - name: Restart application
         run: ssh staging "supervisorctl restart tsumo"

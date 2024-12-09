@@ -53,7 +53,7 @@ export default {
     }),
     env({
       NODE_ENV: process.env.NODE_ENV,
-      MJ_SERVER: isDev ? "ws://localhost:8080" : process.env.MJ_SERVER,
+      TSUMO_SERVER: isDev ? "ws://localhost:8080" : process.env.TSUMO_SERVER,
     }),
     !isDev && terser(),
   ],
