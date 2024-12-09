@@ -12,10 +12,10 @@ export default () => (
   <>
     <p>At the start, every player gets 13 tiles.</p>
     <p>
-      On a player’s turn, they can either <em>eat</em> <EatIcon /> the previous
-      player’s discard, or <em>draw</em> <DrawIcon /> a new tile. They can then
-      proceed to declare a <em>win</em> <WinIcon /> if they have a winning hand,
-      or <em>discard</em> <DiscardIcon /> any tile on their hand.
+      On a player’s turn, they can either eat <EatIcon /> the previous player’s
+      discard, or <em>draw</em> <DrawIcon /> a new tile. They can then proceed
+      to declare a <em>win</em> <WinIcon /> if they have a winning hand, or{" "}
+      <em>discard</em> <DiscardIcon /> any tile on their hand.
     </p>
     <p>
       Once a tile is discarded, all the other players can <em>react</em> and
@@ -26,8 +26,9 @@ export default () => (
     </p>
     <p>
       If no one reacts, the turn continues to the next player, who then has the
-      ability to either eat <EatIcon /> the discard by selecting two of their
-      own tiles to form a sequence or other set, or to draw a new tile.
+      ability to either <em>eat</em> <EatIcon /> the discard by selecting two of
+      their own tiles to form a sequence or other set, or to draw <DrawIcon /> a
+      new tile.
     </p>
   </>
 );
