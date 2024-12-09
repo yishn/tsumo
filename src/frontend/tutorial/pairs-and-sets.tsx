@@ -26,7 +26,8 @@ export default () => (
       </TileRow>
     </p>
     <p>
-      A <em>pong</em> <PongIcon /> is a set of three identical tiles:
+      A <em>pong</em> <PongIcon /> is a set of three identical tiles and a set
+      of four identical tiles is called a <em>kong</em> <KongIcon />:
     </p>
     <p>
       <TileRow>
@@ -41,33 +42,16 @@ export default () => (
           <Tile suit={TileSuit.Wind} rank={2} />
         </TileStack>
         <TileStack>
-          <Tile suit={TileSuit.Dragon} rank={2} />
-          <Tile suit={TileSuit.Dragon} rank={2} />
-          <Tile suit={TileSuit.Dragon} rank={2} />
+          <Tile suit={TileSuit.Myriad} rank={9} />
+          <Tile suit={TileSuit.Myriad} rank={9} />
+          <Tile suit={TileSuit.Myriad} rank={9} />
+          <Tile suit={TileSuit.Myriad} rank={9} />
         </TileStack>
       </TileRow>
     </p>
     <p>
-      A <em>kong</em> <KongIcon /> is a set of four identical tiles:
-    </p>
-    <p>
-      <TileRow>
-        <TileStack>
-          <Tile suit={TileSuit.Myriad} rank={9} />
-          <Tile suit={TileSuit.Myriad} rank={9} />
-          <Tile suit={TileSuit.Myriad} rank={9} />
-          <Tile suit={TileSuit.Myriad} rank={9} />
-        </TileStack>
-        <TileStack>
-          <Tile suit={TileSuit.Dragon} rank={1} />
-          <Tile suit={TileSuit.Dragon} rank={1} />
-          <Tile suit={TileSuit.Dragon} rank={1} />
-          <Tile suit={TileSuit.Dragon} rank={1} />
-        </TileStack>
-      </TileRow>
-    </p>
-    <p>
-      A <em>sequence</em> is a set of three consecutive same-suited tiles:
+      A <em>sequence</em> is either a set of three consecutive, same-suited
+      numerical tiles, or any three distinct, same-suited honor tiles:
     </p>
     <p>
       <TileRow>
@@ -81,18 +65,6 @@ export default () => (
           <Tile suit={TileSuit.Bamboo} rank={5} />
           <Tile suit={TileSuit.Bamboo} rank={6} />
         </TileStack>
-        <TileStack>
-          <Tile suit={TileSuit.Myriad} rank={7} />
-          <Tile suit={TileSuit.Myriad} rank={8} />
-          <Tile suit={TileSuit.Myriad} rank={9} />
-        </TileStack>
-      </TileRow>
-    </p>
-    <p>
-      For honor tiles, any three distinct same-suited tiles can form a sequence:
-    </p>
-    <p>
-      <TileRow>
         <TileStack>
           <Tile suit={TileSuit.Wind} rank={1} />
           <Tile suit={TileSuit.Wind} rank={2} />

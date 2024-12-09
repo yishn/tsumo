@@ -25,6 +25,13 @@ import { Tile } from "../components/tile.tsx";
 import { TileSuit } from "../../core/tile.ts";
 import { SECRET, SESSION, webSocketHook } from "../global-state.ts";
 import { LocalStorage } from "../local-storage.ts";
+import { TutorialPanel } from "../components/tutorial-panel.tsx";
+import TutorialPage1 from "../tutorial/tiles.tsx";
+import TutorialPage2 from "../tutorial/pairs-and-sets.tsx";
+import TutorialPage3 from "../tutorial/winning-hands.tsx";
+import TutorialPage4 from "../tutorial/joker.tsx";
+import TutorialPage5 from "../tutorial/game-flow.tsx";
+import { AnimatedIf } from "../components/animated-if.tsx";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -48,6 +55,7 @@ export class LobbyPage extends Component("lobby-page", {
 
     const [ownAvatarIndex, setOwnAvatarIndex] = useSignal(LocalStorage.avatar);
     const [ownName, setOwnName] = useSignal(LocalStorage.name);
+    const [showTutorial, setShowTutorial] = useSignal(false);
 
     useEffect(() => {
       LocalStorage.avatar = ownAvatarIndex();
@@ -258,10 +266,32 @@ export class LobbyPage extends Component("lobby-page", {
             <SubmitIcon fill="#12bb25" />
           </Tile>
 
-          <ActionBarButton tooltip="How To Play">
+          <ActionBarButton
+            tooltip="How To Play"
+            onButtonClick={() => setShowTutorial(true)}
+          >
             <HelpIcon />
           </ActionBarButton>
         </div>
+
+        <AnimatedIf
+          value={() => (showTutorial() ? {} : undefined)}
+          hideDelay={1000}
+        >
+          {(_, hide) => (
+            <TutorialPanel
+              class={() => clsx({ hide: hide() })}
+              content={[
+                <TutorialPage1 />,
+                <TutorialPage2 />,
+                <TutorialPage3 />,
+                <TutorialPage4 />,
+                <TutorialPage5 />,
+              ]}
+              onFinished={() => setShowTutorial(false)}
+            />
+          )}
+        </AnimatedIf>
 
         <Style>{css`
           :host {
@@ -272,6 +302,7 @@ export class LobbyPage extends Component("lobby-page", {
             justify-content: safe center;
             align-items: safe center;
             gap: 0.5em;
+            position: relative;
             padding: 0.5em 0;
             padding-bottom: env(safe-area-inset-bottom);
             overflow: auto;
@@ -280,7 +311,7 @@ export class LobbyPage extends Component("lobby-page", {
           }
           :host::before {
             content: "";
-            position: fixed;
+            position: absolute;
             left: 0;
             right: 0;
             top: 0;
@@ -368,7 +399,7 @@ export class LobbyPage extends Component("lobby-page", {
             gap: 1em;
             transition: opacity 0.2s;
             padding-bottom: 1em;
-            padding-left: calc(1em + 24px);
+            padding-left: calc(1em + 1.8em);
           }
           [part="ready"].hide {
             opacity: 0;

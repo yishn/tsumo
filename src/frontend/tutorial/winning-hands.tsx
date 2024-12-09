@@ -39,12 +39,8 @@ export default () => (
       </TileRow>
     </p>
     <p>
-      Bonus points will be awarded if each set is a pong or kong (
-      <em>All Pongs</em>). There are two special winning hands that give bonus
-      points.
-    </p>
-    <p>
-      <em>Seven Pairs</em> is achieved by forming seven pairs:
+      There are two special winning hands. <em>Seven Pairs</em> is achieved by
+      forming seven pairs:
     </p>
     <p>
       <TileRow>
@@ -99,10 +95,6 @@ export default () => (
         <Tile suit={TileSuit.Dragon} rank={2} />
         <Tile suit={TileSuit.Dragon} rank={3} />
       </TileRow>
-    </p>
-    <p>
-      In this case, bonus points will be awarded if all seven honor tiles are
-      present (<em>Seven Stars</em>).
     </p>
   </>
 );

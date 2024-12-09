@@ -203,6 +203,7 @@ export class AppComponent extends Component("app") {
 
           html {
             --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
+            --app-font: 1.2em/1.3 var(--app-kaiti-font-stack);
             --app-background: linear-gradient(
                 to bottom,
                 #714634,
@@ -215,7 +216,7 @@ export class AppComponent extends Component("app") {
             background: var(--app-background);
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font: 1.2em/1.3 var(--app-kaiti-font-stack);
+            font: var(--app-font);
             color: #eee;
             cursor: default;
             -webkit-user-select: none;

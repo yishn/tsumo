@@ -12,22 +12,22 @@ export default () => (
 
     <table>
       <tr>
-        <th>Circles</th>
-        <td>
-          <TileRow>
-            <Tile suit={TileSuit.Circle} rank={1} />
-            <Tile suit={TileSuit.Circle} rank={2} /> …
-            <Tile suit={TileSuit.Circle} rank={9} />
-          </TileRow>
-        </td>
-      </tr>
-      <tr>
         <th>Bamboo</th>
         <td>
           <TileRow>
             <Tile suit={TileSuit.Bamboo} rank={1} />
             <Tile suit={TileSuit.Bamboo} rank={2} /> …
             <Tile suit={TileSuit.Bamboo} rank={9} />
+          </TileRow>
+        </td>
+      </tr>
+      <tr>
+        <th>Circles</th>
+        <td>
+          <TileRow>
+            <Tile suit={TileSuit.Circle} rank={1} />
+            <Tile suit={TileSuit.Circle} rank={2} /> …
+            <Tile suit={TileSuit.Circle} rank={9} />
           </TileRow>
         </td>
       </tr>
