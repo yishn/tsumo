@@ -30,9 +30,11 @@ export class ActionBarButton extends Component("action-bar-button", {
               --action-bar-icon-disabled-color,
               currentColor
             );
+            display: inline-flex;
           }
 
           button {
+            display: inline-flex;
             border: none;
             padding: 0 0.2em;
             background: none;

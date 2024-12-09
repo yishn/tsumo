@@ -22,7 +22,7 @@ export class TutorialPanel extends Component("tutorial-panel", {
 }) {
   render() {
     const [currentStep, setCurrentStep] = useSignal(0);
-    const maxStep = () => Math.max(this.props.content().length - 1, 0);
+    const maxStep = () => Math.max(this.props.content().length - 1, 1);
 
     let firstRender = true;
     useEffect(() => {
@@ -51,7 +51,14 @@ export class TutorialPanel extends Component("tutorial-panel", {
             </Else>
           </ActionBarButton>
 
-          <div class="progress"></div>
+          <div
+            class="progress"
+            style={{
+              "--progress": () => currentStep() / maxStep(),
+            }}
+          >
+            <div></div>
+          </div>
         </div>
 
         <div part="content">
@@ -113,12 +120,28 @@ export class TutorialPanel extends Component("tutorial-panel", {
 
           [part="header"] {
             display: flex;
+            align-items: center;
+            gap: 1em;
             padding: 1em;
             box-shadow: 0 0.5em 1em rgba(14, 4, 2, 0.5);
             z-index: 1;
           }
           [part="header"] .progress {
+            position: relative;
             flex: 1;
+            border-radius: 0.5em;
+            height: 1em;
+            background-color: rgb(123, 77, 55);
+          }
+          [part="header"] .progress div {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            border-radius: 0.5em;
+            width: calc(var(--progress) * 100%);
+            background-color: #35de7b;
+            transition: 0.2s width;
           }
 
           [part="content"] {
@@ -157,20 +180,22 @@ export class TutorialPanel extends Component("tutorial-panel", {
           [part="content"] .next {
             border: none;
             border-radius: 0.2em;
-            padding: 0.2em 0.5em;
+            padding: 0.3em 0.5em;
             background-color: #11a923;
-            cursor: pointer;
+            box-shadow: 0 0.2em 0 #077714;
             font: var(--app-font);
             font-size: 1em;
             font-style: italic;
-            box-shadow: 0 -0.2em 0 #35de7b;
+            color: #eee;
+            cursor: pointer;
+            touch-action: manipulation;
             transition:
               0.2s background-color,
               0.2s box-shadow;
           }
           [part="content"] .next:active {
             background-color: #078307;
-            box-shadow: 0 -0.2em 0 #20a243;
+            box-shadow: 0 0.2em 0 #015a01;
           }
         `}</Style>
       </>
