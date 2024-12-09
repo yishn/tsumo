@@ -215,7 +215,7 @@ export class AppComponent extends Component("app") {
             background: var(--app-background);
             padding-top: env(safe-area-inset-top);
             overflow: hidden;
-            font: 1.2em var(--app-kaiti-font-stack);
+            font: 1.2em/1.3 var(--app-kaiti-font-stack);
             color: #eee;
             cursor: default;
             -webkit-user-select: none;

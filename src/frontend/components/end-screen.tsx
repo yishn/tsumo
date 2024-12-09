@@ -158,7 +158,7 @@ export class EndScreen extends Component("end-screen", {
             justify-content: safe center;
             align-items: safe center;
             padding: 1.5em;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(14, 4, 2, 0.9);
             animation: 0.5s backwards enter;
           }
 
