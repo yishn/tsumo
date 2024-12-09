@@ -7,26 +7,29 @@ import {
   PongIcon,
   WinIcon,
 } from "../assets.ts";
+import { TileRow } from "../components/tile-row.tsx";
 import { Tile } from "../components/tile.tsx";
 
 export default () => (
   <>
     <p>
-      At the start, every player gets 13 tiles and a
+      At the start, every player gets 13 tiles and a{" "}
       <em>joker indicator tile</em> is drawn. The tiles identical to the drawn
-      tile and the one that comes after in suit order will become
+      tile and the one that comes after in suit order will become{" "}
       <em>jokers</em> and will glow. A joker can be substituted for any tile in
       a winning hand.
     </p>
-    <p class="center">
-      <Tile glow suit={TileSuit.Circle} rank={3} />
-      <Tile glow suit={TileSuit.Circle} rank={4} />{" "}
-      <Tile glow suit={TileSuit.Myriad} rank={9} />
-      <Tile glow suit={TileSuit.Myriad} rank={1} />{" "}
-      <Tile glow suit={TileSuit.Wind} rank={2} />
-      <Tile glow suit={TileSuit.Wind} rank={3} />{" "}
-      <Tile glow suit={TileSuit.Dragon} rank={1} />
-      <Tile glow suit={TileSuit.Dragon} rank={2} />{" "}
+    <p>
+      <TileRow>
+        <Tile glow suit={TileSuit.Circle} rank={3} />
+        <Tile glow suit={TileSuit.Circle} rank={4} />
+        <Tile glow suit={TileSuit.Myriad} rank={9} />
+        <Tile glow suit={TileSuit.Myriad} rank={1} />
+        <Tile glow suit={TileSuit.Wind} rank={2} />
+        <Tile glow suit={TileSuit.Wind} rank={3} />
+        <Tile glow suit={TileSuit.Dragon} rank={1} />
+        <Tile glow suit={TileSuit.Dragon} rank={2} />
+      </TileRow>
     </p>
     <p>
       On a player’s turn, the player will first draw <DrawIcon /> a tile. They
