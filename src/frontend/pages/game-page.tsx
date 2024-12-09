@@ -548,7 +548,7 @@ export class GamePage extends Component("game-page", {
             </If>
 
             <div slot="player-extra" style={{ flex: 1 }} />
-            <span slot="player-extra" class="rounds">
+            <span slot="player-extra" class="rotations">
               Rotation {() => this.props.gameInfo()?.rotation ?? 1}/
               {() => this.props.gameInfo()?.maxRotation ?? 1}
             </span>
@@ -884,8 +884,9 @@ export class GamePage extends Component("game-page", {
             background-color: rgba(0, 0, 0, 0.9);
             animation: 0.5s enter-self;
           }
-          [part="self"] .rounds {
+          [part="self"] .rotations {
             opacity: 0.7;
+            font-size: 0.9em;
           }
           [part="self"] .joker {
             font-size: 0.7em;
