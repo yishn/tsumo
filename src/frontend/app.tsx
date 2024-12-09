@@ -221,7 +221,6 @@ export class AppComponent extends Component("app") {
             -webkit-user-select: none;
             user-select: none;
             -webkit-user-drag: none;
-            white-space: nowrap;
           }
         `}</Style>
 
