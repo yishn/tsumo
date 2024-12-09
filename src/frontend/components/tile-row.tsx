@@ -56,6 +56,7 @@ export class TileRow extends Component("tile-row", {
             gap: ${() => (this.props.minimal() ? 0 : "0.2em")};
             flex-wrap: wrap;
             padding-bottom: 0.8em;
+            align-items: center;
           }
         `}</Style>
       </>
