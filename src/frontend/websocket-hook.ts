@@ -26,38 +26,41 @@ export function useWebSocket<T, U>(
   }> = new Set();
   const [connected, setConnected] = useSignal(false);
   const [error, setError] = useSignal<Event | Error>();
-  const queuedMessages: U[] = [];
+
+  function connect() {
+    const socket = new WebSocket(MaybeSignal.get(url));
+
+    socket.addEventListener("open", () => {
+      setConnected(true);
+      setError(undefined);
+    });
+
+    socket.addEventListener("close", () => {
+      setConnected(false);
+    });
+
+    socket.addEventListener("error", (evt) => {
+      setError(evt);
+    });
+
+    socket.addEventListener("message", (evt) => {
+      const data = JSON.parse(evt.data);
+
+      for (const { path, handler } of handlers) {
+        const value = path(data);
+
+        if (value !== undefined) {
+          handler(value);
+        }
+      }
+    });
+
+    return socket;
+  }
 
   useEffect(() => {
     try {
-      socket = new WebSocket(MaybeSignal.get(url));
-
-      socket.addEventListener("open", () => {
-        setConnected(true);
-        setError(undefined);
-
-        queuedMessages.length = 0;
-      });
-
-      socket.addEventListener("close", () => {
-        setConnected(false);
-      });
-
-      socket.addEventListener("error", (evt) => {
-        setError(evt);
-      });
-
-      socket.addEventListener("message", (evt) => {
-        const data = JSON.parse(evt.data);
-
-        for (const { path, handler } of handlers) {
-          const value = path(data);
-
-          if (value !== undefined) {
-            handler(value);
-          }
-        }
-      });
+      socket = connect();
     } catch (err) {
       setError(err as Error);
     }
@@ -89,8 +92,6 @@ export function useWebSocket<T, U>(
     sendMessage: (data) => {
       if (connected()) {
         socket.send(JSON.stringify(data));
-      } else {
-        queuedMessages.push(data);
       }
     },
     close: () => {
