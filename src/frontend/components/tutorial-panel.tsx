@@ -173,6 +173,9 @@ export class TutorialPanel extends Component("tutorial-panel", {
             font-size: 0.7em;
             justify-content: center;
           }
+          [part="content"] .nb {
+            display: inline-block;
+          }
 
           [part="content"] .spacer {
             flex: 1;

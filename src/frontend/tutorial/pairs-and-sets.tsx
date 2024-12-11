@@ -26,8 +26,15 @@ export default () => (
       </TileRow>
     </p>
     <p>
-      A <em>pong</em> <PongIcon /> is a set of three identical tiles and a set
-      of four identical tiles is called a <em>kong</em> <KongIcon />:
+      A{" "}
+      <span class="nb">
+        <em>pong</em> <PongIcon />
+      </span>{" "}
+      is a set of three identical tiles and a set of four identical tiles is
+      called a{" "}
+      <span class="nb">
+        <em>kong</em> <KongIcon />:
+      </span>
     </p>
     <p>
       <TileRow>

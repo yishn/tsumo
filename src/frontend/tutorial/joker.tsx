@@ -7,11 +7,8 @@ export default () => (
     <p>
       At the start, a <em>joker indicator tile</em> is drawn. The tiles
       identical to the drawn tile will become the <em>primary joker</em> and the
-      next tile in suit order will become the <em>secondary joker</em>.
-    </p>
-    <p>
-      Both of them will glow and can be substituted for any tile in a winning
-      hand.
+      next tile in suit order will become the <em>secondary joker</em>. Both of
+      them will glow and can be substituted for any tile in a winning hand.
     </p>
     <table>
       <tr>

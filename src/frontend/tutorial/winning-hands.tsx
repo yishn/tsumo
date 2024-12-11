@@ -7,8 +7,11 @@ import { TileRow } from "../components/tile-row.tsx";
 export default () => (
   <>
     <p>
-      The goal is to form a <em>winning hand</em> <WinIcon /> of 14 tiles. A
-      standard winning hand consists of four sets and one pair.
+      The goal is to form a{" "}
+      <span>
+        <em>winning hand</em> <WinIcon />
+      </span>{" "}
+      of 14 tiles. A standard winning hand consists of four sets and one pair.
     </p>
     <p>
       <TileRow>
