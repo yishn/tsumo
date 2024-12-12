@@ -12,10 +12,11 @@ import {
 } from "sinho";
 import clsx from "clsx";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
-import { ActionBarButton } from "../components/action-bar.tsx";
+import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
 import {
   HelpIcon,
   LeftIcon,
+  PongIcon,
   RightIcon,
   SubmitIcon,
   avatarList,
@@ -156,123 +157,128 @@ export class LobbyPage extends Component("lobby-page", {
 
     return (
       <>
-        <div part="players">
-          <For each={remotePlayers} key={(player, i) => player?.id ?? i}>
-            {(player) => (
+        <div class="content">
+          <div part="players">
+            <For each={remotePlayers} key={(player, i) => player?.id ?? i}>
+              {(player) => (
+                <PlayerAvatar
+                  name={() => player()?.name || "\u200b"}
+                  current={() => player().id === startPlayerId()?.id}
+                  avatar={() =>
+                    player()?.avatar == null
+                      ? PlayerAvatar.emptyAvatar
+                      : getAvatarUrl(player()!.avatar!)
+                  }
+                  dice={() => player()?.dice}
+                />
+              )}
+            </For>
+
+            <If condition={() => remotePlayers().length < 3}>
               <PlayerAvatar
-                name={() => player()?.name || "\u200b"}
-                current={() => player().id === startPlayerId()?.id}
+                class="invite"
+                name={"\u200b"}
                 avatar={() =>
-                  player()?.avatar == null
-                    ? PlayerAvatar.emptyAvatar
-                    : getAvatarUrl(player()!.avatar!)
+                  !justCopiedInviteLink()
+                    ? "./assets/icons/invite.svg"
+                    : "./assets/icons/clipboard.svg"
                 }
-                dice={() => player()?.dice}
+                title="Copy invitation link"
+                onAvatarClick={() => {
+                  navigator.clipboard.writeText(
+                    new URL(
+                      "?" +
+                        new URLSearchParams({
+                          session: SESSION ?? "",
+                        }).toString(),
+                      location.href
+                    ).toString()
+                  );
+
+                  setJustCopiedInviteLink(true);
+                }}
               />
-            )}
-          </For>
+            </If>
+          </div>
 
-          <If condition={() => remotePlayers().length < 3}>
-            <PlayerAvatar
-              class="invite"
-              name={"\u200b"}
-              avatar={() =>
-                !justCopiedInviteLink()
-                  ? "./assets/icons/invite.svg"
-                  : "./assets/icons/clipboard.svg"
-              }
-              title="Copy invitation link"
-              onAvatarClick={() => {
-                navigator.clipboard.writeText(
-                  new URL(
-                    "?" +
-                      new URLSearchParams({
-                        session: SESSION ?? "",
-                      }).toString(),
-                    location.href
-                  ).toString()
+          <div part="avatar-chooser">
+            <ActionBarButton
+              class={() => clsx("prev", { disabled: ready() })}
+              disabled={ready}
+              tooltip="Previous avatar"
+              onButtonClick={() => {
+                setOwnAvatarIndex((index) =>
+                  ready()
+                    ? index
+                    : (index - 1 + avatarList.length) % avatarList.length
                 );
+              }}
+            >
+              <LeftIcon />
+            </ActionBarButton>
 
-                setJustCopiedInviteLink(true);
+            <PlayerAvatar
+              avatar={() => getAvatarUrl(ownAvatarIndex())}
+              current={() => ownPlayerId() === startPlayerId()?.id}
+              sound
+              dice={ownDice}
+            />
+
+            <ActionBarButton
+              class={() => clsx("next", { disabled: ready() })}
+              disabled={ready}
+              tooltip="Next avatar"
+              onButtonClick={() => {
+                setOwnAvatarIndex((index) =>
+                  ready() ? index : (index + 1) % avatarList.length
+                );
+              }}
+            >
+              <RightIcon />
+            </ActionBarButton>
+          </div>
+
+          <div part="name-chooser">
+            <input
+              type="text"
+              disabled={() => ready()}
+              placeholder="Your name"
+              value={ownName}
+              oninput={(evt) => setOwnName(evt.currentTarget.value)}
+              onkeypress={(evt) => {
+                if (evt.key === "Enter") {
+                  canRollInitiative() && setReady(true);
+                }
               }}
             />
-          </If>
-        </div>
+          </div>
 
-        <div part="avatar-chooser">
-          <ActionBarButton
-            class={() => clsx("prev", { disabled: ready() })}
-            disabled={ready}
-            tooltip="Previous avatar"
-            onButtonClick={() => {
-              setOwnAvatarIndex((index) =>
-                ready()
-                  ? index
-                  : (index - 1 + avatarList.length) % avatarList.length
-              );
-            }}
+          <div part="status">{status}</div>
+
+          <div
+            part="ready"
+            class={() => clsx({ hide: ready() ? true : false })}
           >
-            <LeftIcon />
-          </ActionBarButton>
+            <Tile
+              title="Ready"
+              custom
+              sounds={() => canRollInitiative() || ready()}
+              back={() => !canRollInitiative() && !ready()}
+              suit={TileSuit.Dragon}
+              rank={2}
+              onclick={() => canRollInitiative() && setReady(true)}
+            >
+              <SubmitIcon fill="#12bb25" />
+            </Tile>
 
-          <PlayerAvatar
-            avatar={() => getAvatarUrl(ownAvatarIndex())}
-            current={() => ownPlayerId() === startPlayerId()?.id}
-            sound
-            dice={ownDice}
-          />
-
-          <ActionBarButton
-            class={() => clsx("next", { disabled: ready() })}
-            disabled={ready}
-            tooltip="Next avatar"
-            onButtonClick={() => {
-              setOwnAvatarIndex((index) =>
-                ready() ? index : (index + 1) % avatarList.length
-              );
-            }}
-          >
-            <RightIcon />
-          </ActionBarButton>
-        </div>
-
-        <div part="name-chooser">
-          <input
-            type="text"
-            disabled={() => ready()}
-            placeholder="Your name"
-            value={ownName}
-            oninput={(evt) => setOwnName(evt.currentTarget.value)}
-            onkeypress={(evt) => {
-              if (evt.key === "Enter") {
-                canRollInitiative() && setReady(true);
-              }
-            }}
-          />
-        </div>
-
-        <div part="status">{status}</div>
-
-        <div part="ready" class={() => clsx({ hide: ready() ? true : false })}>
-          <Tile
-            title="Ready"
-            custom
-            sounds={() => canRollInitiative() || ready()}
-            back={() => !canRollInitiative() && !ready()}
-            suit={TileSuit.Dragon}
-            rank={2}
-            onclick={() => canRollInitiative() && setReady(true)}
-          >
-            <SubmitIcon fill="#12bb25" />
-          </Tile>
-
-          <ActionBarButton
-            disabled={ready}
-            tooltip="How To Play"
-            onButtonClick={() => setShowTutorial(true)}
-          >
-            <HelpIcon />
-          </ActionBarButton>
+            <ActionBarButton
+              disabled={ready}
+              tooltip="How To Play"
+              onButtonClick={() => setShowTutorial(true)}
+            >
+              <HelpIcon />
+            </ActionBarButton>
+          </div>
         </div>
 
         <AnimatedIf
@@ -300,13 +306,8 @@ export class LobbyPage extends Component("lobby-page", {
             --action-bar-icon-disabled-color: rgba(255, 211, 163, 0.5);
             display: flex;
             flex-direction: column;
-            justify-content: safe center;
-            align-items: safe center;
-            gap: 0.5em;
             position: relative;
-            padding: 0.5em 0;
-            padding-bottom: env(safe-area-inset-bottom);
-            overflow: auto;
+            overflow: none;
             background: linear-gradient(
               to bottom,
               transparent,
@@ -314,6 +315,17 @@ export class LobbyPage extends Component("lobby-page", {
             );
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
+          }
+
+          .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: safe center;
+            align-items: safe center;
+            gap: 0.5em;
+            padding: 0.5em 0;
+            overflow: auto;
           }
 
           [part="players"] {
