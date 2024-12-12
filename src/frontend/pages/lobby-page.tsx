@@ -277,7 +277,7 @@ export class LobbyPage extends Component("lobby-page", {
 
         <AnimatedIf
           value={() => (showTutorial() ? {} : undefined)}
-          hideDelay={1000}
+          hideDelay={TutorialPanel.leaveAnimationDuration}
         >
           {(_, hide) => (
             <TutorialPanel

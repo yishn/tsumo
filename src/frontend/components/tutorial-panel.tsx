@@ -20,6 +20,9 @@ export class TutorialPanel extends Component("tutorial-panel", {
   content: prop<Template[]>([]),
   onFinished: event(),
 }) {
+  static enterAnimationDuration = 300;
+  static leaveAnimationDuration = 300;
+
   render() {
     const [currentStep, setCurrentStep] = useSignal(0);
     const maxStep = () => Math.max(this.props.content().length - 1, 1);
@@ -91,12 +94,14 @@ export class TutorialPanel extends Component("tutorial-panel", {
         <Style>{css`
           @keyframes enter {
             from {
-              transform: translate(-50%, -100%);
+              opacity: 0;
+              transform: translate(-50%, 0) scale(0.8);
             }
           }
           @keyframes leave {
             to {
-              transform: translate(-50%, -105%);
+              opacity: 0;
+              transform: translate(-50%, 0) scale(0.8);
             }
           }
           :host {
@@ -112,10 +117,10 @@ export class TutorialPanel extends Component("tutorial-panel", {
             transform: translate(-50%, 0);
             background-color: rgba(14, 4, 2, 0.9);
             box-shadow: 0 0.5em 1em rgba(14, 4, 2, 0.5);
-            animation: 1s backwards enter;
+            animation: ${TutorialPanel.enterAnimationDuration}ms backwards enter;
           }
           :host(.hide) {
-            animation: 1s forwards leave;
+            animation: ${TutorialPanel.leaveAnimationDuration}ms forwards leave;
           }
 
           [part="header"] {
