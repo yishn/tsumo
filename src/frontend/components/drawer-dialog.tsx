@@ -72,6 +72,7 @@ export class DrawerDialog extends Component("drawer-dialog", {
             position: fixed;
             left: 50%;
             bottom: 0;
+            border-radius: 0.5em 0.5em 0 0;
             width: min(30em, 100dvw);
             background-color: rgba(0, 0, 0, 0.9);
             padding: 1em;
