@@ -39,6 +39,9 @@ export class ActionBarButton extends Component("action-bar-button", {
             padding: 0 0.2em;
             background: none;
             cursor: pointer;
+            font: var(--app-font);
+            font-size: 1em;
+            color: var(--_action-bar-icon-color);
             touch-action: manipulation;
           }
           button:disabled {
@@ -53,8 +56,8 @@ export class ActionBarButton extends Component("action-bar-button", {
             fill: var(--_action-bar-icon-color);
             stroke: var(--_action-bar-icon-color);
             stroke-width: 0;
-            width: 1.8em;
-            height: 1.8em;
+            width: 1.25em;
+            height: 1.25em;
             overflow: visible;
           }
         `}</Style>
