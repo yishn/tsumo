@@ -307,22 +307,13 @@ export class LobbyPage extends Component("lobby-page", {
             padding: 0.5em 0;
             padding-bottom: env(safe-area-inset-bottom);
             overflow: auto;
-            -webkit-backdrop-filter: blur(0.5em);
-            backdrop-filter: blur(0.5em);
-          }
-          :host::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
             background: linear-gradient(
               to bottom,
               transparent,
               rgba(0, 0, 0, 0.2) 5em
             );
-            z-index: -1;
+            -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
           }
 
           [part="players"] {
