@@ -330,6 +330,8 @@ export class LobbyPage extends Component("lobby-page", {
             onsubmit={(evt) => {
               evt.preventDefault();
 
+              if (joinSessionId().trim() === "") return;
+
               window.location.href =
                 "?" +
                 new URLSearchParams({
@@ -347,7 +349,15 @@ export class LobbyPage extends Component("lobby-page", {
                 oninput={(evt) => setJoinSessionId(evt.currentTarget.value)}
               />
             </label>
-            <Button primary disabled={() => joinSessionId().trim() === ""}>
+            <Button
+              primary
+              disabled={() => joinSessionId().trim() === ""}
+              onclick={(evt) =>
+                (
+                  evt.currentTarget.parentElement as HTMLFormElement
+                ).requestSubmit()
+              }
+            >
               Join
             </Button>
           </form>

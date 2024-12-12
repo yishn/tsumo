@@ -10,7 +10,7 @@ export class Button extends Component("button", {
       <>
         <button
           class={() => clsx({ primary: this.props.primary() })}
-          type={() => (this.props.primary() ? "submit" : "button")}
+          type="button"
           disabled={this.props.disabled}
         >
           <slot></slot>
