@@ -15,6 +15,7 @@ import {
 import { ActionBarButton } from "./action-bar.tsx";
 import { CloseIcon, LeftIcon } from "../assets.ts";
 import { playPopSound } from "../sounds.ts";
+import { Button } from "./button.tsx";
 
 export class TutorialPanel extends Component("tutorial-panel", {
   content: prop<Template[]>([]),
@@ -72,8 +73,9 @@ export class TutorialPanel extends Component("tutorial-panel", {
           </For>
 
           <div class="spacer"></div>
-          <button
+          <Button
             class="next"
+            primary
             onclick={(evt) => {
               evt.preventDefault();
 
@@ -88,7 +90,7 @@ export class TutorialPanel extends Component("tutorial-panel", {
           >
             <If condition={() => currentStep() < maxStep()}>Continue</If>
             <Else>Finish</Else>
-          </button>
+          </Button>
         </div>
 
         <Style>{css`
@@ -112,7 +114,6 @@ export class TutorialPanel extends Component("tutorial-panel", {
             bottom: 0;
             left: 50%;
             width: min(100dvw, 30em);
-            padding-bottom: env(safe-area-inset-bottom);
             overflow: hidden;
             transform: translate(-50%, 0);
             background-color: rgba(14, 4, 2, 0.9);
@@ -154,6 +155,7 @@ export class TutorialPanel extends Component("tutorial-panel", {
             display: flex;
             flex-direction: column;
             padding: 1em;
+            padding-bottom: max(1em, env(safe-area-inset-bottom));
             overflow: auto;
             z-index: 0;
           }
@@ -181,29 +183,8 @@ export class TutorialPanel extends Component("tutorial-panel", {
           [part="content"] .nb {
             display: inline-block;
           }
-
           [part="content"] .spacer {
             flex: 1;
-          }
-          [part="content"] .next {
-            border: none;
-            border-radius: 0.2em;
-            padding: 0.3em 0.5em;
-            background-color: #11a923;
-            box-shadow: 0 0.2em 0 #077714;
-            font: var(--app-font);
-            font-size: 1em;
-            font-style: italic;
-            color: #eee;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition:
-              0.2s background-color,
-              0.2s box-shadow;
-          }
-          [part="content"] .next:active {
-            background-color: #078307;
-            box-shadow: 0 0.2em 0 #015a01;
           }
         `}</Style>
       </>
