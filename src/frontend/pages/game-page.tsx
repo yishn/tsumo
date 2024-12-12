@@ -111,10 +111,11 @@ export class GamePage extends Component("game-page", {
       ...this.props.gamePlayersInfo()?.[this.props.ownPlayerId() ?? ""],
       ...this.props.ownPlayerInfo(),
     }));
+    const currentPlayer = useMemo(() => this.props.gameInfo()?.currentPlayer);
     const isSelfTurn = useMemo(
-      () => this.props.gameInfo()?.currentPlayer === this.props.ownPlayerId()
+      () => currentPlayer() === this.props.ownPlayerId()
     );
-    const phase = () => this.props.gameInfo()?.phase;
+    const phase = useMemo(() => this.props.gameInfo()?.phase);
     const lastDiscard = () => this.props.gameInfo()?.lastDiscard;
     const kongDiscard = () => this.props.gameInfo()?.kongDiscard;
     const reacted = () =>
@@ -134,6 +135,27 @@ export class GamePage extends Component("game-page", {
     useEffect(() => {
       if (isSelfTurn()) {
         playTurnSound();
+      }
+    });
+
+    useEffect(() => {
+      let selector: string | undefined;
+
+      if (phase() === Phase.Reaction) {
+        selector = "[part='players'] mj-player-row:first-of-type";
+      } else if (currentPlayer() != null && !isSelfTurn()) {
+        selector = "[part='players'] mj-player-row.current";
+      } else if (isSelfTurn()) {
+        selector = "[part='players'] mj-player-row:last-of-type";
+      }
+
+      if (selector != null) {
+        setTimeout(() => {
+          this.shadowRoot!.querySelector(selector)?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        });
       }
     });
 
@@ -188,12 +210,15 @@ export class GamePage extends Component("game-page", {
           <For each={remotePlayerInfos}>
             {(player, i) => (
               <PlayerRow
+                class={() =>
+                  clsx({
+                    current: player().id === currentPlayer(),
+                  })
+                }
                 style={{ animationDelay: `${i() * 0.1}s` }}
                 name={() => player().name ?? ""}
                 avatar={() => getAvatarUrl(player().avatar)}
-                current={() =>
-                  player().id === this.props.gameInfo()?.currentPlayer
-                }
+                current={() => player().id === currentPlayer()}
                 dealer={() => player().id === this.props.gameInfo()?.dealer}
                 loading={() => this.props.deadPlayers().includes(player().id)}
                 score={() =>
