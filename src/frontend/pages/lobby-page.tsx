@@ -8,15 +8,15 @@ import {
   prop,
   useEffect,
   useMemo,
+  useRef,
   useSignal,
 } from "sinho";
 import clsx from "clsx";
 import { PlayerAvatar } from "../components/player-avatar.tsx";
-import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
+import { ActionBarButton } from "../components/action-bar.tsx";
 import {
   HelpIcon,
   LeftIcon,
-  PongIcon,
   RightIcon,
   SubmitIcon,
   avatarList,
@@ -27,12 +27,14 @@ import { TileSuit } from "../../core/tile.ts";
 import { SECRET, SESSION, webSocketHook } from "../global-state.ts";
 import { LocalStorage } from "../local-storage.ts";
 import { TutorialPanel } from "../components/tutorial-panel.tsx";
+import { AnimatedIf } from "../components/animated-if.tsx";
+import { Button } from "../components/button.tsx";
+import { DrawerDialog } from "../components/drawer-dialog.tsx";
 import TutorialPage1 from "../tutorial/tiles.tsx";
 import TutorialPage2 from "../tutorial/pairs-and-sets.tsx";
 import TutorialPage3 from "../tutorial/winning-hands.tsx";
 import TutorialPage4 from "../tutorial/joker.tsx";
 import TutorialPage5 from "../tutorial/game-flow.tsx";
-import { AnimatedIf } from "../components/animated-if.tsx";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -155,9 +157,29 @@ export class LobbyPage extends Component("lobby-page", {
       };
     });
 
+    const [showJoinDialog, setShowJoinDialog] = useSignal(false);
+    const [joinSessionId, setJoinSessionId] = useSignal("");
+    const joinSessionIdInput = useRef<HTMLInputElement>();
+
+    useEffect(() => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+
+      if (showJoinDialog()) {
+        setJoinSessionId("");
+
+        timeoutId = setTimeout(() => {
+          joinSessionIdInput()?.focus();
+        }, DrawerDialog.showTransitionDuration);
+      }
+
+      return () => clearTimeout(timeoutId);
+    });
+
     return (
       <>
         <div class="content">
+          <div class="spacer"></div>
+
           <div part="players">
             <For each={remotePlayers} key={(player, i) => player?.id ?? i}>
               {(player) => (
@@ -183,17 +205,9 @@ export class LobbyPage extends Component("lobby-page", {
                     ? "./assets/icons/invite.svg"
                     : "./assets/icons/clipboard.svg"
                 }
-                title="Copy invitation link"
+                title="Copy Session Identifier"
                 onAvatarClick={() => {
-                  navigator.clipboard.writeText(
-                    new URL(
-                      "?" +
-                        new URLSearchParams({
-                          session: SESSION ?? "",
-                        }).toString(),
-                      location.href
-                    ).toString()
-                  );
+                  navigator.clipboard.writeText(SESSION);
 
                   setJustCopiedInviteLink(true);
                 }}
@@ -279,6 +293,12 @@ export class LobbyPage extends Component("lobby-page", {
               <HelpIcon />
             </ActionBarButton>
           </div>
+
+          <div class="spacer"></div>
+
+          <Button part="join" onclick={() => setShowJoinDialog(true)}>
+            Join Session
+          </Button>
         </div>
 
         <AnimatedIf
@@ -299,6 +319,39 @@ export class LobbyPage extends Component("lobby-page", {
             />
           )}
         </AnimatedIf>
+
+        <DrawerDialog
+          class="join-dialog"
+          show={showJoinDialog}
+          onClose={() => setShowJoinDialog(false)}
+        >
+          <form
+            class="inner"
+            onsubmit={(evt) => {
+              evt.preventDefault();
+
+              window.location.href =
+                "?" +
+                new URLSearchParams({
+                  session: joinSessionId(),
+                }).toString();
+            }}
+          >
+            <label>
+              <p>Session Identifier:</p>
+              <input
+                ref={joinSessionIdInput}
+                type="text"
+                value={joinSessionId}
+                maxLength={50}
+                oninput={(evt) => setJoinSessionId(evt.currentTarget.value)}
+              />
+            </label>
+            <Button primary disabled={() => joinSessionId().trim() === ""}>
+              Join
+            </Button>
+          </form>
+        </DrawerDialog>
 
         <Style>{css`
           :host {
@@ -321,11 +374,14 @@ export class LobbyPage extends Component("lobby-page", {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: safe center;
             align-items: safe center;
             gap: 0.5em;
-            padding: 0.5em 0;
+            padding: 0.5em;
+            padding-bottom: max(0.7em, env(safe-area-inset-bottom));
             overflow: auto;
+          }
+          .content .spacer {
+            flex: 1;
           }
 
           [part="players"] {
@@ -379,17 +435,21 @@ export class LobbyPage extends Component("lobby-page", {
             animation: 0.7s linear infinite alternate next-arrow-sway;
           }
 
-          [part="name-chooser"] input {
+          input {
             box-sizing: border-box;
-            width: 6em;
             border: none;
             margin-bottom: 1em;
             background-color: rgba(0, 0, 0, 0.7);
-            font: 1.5em var(--app-kaiti-font-stack);
+            font: var(--app-font);
+            font-size: 1em;
             text-align: center;
           }
-          [part="name-chooser"] input:disabled {
+          input:disabled {
             cursor: not-allowed;
+          }
+          [part="name-chooser"] input {
+            width: 6em;
+            font-size: 1.5em;
           }
 
           [part="status"] {
@@ -407,6 +467,30 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="ready"].hide {
             opacity: 0;
+          }
+
+          [part="join"] {
+            align-self: center;
+            width: 100%;
+            max-width: 20em;
+          }
+
+          .join-dialog .inner {
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+          }
+          .join-dialog label {
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+          }
+          .join-dialog label p {
+            margin-top: 0.5em;
+            margin-bottom: 0.2em;
+          }
+          .join-dialog input {
+            background-color: rgba(255, 255, 255, 0.2);
           }
         `}</Style>
 

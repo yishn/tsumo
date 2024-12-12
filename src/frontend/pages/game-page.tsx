@@ -907,6 +907,8 @@ export class GamePage extends Component("game-page", {
             align-items: stretch;
             padding-bottom: max(0.5em, env(safe-area-inset-bottom));
             background-color: rgba(0, 0, 0, 0.9);
+            -webkit-backdrop-filter: blur(0.5em);
+            backdrop-filter: blur(0.5em);
             animation: 0.5s enter-self;
           }
           [part="self"] .rotations {

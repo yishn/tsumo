@@ -3,11 +3,16 @@ import { Component, css, defineComponents, prop, Style } from "sinho";
 
 export class Button extends Component("button", {
   primary: prop<boolean>(false, { attribute: () => true }),
+  disabled: prop<boolean>(false, { attribute: () => true }),
 }) {
   render() {
     return (
       <>
-        <button class={() => clsx({ primary: this.props.primary() })}>
+        <button
+          class={() => clsx({ primary: this.props.primary() })}
+          type={() => (this.props.primary() ? "submit" : "button")}
+          disabled={this.props.disabled}
+        >
           <slot></slot>
         </button>
 
@@ -41,6 +46,11 @@ export class Button extends Component("button", {
             box-shadow:
               0 0.2em 0 #9fa7a1,
               var(--button-shadow);
+          }
+
+          button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
           }
 
           button.primary {
