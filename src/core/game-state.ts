@@ -405,53 +405,51 @@ export class ReactionPhase extends PhaseBase(Phase.Reaction) {
       const player = this.state.getPlayer(playerIndex);
       this.reactions = [];
 
-      if (tileIndex1 != null) {
-        if (type === "pong" || type === "kong") {
-          const tile1 = player.getTile(tileIndex1);
-          const tile2 = player.getTile(tileIndex2);
-          const tile3 =
-            tileIndex3 == null ? undefined : player.getTile(tileIndex3);
+      if (tileIndex1 != null && (type === "pong" || type === "kong")) {
+        const tile1 = player.getTile(tileIndex1);
+        const tile2 = player.getTile(tileIndex2);
+        const tile3 =
+          tileIndex3 == null ? undefined : player.getTile(tileIndex3);
 
-          if (tileIndex3 == null) {
-            player.removeTiles(tileIndex1, tileIndex2);
-          } else {
-            player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
-          }
-          player.lastDrawnTileIndex = undefined;
-
-          const discard = this.state.removeLastDiscard();
-          player.pushMeld(
-            tile3 == null
-              ? [tile1, tile2, discard]
-              : [tile1, tile2, tile3, discard]
-          );
-
-          this.state.turn++;
-          this.state.currentPlayerIndex = playerIndex;
-
-          if (tileIndex3 != null) {
-            // Handle kongs
-
-            this.state.scoreKong(playerIndex);
-            this.state.lastDiscardInfo = undefined;
-
-            player.statistics.kongs++;
-            player.statistics.stolenDiscards++;
-
-            return this.nextPhase(PullPhase);
-          } else {
-            // Handle pongs
-
-            player.statistics.pongs++;
-            player.statistics.stolenDiscards++;
-
-            return this.nextPhase(PushPhase);
-          }
-        } else if (type === "win") {
-          this.state.currentPlayerIndex = playerIndex;
-
-          return this.nextPhase(ScorePhase);
+        if (tileIndex3 == null) {
+          player.removeTiles(tileIndex1, tileIndex2);
+        } else {
+          player.removeTiles(tileIndex1, tileIndex2, tileIndex3);
         }
+        player.lastDrawnTileIndex = undefined;
+
+        const discard = this.state.removeLastDiscard();
+        player.pushMeld(
+          tile3 == null
+            ? [tile1, tile2, discard]
+            : [tile1, tile2, tile3, discard]
+        );
+
+        this.state.turn++;
+        this.state.currentPlayerIndex = playerIndex;
+
+        if (tileIndex3 != null) {
+          // Handle kongs
+
+          this.state.scoreKong(playerIndex);
+          this.state.lastDiscardInfo = undefined;
+
+          player.statistics.kongs++;
+          player.statistics.stolenDiscards++;
+
+          return this.nextPhase(PullPhase);
+        } else {
+          // Handle pongs
+
+          player.statistics.pongs++;
+          player.statistics.stolenDiscards++;
+
+          return this.nextPhase(PushPhase);
+        }
+      } else if (type === "win") {
+        this.state.currentPlayerIndex = playerIndex;
+
+        return this.nextPhase(ScorePhase);
       }
     }
 

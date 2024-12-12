@@ -267,6 +267,7 @@ export class LobbyPage extends Component("lobby-page", {
           </Tile>
 
           <ActionBarButton
+            disabled={ready}
             tooltip="How To Play"
             onButtonClick={() => setShowTutorial(true)}
           >
