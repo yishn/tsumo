@@ -1,5 +1,13 @@
 {
-  "name": "Mahjong",
+  "name": "Tsumo",
+  "background_color": "#714634",
+  "theme_color": "#714634",
+  "categories": ["games"],
   "display": "fullscreen",
+  "icons": [
+    {
+      "src": "./assets/img/favicon.png"
+    }
+  ],
   "orientation": "portrait"
 }

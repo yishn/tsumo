@@ -340,7 +340,7 @@ export class LobbyPage extends Component("lobby-page", {
           }
 
           [part="avatar-chooser"] {
-            --player-avatar-size: 12em;
+            --player-avatar-size: 10em;
             display: flex;
             justify-content: safe center;
             align-items: safe center;
