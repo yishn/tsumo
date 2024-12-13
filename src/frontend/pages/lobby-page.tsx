@@ -28,13 +28,14 @@ import { SECRET, SESSION, webSocketHook } from "../global-state.ts";
 import { LocalStorage } from "../local-storage.ts";
 import { TutorialPanel } from "../components/tutorial-panel.tsx";
 import { AnimatedIf } from "../components/animated-if.tsx";
-import { Button } from "../components/button.tsx";
+import { Button, ButtonList } from "../components/button.tsx";
 import { DrawerDialog } from "../components/drawer-dialog.tsx";
 import TutorialPage1 from "../tutorial/tiles.tsx";
 import TutorialPage2 from "../tutorial/pairs-and-sets.tsx";
 import TutorialPage3 from "../tutorial/winning-hands.tsx";
 import TutorialPage4 from "../tutorial/joker.tsx";
 import TutorialPage5 from "../tutorial/game-flow.tsx";
+import { uuid } from "../../shared/utils.ts";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -349,17 +350,31 @@ export class LobbyPage extends Component("lobby-page", {
                 oninput={(evt) => setJoinSessionId(evt.currentTarget.value)}
               />
             </label>
-            <Button
-              primary
-              disabled={() => joinSessionId().trim() === ""}
-              onclick={(evt) =>
-                (
-                  evt.currentTarget.parentElement as HTMLFormElement
-                ).requestSubmit()
-              }
-            >
-              Join
-            </Button>
+            <ButtonList>
+              <Button
+                primary
+                disabled={() => joinSessionId().trim() === ""}
+                onclick={(evt) =>
+                  (
+                    evt.currentTarget.parentElement!
+                      .parentElement as HTMLFormElement
+                  ).requestSubmit()
+                }
+              >
+                Join
+              </Button>
+              <Button
+                onclick={() => {
+                  window.location.href =
+                    "?" +
+                    new URLSearchParams({
+                      session: uuid(),
+                    }).toString();
+                }}
+              >
+                New Session
+              </Button>
+            </ButtonList>
           </form>
         </DrawerDialog>
 
@@ -386,8 +401,8 @@ export class LobbyPage extends Component("lobby-page", {
             flex-direction: column;
             align-items: safe center;
             gap: 0.5em;
-            padding: 0.5em;
-            padding-bottom: max(0.7em, env(safe-area-inset-bottom));
+            padding: 1em;
+            padding-bottom: max(1em, env(safe-area-inset-bottom));
             overflow: auto;
           }
           .content .spacer {

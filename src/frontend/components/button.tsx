@@ -50,7 +50,7 @@ export class Button extends Component("button", {
 
           button:disabled {
             cursor: not-allowed;
-            opacity: 0.5;
+            opacity: 0.6;
           }
 
           button.primary {
@@ -61,7 +61,7 @@ export class Button extends Component("button", {
             color: #eee;
           }
 
-          button.primary:active {
+          button.primary:active:not(:disabled) {
             background-color: #078307;
             box-shadow:
               0 0.2em 0 #015a01,
@@ -73,4 +73,22 @@ export class Button extends Component("button", {
   }
 }
 
-defineComponents("mj-", Button);
+export class ButtonList extends Component("button-list") {
+  render() {
+    return (
+      <>
+        <slot />
+
+        <Style>{css`
+          :host {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+          }
+        `}</Style>
+      </>
+    );
+  }
+}
+
+defineComponents("mj-", Button, ButtonList);
