@@ -298,7 +298,7 @@ export class LobbyPage extends Component("lobby-page", {
           <div class="spacer"></div>
 
           <Button part="join" onclick={() => setShowJoinDialog(true)}>
-            Join Session
+            Join Another Session
           </Button>
         </div>
 
@@ -511,8 +511,7 @@ export class LobbyPage extends Component("lobby-page", {
             justify-content: stretch;
           }
           .join-dialog label p {
-            margin-top: 0.5em;
-            margin-bottom: 0.2em;
+            margin: 0 0 0.2em;
           }
           .join-dialog input {
             background-color: rgba(255, 255, 255, 0.2);
