@@ -8,6 +8,7 @@ import {
   prop,
   useEffect,
   useMemo,
+  useRef,
   useSignal,
 } from "sinho";
 import { delay, sakuraBlossoms } from "../animation.ts";
@@ -99,9 +100,25 @@ export class ScoreScroll extends Component("score-scroll", {
         `${ScoreScroll.enterAnimationDuration + row++ * 500}ms`,
     });
 
+    const containerRef = useRef<HTMLDivElement>();
+
+    useEffect(() => {
+      // Scroll to bottom
+
+      setTimeout(
+        () => {
+          containerRef()?.scrollTo({
+            behavior: "smooth",
+            top: containerRef()!.scrollHeight,
+          });
+        },
+        ScoreScroll.enterAnimationDuration + row * 500
+      );
+    });
+
     return (
       <>
-        <div part="container">
+        <div ref={containerRef} part="container">
           <h1>Score</h1>
           <img class="head" src="./assets/img/win.svg" alt="和" />
 
