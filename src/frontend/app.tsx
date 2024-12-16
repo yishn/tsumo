@@ -222,6 +222,7 @@ export class AppComponent extends Component("app") {
             -webkit-user-select: none;
             user-select: none;
             -webkit-user-drag: none;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
           }
         `}</Style>
 
