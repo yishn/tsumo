@@ -12,6 +12,7 @@ export class Button extends Component("button", {
           class={() => clsx({ primary: this.props.primary() })}
           type="button"
           disabled={this.props.disabled}
+          ontouchstart={() => {}}
         >
           <slot></slot>
         </button>

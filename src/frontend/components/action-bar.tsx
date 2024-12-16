@@ -12,6 +12,7 @@ export class ActionBarButton extends Component("action-bar-button", {
           part="button"
           title={() => this.props.tooltip() ?? ""}
           disabled={this.props.disabled}
+          ontouchstart={() => {}}
           onclick={(evt) => {
             evt.preventDefault();
             this.events.onButtonClick(evt);
