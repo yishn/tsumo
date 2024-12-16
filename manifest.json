@@ -6,7 +6,7 @@
   "display": "fullscreen",
   "icons": [
     {
-      "src": "./assets/img/favicon.png"
+      "src": "./assets/img/icon.png"
     }
   ],
   "orientation": "portrait",
