@@ -206,7 +206,7 @@ export class LobbyPage extends Component("lobby-page", {
                     ? "./assets/icons/invite.svg"
                     : "./assets/icons/clipboard.svg"
                 }
-                title="Copy Session Identifier"
+                title="Copy Table Identifier"
                 onAvatarClick={() => {
                   navigator.clipboard.writeText(SESSION);
 
@@ -298,7 +298,7 @@ export class LobbyPage extends Component("lobby-page", {
           <div class="spacer"></div>
 
           <Button part="join" onclick={() => setShowJoinDialog(true)}>
-            Join Another Session
+            Join Another Table
           </Button>
         </div>
 
@@ -341,7 +341,7 @@ export class LobbyPage extends Component("lobby-page", {
             }}
           >
             <label>
-              <p>Session Identifier:</p>
+              <p>Table Identifier:</p>
               <input
                 ref={joinSessionIdInput}
                 type="text"
@@ -372,7 +372,7 @@ export class LobbyPage extends Component("lobby-page", {
                     }).toString();
                 }}
               >
-                New Session
+                New Table
               </Button>
             </ButtonList>
           </form>
