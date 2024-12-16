@@ -385,10 +385,10 @@ export class LobbyPage extends Component("lobby-page", {
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: none;
+            overflow: hidden;
             background: linear-gradient(
               to bottom,
-              transparent,
+              #714634,
               rgba(0, 0, 0, 0.2) 5em
             );
             -webkit-backdrop-filter: blur(0.5em);
