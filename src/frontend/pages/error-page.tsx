@@ -44,7 +44,7 @@ export class ErrorPage extends Component("error-page", {
             padding-bottom: 4em;
             background: linear-gradient(
               to bottom,
-              transparent,
+              var(--app-theme-color),
               rgba(0, 0, 0, 0.2) 5em
             );
             -webkit-backdrop-filter: blur(0.5em);
