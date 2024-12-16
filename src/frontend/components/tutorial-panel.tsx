@@ -137,7 +137,7 @@ export class TutorialPanel extends Component("tutorial-panel", {
             flex: 1;
             border-radius: 0.5em;
             height: 1em;
-            background-color: #714634;
+            background-color: var(--app-theme-color);
           }
           [part="header"] .progress div {
             position: absolute;

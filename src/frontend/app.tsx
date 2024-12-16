@@ -202,14 +202,16 @@ export class AppComponent extends Component("app") {
           }
 
           html {
+            --app-theme-color: #714634;
             --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
             --app-font: 1.2em/1.3 var(--app-kaiti-font-stack);
             --app-background: linear-gradient(
                 to bottom,
-                #714634,
+                var(--app-theme-color),
                 transparent 5em
               ),
-              url("./assets/img/bg.jpg") center / cover no-repeat fixed #714634;
+              url("./assets/img/bg.jpg") center / cover no-repeat fixed
+                var(--app-theme-color);
             width: 100dvw;
             height: 100dvh;
             color-scheme: dark;

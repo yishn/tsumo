@@ -388,7 +388,7 @@ export class LobbyPage extends Component("lobby-page", {
             overflow: hidden;
             background: linear-gradient(
               to bottom,
-              #714634,
+              var(--app-theme-color),
               rgba(0, 0, 0, 0.2) 5em
             );
             -webkit-backdrop-filter: blur(0.5em);
