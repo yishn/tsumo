@@ -49,7 +49,6 @@ import { diceSort } from "../../shared/utils.ts";
 import { webSocketHook } from "../global-state.ts";
 import { TileStack } from "../components/tile-stack.tsx";
 import { ReactionWindow } from "../components/reaction-window.tsx";
-import { reactionTimeout } from "../../shared/constants.ts";
 import { ReactionBar } from "../components/reaction-bar.tsx";
 import { ScoreScroll } from "../components/score-scroll.tsx";
 import { EndScreen } from "../components/end-screen.tsx";
@@ -325,7 +324,7 @@ export class GamePage extends Component("game-page", {
                 class={() => clsx({ leave: leave() })}
                 suit={() => value()?.suit}
                 rank={() => value()?.rank}
-                timeout={reactionTimeout}
+                timeout={this.props.gameInfo()?.reactionTimeout}
               >
                 <ActionBarButton
                   slot="action"

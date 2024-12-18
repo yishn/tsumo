@@ -36,7 +36,6 @@ import {
   ScorePhase,
 } from "../core/game-state.ts";
 import { diceSort, uuid } from "../shared/utils.ts";
-import { reactionTimeout } from "../shared/constants.ts";
 
 type Peers = Map<
   string,
@@ -410,6 +409,7 @@ function useGame(session: GameSession): () => void {
         gameState().phase.name === Phase.Reaction
           ? (gameState().phase as ReactionPhase).reactions
           : [],
+      reactionTimeout: gameState().reactionTimeout,
     }));
 
     const currentPlayerPeer = useMemo(() =>
@@ -510,7 +510,7 @@ function useGame(session: GameSession): () => void {
       if (phase instanceof ReactionPhase) {
         timeoutId = setTimeout(() => {
           updateGameState(ReactionPhase, (state) => state.phase.next());
-        }, reactionTimeout + 200);
+        }, gameState().reactionTimeout + 200);
       }
 
       if (phase instanceof ScorePhase) {

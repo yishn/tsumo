@@ -51,6 +51,7 @@ export interface GameInfo {
   lastDiscardInfo: [playerId: string, discardIndex: number] | null;
   kongDiscard: ITile | null;
   reactions: Reaction[];
+  reactionTimeout: number;
 }
 
 export interface ScoreInfo {
