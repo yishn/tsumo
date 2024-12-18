@@ -340,16 +340,14 @@ export class LobbyPage extends Component("lobby-page", {
                 }).toString();
             }}
           >
-            <label>
-              <p>Table Identifier:</p>
-              <input
-                ref={joinSessionIdInput}
-                type="text"
-                value={joinSessionId}
-                maxLength={50}
-                oninput={(evt) => setJoinSessionId(evt.currentTarget.value)}
-              />
-            </label>
+            <input
+              ref={joinSessionIdInput}
+              type="text"
+              placeholder="Table Identifier"
+              value={joinSessionId}
+              maxLength={50}
+              oninput={(evt) => setJoinSessionId(evt.currentTarget.value)}
+            />
             <ButtonList>
               <Button
                 primary
@@ -379,6 +377,11 @@ export class LobbyPage extends Component("lobby-page", {
         </DrawerDialog>
 
         <Style>{css`
+          @keyframes enter {
+            from {
+              opacity: 0;
+            }
+          }
           :host {
             --action-bar-icon-color: rgb(255, 211, 163);
             --action-bar-icon-disabled-color: rgba(255, 211, 163, 0.5);
@@ -393,6 +396,7 @@ export class LobbyPage extends Component("lobby-page", {
             );
             -webkit-backdrop-filter: blur(0.5em);
             backdrop-filter: blur(0.5em);
+            animation: 1s backwards enter;
           }
 
           .content {
@@ -463,11 +467,11 @@ export class LobbyPage extends Component("lobby-page", {
           input {
             box-sizing: border-box;
             border: none;
+            border-radius: 0.3em;
+            padding: 0 0.5em;
             margin-bottom: 1em;
             background-color: rgba(0, 0, 0, 0.7);
-            font: var(--app-font);
-            font-size: 1em;
-            text-align: center;
+            font: 1em/1.5 var(--app-kaiti-font-stack);
           }
           input:disabled {
             cursor: not-allowed;
@@ -475,6 +479,7 @@ export class LobbyPage extends Component("lobby-page", {
           [part="name-chooser"] input {
             width: 6em;
             font-size: 1.5em;
+            text-align: center;
           }
 
           [part="status"] {
@@ -500,20 +505,12 @@ export class LobbyPage extends Component("lobby-page", {
             max-width: 20em;
           }
 
-          .join-dialog .inner {
+          mj-drawer-dialog .inner {
             display: flex;
             flex-direction: column;
             justify-content: stretch;
           }
-          .join-dialog label {
-            display: flex;
-            flex-direction: column;
-            justify-content: stretch;
-          }
-          .join-dialog label p {
-            margin: 0 0 0.2em;
-          }
-          .join-dialog input {
+          mj-drawer-dialog input {
             background-color: rgba(255, 255, 255, 0.2);
           }
         `}</Style>
