@@ -37,6 +37,7 @@ import TutorialPage3 from "../tutorial/winning-hands.tsx";
 import TutorialPage4 from "../tutorial/joker.tsx";
 import TutorialPage5 from "../tutorial/game-flow.tsx";
 import { uuid } from "../../shared/utils.ts";
+import { FormRow } from "../components/form-row.tsx";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -336,6 +337,9 @@ export class LobbyPage extends Component("lobby-page", {
           show={showSettingsDialog}
           onClose={() => setShowSettingsDialog(false)}
         >
+          <FormRow label="Rotations"></FormRow>
+          <FormRow label="Reaction Duration"></FormRow>
+
           <ButtonList>
             <Button onclick={() => setShowSettingsDialog(false)}>Close</Button>
           </ButtonList>
@@ -423,7 +427,6 @@ export class LobbyPage extends Component("lobby-page", {
             display: flex;
             flex-direction: column;
             align-items: safe center;
-            gap: 0.5em;
             padding: 1em;
             padding-bottom: max(1em, env(safe-area-inset-bottom));
             overflow: auto;
@@ -461,6 +464,7 @@ export class LobbyPage extends Component("lobby-page", {
             justify-content: safe center;
             align-items: safe center;
             gap: 0.5em;
+            margin-bottom: 0.5em;
           }
           [part="avatar-chooser"] .prev,
           [part="avatar-chooser"] .next {
@@ -488,7 +492,6 @@ export class LobbyPage extends Component("lobby-page", {
             border: none;
             border-radius: 0.3em;
             padding: 0 0.5em;
-            margin-bottom: 1em;
             background-color: rgba(0, 0, 0, 0.7);
             font: 1em/1.5 var(--app-kaiti-font-stack);
           }
@@ -497,6 +500,7 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="name-chooser"] input {
             width: 6em;
+            margin-bottom: .7em;
             font-size: 1.5em;
             text-align: center;
           }
@@ -530,6 +534,9 @@ export class LobbyPage extends Component("lobby-page", {
           }
           mj-drawer-dialog input {
             background-color: rgba(255, 255, 255, 0.2);
+          }
+          mj-drawer-dialog mj-button-list {
+            margin-top: 1em;
           }
         `}</Style>
 
