@@ -18,6 +18,7 @@ import {
   HelpIcon,
   LeftIcon,
   RightIcon,
+  SettingsIcon,
   SubmitIcon,
   avatarList,
   getAvatarUrl,
@@ -176,6 +177,8 @@ export class LobbyPage extends Component("lobby-page", {
       return () => clearTimeout(timeoutId);
     });
 
+    const [showSettingsDialog, setShowSettingsDialog] = useSignal(false);
+
     return (
       <>
         <div class="content">
@@ -274,6 +277,14 @@ export class LobbyPage extends Component("lobby-page", {
             part="ready"
             class={() => clsx({ hide: ready() ? true : false })}
           >
+            <ActionBarButton
+              disabled={ready}
+              tooltip="Game Settings"
+              onButtonClick={() => setShowSettingsDialog(true)}
+            >
+              <SettingsIcon />
+            </ActionBarButton>
+
             <Tile
               title="Ready"
               custom
@@ -322,7 +333,15 @@ export class LobbyPage extends Component("lobby-page", {
         </AnimatedIf>
 
         <DrawerDialog
-          class="join-dialog"
+          show={showSettingsDialog}
+          onClose={() => setShowSettingsDialog(false)}
+        >
+          <ButtonList>
+            <Button onclick={() => setShowSettingsDialog(false)}>Close</Button>
+          </ButtonList>
+        </DrawerDialog>
+
+        <DrawerDialog
           show={showJoinDialog}
           onClose={() => setShowJoinDialog(false)}
         >
@@ -493,7 +512,6 @@ export class LobbyPage extends Component("lobby-page", {
             gap: 1em;
             transition: opacity 0.2s;
             padding-bottom: 1em;
-            padding-left: calc(1em + 1.8em);
           }
           [part="ready"].hide {
             opacity: 0;
