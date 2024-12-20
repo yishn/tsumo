@@ -192,18 +192,20 @@ export class LobbyPage extends Component("lobby-page", {
       }
     });
 
-    useEffect(() => {
-      if (maxRotation() != null && reactionTimeout() != null) {
-        webSocketHook.sendMessage({
-          lobby: {
-            gameSettings: {
-              maxRotation: maxRotation()!,
-              reactionTimeout: reactionTimeout()!,
+    const sendGameSettings = () => {
+      setTimeout(() => {
+        if (maxRotation() != null && reactionTimeout() != null) {
+          webSocketHook.sendMessage({
+            lobby: {
+              gameSettings: {
+                maxRotation: maxRotation()!,
+                reactionTimeout: reactionTimeout()!,
+              },
             },
-          },
-        });
-      }
-    });
+          });
+        }
+      });
+    };
 
     return (
       <>
@@ -365,24 +367,28 @@ export class LobbyPage extends Component("lobby-page", {
           <FormRow label="Number of Rotations">
             <NumberStepper
               value={() => maxRotation() ?? 0}
-              onDecrement={() =>
-                setMaxRotation((n) => Math.max(1, (n ?? 0) - 1))
-              }
-              onIncrement={() =>
-                setMaxRotation((n) => Math.min(9, (n ?? 0) + 1))
-              }
+              onDecrement={() => {
+                setMaxRotation((n) => Math.max(1, (n ?? 0) - 1));
+                sendGameSettings();
+              }}
+              onIncrement={() => {
+                setMaxRotation((n) => Math.min(9, (n ?? 0) + 1));
+                sendGameSettings();
+              }}
             />
           </FormRow>
           <FormRow label="Reaction Duration">
             <NumberStepper
               value={() => (reactionTimeout() ?? 0) / 1000}
               valueSuffix=" sec"
-              onDecrement={() =>
-                setReactionTimeout((n) => Math.max(1000, (n ?? 0) - 1000))
-              }
-              onIncrement={() =>
-                setReactionTimeout((n) => Math.min(9000, (n ?? 0) + 1000))
-              }
+              onDecrement={() => {
+                setReactionTimeout((n) => Math.max(1000, (n ?? 0) - 1000));
+                sendGameSettings();
+              }}
+              onIncrement={() => {
+                setReactionTimeout((n) => Math.min(9000, (n ?? 0) + 1000));
+                sendGameSettings();
+              }}
             />
           </FormRow>
 
