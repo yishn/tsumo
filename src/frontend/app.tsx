@@ -134,6 +134,9 @@ export class AppComponent extends Component("app") {
     );
     const scoreInfo = webSocketHook.useServerSignal((msg) => msg.game?.score);
     const endInfo = webSocketHook.useServerSignal((msg) => msg.game?.end);
+    const gameSettings = webSocketHook.useServerSignal(
+      (msg) => msg.gameSettings
+    );
 
     useEffect(() => {
       if (webSocketHook.connected()) {
@@ -169,7 +172,11 @@ export class AppComponent extends Component("app") {
           <ErrorPage message={() => error()?.message ?? "Unknown error"} />
         </If>
         <ElseIf condition={() => mode() === "lobby"}>
-          <LobbyPage players={players} ownPlayerId={ownPlayerId} />
+          <LobbyPage
+            players={players}
+            ownPlayerId={ownPlayerId}
+            gameSettings={gameSettings}
+          />
         </ElseIf>
         <ElseIf condition={() => mode() === "game"}>
           <GamePage

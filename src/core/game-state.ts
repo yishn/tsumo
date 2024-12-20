@@ -822,7 +822,7 @@ export class GameState<P extends PhaseBase = PhaseBase> {
   phase: P;
   turn: number = 1;
   rotation: number = 1;
-  maxRotation: number = 2;
+  maxRotation: number = 4;
   reactionTimeout: number = 5000;
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());

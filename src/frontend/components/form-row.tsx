@@ -13,11 +13,12 @@ export class FormRow extends Component("form-row", {
           :host {
             display: flex;
             align-items: center;
+            gap: 0.5em;
+            margin: 0.5em 0;
           }
 
           [part="label"] {
             flex: 1;
-            padding: 0.2em 0;
           }
         `}</Style>
       </>

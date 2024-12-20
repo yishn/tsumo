@@ -16,6 +16,7 @@ import {
   GameEndInfo,
   GameInfo,
   GamePlayersInfo,
+  GameSettings,
   PlayerInfo,
   ScoreInfo,
   ServerMessage,
@@ -248,9 +249,14 @@ function onAllReady(session: GameSession, cb: () => void): () => void {
   return destroy;
 }
 
-function useLobby(session: GameSession): () => void {
+function useLobby(
+  session: GameSession,
+  gameSettings?: GameSettings
+): () => void {
   const [, destroy] = useSubscope(() => {
-    const { onClientMessage, onClientClose } = useWebSockets(session.clients);
+    const { useClientSignal, onClientMessage, onClientClose } = useWebSockets(
+      session.clients
+    );
 
     useEffect(() => {
       session.players.set((players) => {
@@ -330,6 +336,34 @@ function useLobby(session: GameSession): () => void {
       };
     });
 
+    if (gameSettings != null) {
+      const [maxRotation, setMaxRotation] = useSignal(gameSettings.maxRotation);
+      const [reactionTimeout, setReactionTimeout] = useSignal(
+        gameSettings.reactionTimeout
+      );
+
+      useEffect(() => {
+        gameSettings.maxRotation = maxRotation();
+        gameSettings.reactionTimeout = reactionTimeout();
+      });
+
+      useClientSignal(
+        (msg) => msg.gameSettings,
+        () => ({
+          maxRotation: maxRotation(),
+          reactionTimeout: reactionTimeout(),
+        })
+      );
+
+      onClientMessage(
+        (msg) => msg.lobby?.gameSettings,
+        (evt) => {
+          setMaxRotation(evt.data.maxRotation);
+          setReactionTimeout(evt.data.reactionTimeout);
+        }
+      );
+    }
+
     onClientClose((evt) => {
       session.peers.set((peers) => {
         const result = new Map(peers);
@@ -352,7 +386,7 @@ function useLobby(session: GameSession): () => void {
   return destroy;
 }
 
-function useGame(session: GameSession): () => void {
+function useGame(session: GameSession, settings?: GameSettings): () => void {
   const [, destroy] = useSubscope(() => {
     const { useClientSignal, onClientMessage, onClientClose } = useWebSockets(
       session.clients
@@ -368,6 +402,15 @@ function useGame(session: GameSession): () => void {
       GameState.createNewGame(),
       { force: true }
     );
+
+    if (settings != null) {
+      setGameState((state) => {
+        state.maxRotation = settings.maxRotation;
+        state.reactionTimeout = settings.reactionTimeout;
+
+        return state;
+      });
+    }
 
     const updateGameState = <P extends PhaseBase>(
       phase: "*" | (new (...args: any) => P),
@@ -613,13 +656,19 @@ export class GameSession {
     useClientSignal((msg) => msg.mode, this.mode);
     useClientSignal((msg) => msg.players, this.players);
 
+    let newGameState = GameState.createNewGame();
+    let gameSettings: GameSettings = {
+      maxRotation: newGameState.maxRotation,
+      reactionTimeout: newGameState.reactionTimeout,
+    };
+
     useEffect(() => {
       let destroy: Cleanup;
 
       if (this.mode() === "lobby") {
-        destroy = useLobby(this);
+        destroy = useLobby(this, gameSettings);
       } else if (this.mode() === "game") {
-        destroy = useGame(this);
+        destroy = useGame(this, gameSettings);
       }
 
       return destroy;

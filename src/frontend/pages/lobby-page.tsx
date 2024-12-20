@@ -38,6 +38,8 @@ import TutorialPage4 from "../tutorial/joker.tsx";
 import TutorialPage5 from "../tutorial/game-flow.tsx";
 import { uuid } from "../../shared/utils.ts";
 import { FormRow } from "../components/form-row.tsx";
+import { NumberStepper } from "../components/number-stepper.tsx";
+import { GameSettings } from "../../shared/message.ts";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -49,6 +51,7 @@ export class LobbyPage extends Component("lobby-page", {
     }[]
   >(),
   ownPlayerId: prop<string>(),
+  gameSettings: prop<GameSettings>(),
 }) {
   render() {
     const players = this.props.players;
@@ -179,6 +182,28 @@ export class LobbyPage extends Component("lobby-page", {
     });
 
     const [showSettingsDialog, setShowSettingsDialog] = useSignal(false);
+    const [maxRotation, setMaxRotation] = useSignal<number>();
+    const [reactionTimeout, setReactionTimeout] = useSignal<number>();
+
+    useEffect(() => {
+      if (this.props.gameSettings() != null) {
+        setMaxRotation(this.props.gameSettings()!.maxRotation);
+        setReactionTimeout(this.props.gameSettings()!.reactionTimeout);
+      }
+    });
+
+    useEffect(() => {
+      if (maxRotation() != null && reactionTimeout() != null) {
+        webSocketHook.sendMessage({
+          lobby: {
+            gameSettings: {
+              maxRotation: maxRotation()!,
+              reactionTimeout: reactionTimeout()!,
+            },
+          },
+        });
+      }
+    });
 
     return (
       <>
@@ -337,8 +362,29 @@ export class LobbyPage extends Component("lobby-page", {
           show={showSettingsDialog}
           onClose={() => setShowSettingsDialog(false)}
         >
-          <FormRow label="Rotations"></FormRow>
-          <FormRow label="Reaction Duration"></FormRow>
+          <FormRow label="Number of Rotations">
+            <NumberStepper
+              value={() => maxRotation() ?? 0}
+              onDecrement={() =>
+                setMaxRotation((n) => Math.max(1, (n ?? 0) - 1))
+              }
+              onIncrement={() =>
+                setMaxRotation((n) => Math.min(9, (n ?? 0) + 1))
+              }
+            />
+          </FormRow>
+          <FormRow label="Reaction Duration">
+            <NumberStepper
+              value={() => (reactionTimeout() ?? 0) / 1000}
+              valueSuffix=" sec"
+              onDecrement={() =>
+                setReactionTimeout((n) => Math.max(1000, (n ?? 0) - 1000))
+              }
+              onIncrement={() =>
+                setReactionTimeout((n) => Math.min(9000, (n ?? 0) + 1000))
+              }
+            />
+          </FormRow>
 
           <ButtonList>
             <Button onclick={() => setShowSettingsDialog(false)}>Close</Button>
@@ -500,7 +546,7 @@ export class LobbyPage extends Component("lobby-page", {
           }
           [part="name-chooser"] input {
             width: 6em;
-            margin-bottom: .7em;
+            margin-bottom: 0.7em;
             font-size: 1.5em;
             text-align: center;
           }

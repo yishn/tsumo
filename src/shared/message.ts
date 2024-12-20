@@ -66,6 +66,11 @@ export interface GameEndInfo {
   nextSession: string;
 }
 
+export interface GameSettings {
+  maxRotation: number;
+  reactionTimeout: number;
+}
+
 export interface ServerMessage {
   heartbeat?: Heartbeat;
   error?: {
@@ -78,6 +83,7 @@ export interface ServerMessage {
   mode?: AppMode;
   players?: PlayerInfo[];
   deadPlayers?: string[];
+  gameSettings?: GameSettings;
   game?: {
     info?: GameInfo;
     players?: GamePlayersInfo;
@@ -105,6 +111,7 @@ export interface ClientMessage {
       avatar: number;
       ready?: boolean;
     };
+    gameSettings?: GameSettings;
   };
   game?: {
     operation?: {
