@@ -55,6 +55,7 @@ export class NumberStepper extends Component("number-stepper", {
             border-radius: 0.2em;
             padding: 0 0.5em;
             background-color: transparent;
+            color: #eee;
             font: var(--app-font);
             font-size: 1em;
             cursor: pointer;

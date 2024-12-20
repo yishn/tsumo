@@ -23,13 +23,10 @@ export class ActionBarButton extends Component("action-bar-button", {
 
         <Style>{css`
           :host {
-            --_action-bar-icon-color: var(
-              --action-bar-icon-color,
-              currentColor
-            );
+            --_action-bar-icon-color: var(--action-bar-icon-color, #eee);
             --_action-bar-icon-disabled-color: var(
               --action-bar-icon-disabled-color,
-              currentColor
+              #eee
             );
             display: inline-flex;
           }
