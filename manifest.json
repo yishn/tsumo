@@ -3,7 +3,7 @@
   "background_color": "#714634",
   "theme_color": "#714634",
   "categories": ["games"],
-  "display": "fullscreen",
+  "display": "standalone",
   "icons": [
     {
       "src": "./assets/img/icon_maskable.png",
