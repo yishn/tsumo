@@ -6,7 +6,14 @@
   "display": "fullscreen",
   "icons": [
     {
-      "src": "./assets/img/icon.png"
+      "src": "./assets/img/icon_maskable.png",
+      "sizes": "270x270",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./assets/img/icon.png",
+      "sizes": "227x227",
+      "purpose": "any"
     }
   ],
   "orientation": "portrait",
