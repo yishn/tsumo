@@ -545,7 +545,7 @@ export class LobbyPage extends Component("lobby-page", {
             border-radius: 0.3em;
             padding: 0 0.5em;
             background-color: rgba(0, 0, 0, 0.7);
-            font: 1em/1.5 var(--app-kaiti-font-stack);
+            font: 1em/1.5 var(--app-font-stack);
           }
           input:disabled {
             cursor: not-allowed;

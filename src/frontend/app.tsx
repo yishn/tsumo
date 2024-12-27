@@ -210,8 +210,8 @@ export class AppComponent extends Component("app") {
 
           html {
             --app-theme-color: #714634;
-            --app-kaiti-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
-            --app-font: 1.2em/1.3 var(--app-kaiti-font-stack);
+            --app-font-stack: "Alegreya", "KaiTi", "Kaiti TC", serif;
+            --app-font: 1.2rem/1.3 var(--app-font-stack);
             --app-background: linear-gradient(
                 to bottom,
                 var(--app-theme-color),
