@@ -70,6 +70,52 @@ export class Tile implements ITile {
     return Math.abs(a.rank - b.rank) <= 2;
   }
 
+  static completeToSet(a: Tile, b?: Tile): Tile[][] {
+    if (b == null) {
+      const result = [[a, a]];
+
+      [
+        [-2, -1],
+        [-1, 1],
+        [1, 2],
+      ]
+        .map((rankDeltas) => {
+          try {
+            return rankDeltas
+              .map((delta) => a.rank + delta)
+              .map((rank) => new Tile(a.suit, rank));
+          } catch (err) {
+            return null;
+          }
+        })
+        .forEach((tiles) => {
+          if (tiles != null) result.push(tiles);
+        });
+
+      return result;
+    } else {
+      if (Tile.equal(a, b)) return [[a]];
+      if (a.suit !== b.suit) return [];
+
+      if (a.numeric) {
+        const low = Math.min(a.rank, b.rank);
+        const high = Math.max(a.rank, b.rank);
+
+        if (low + 1 === high) {
+          return [[new Tile(a.suit, low - 1), new Tile(a.suit, high + 1)]];
+        } else if (low + 2 === high) {
+          return [[new Tile(a.suit, low + 1)]];
+        }
+      } else if (a.honor) {
+        return (a.suit === TileSuit.Wind ? [1, 2, 3, 4] : [1, 2, 3])
+          .filter((rank) => rank !== a.rank && rank !== b.rank)
+          .map((rank) => [new Tile(a.suit, rank)]);
+      }
+    }
+
+    return [];
+  }
+
   static isChaotic(tiles: Tile[]): boolean {
     const honorTiles = tiles.filter((tile) => tile.honor).sort(Tile.compare);
 
