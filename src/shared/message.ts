@@ -6,6 +6,7 @@ import type {
   ReactionPhase,
   Reaction,
   ScoreModifier,
+  OtherPlayer,
 } from "../core/main.ts";
 import { Achievement } from "./achievements.ts";
 
@@ -23,17 +24,7 @@ export interface PlayerInfo {
   dice?: [number, number];
 }
 
-export type GamePlayersInfo = Record<
-  string,
-  {
-    index: number;
-    score: number;
-    tilesCount: number;
-    discards: ITile[];
-    melds: ITile[][];
-    order: [type: "discard" | "meld", index: number][];
-  }
->;
+export type GamePlayersInfo = Record<string, { index: number } & OtherPlayer>;
 
 export interface GamePlayerInfo {
   tiles: ITile[];

@@ -469,11 +469,7 @@ function useGame(session: GameSession, settings?: GameSettings): () => void {
           player.id,
           {
             index: i,
-            score: gameState().players[i].score,
-            tilesCount: gameState().players[i].tiles.length,
-            discards: gameState().players[i].discards,
-            melds: gameState().players[i].melds,
-            order: gameState().players[i].order,
+            ...gameState().players[i].toOtherPlayer(),
           },
         ])
       )

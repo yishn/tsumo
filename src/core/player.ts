@@ -1,4 +1,4 @@
-import { Tile } from "./tile.ts";
+import { ITile, Tile } from "./tile.ts";
 
 export interface PlayerStatisticsData {
   score: number;
@@ -91,4 +91,22 @@ export class Player {
     this.melds.push(meld.sort(Tile.compare));
     this.order.push(["meld", this.melds.length - 1]);
   }
+
+  toOtherPlayer(): OtherPlayer {
+    return {
+      score: this.score,
+      tilesCount: this.tiles.length,
+      discards: this.discards,
+      melds: this.melds,
+      order: this.order,
+    };
+  }
+}
+
+export interface OtherPlayer {
+  score: number;
+  tilesCount: number;
+  discards: ITile[];
+  melds: ITile[][];
+  order: [type: "discard" | "meld", index: number][];
 }

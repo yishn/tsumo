@@ -6,6 +6,26 @@ export enum TileSuit {
   Dragon = "dragon",
 }
 
+export namespace TileSuit {
+  export function list(): TileSuit[] {
+    return [
+      TileSuit.Bamboo,
+      TileSuit.Myriad,
+      TileSuit.Circle,
+      TileSuit.Wind,
+      TileSuit.Dragon,
+    ];
+  }
+
+  export function isHonor(suit: TileSuit): boolean {
+    return suit === TileSuit.Wind || suit === TileSuit.Dragon;
+  }
+
+  export function isNumeric(suit: TileSuit): boolean {
+    return !isHonor(suit);
+  }
+}
+
 export interface SetsPairs {
   sets: Tile[][];
   pairs: Tile[][];
@@ -204,11 +224,11 @@ export class Tile implements ITile {
   }
 
   get honor(): boolean {
-    return this.suit === TileSuit.Wind || this.suit === TileSuit.Dragon;
+    return TileSuit.isHonor(this.suit);
   }
 
   get numeric(): boolean {
-    return !this.honor;
+    return TileSuit.isNumeric(this.suit);
   }
 
   nextTile(): Tile | undefined {
@@ -236,6 +256,10 @@ export class Tile implements ITile {
 
   valueOf(): string {
     return `${this.suit[0]}${this.rank}`;
+  }
+
+  toString(): string {
+    return this.valueOf();
   }
 }
 
