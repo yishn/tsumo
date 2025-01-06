@@ -102,7 +102,12 @@ export class Tile implements ITile {
         const high = Math.max(a.rank, b.rank);
 
         if (low + 1 === high) {
-          return [[new Tile(a.suit, low - 1), new Tile(a.suit, high + 1)]];
+          return [
+            low > 1 ? new Tile(a.suit, low - 1) : null,
+            high < 9 ? new Tile(a.suit, high + 1) : null,
+          ]
+            .filter((tile) => tile != null)
+            .map((tile) => [tile]);
         } else if (low + 2 === high) {
           return [[new Tile(a.suit, low + 1)]];
         }
