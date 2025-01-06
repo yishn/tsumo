@@ -137,13 +137,14 @@ export class Tile implements ITile {
   }
 
   static formSetsPairs(tiles: Tile[], jokers: number): SetsPairs[] {
-    if (tiles.length + jokers <= 1)
+    if (tiles.length + jokers <= 1) {
       return [
         {
           sets: [],
           pairs: [],
         },
       ];
+    }
 
     const result: SetsPairs[] = [];
     const pivot = tiles[0];
@@ -248,6 +249,19 @@ export class Tile implements ITile {
           (sets.length + melds === 4 && pairs.length >= 1)
       );
     }
+  }
+
+  static fromString(tile: string): Tile {
+    const suit = TileSuit.list().find((value) =>
+      value.startsWith(tile[0].toLowerCase())
+    );
+    const rank = parseInt(tile.slice(1), 10);
+
+    if (suit == null) {
+      throw new TypeError("Invalid tile");
+    }
+
+    return new Tile(suit, rank);
   }
 
   constructor(
