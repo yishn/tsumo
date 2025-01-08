@@ -47,15 +47,8 @@ class TileComponent extends Component("tile", {
 
     if (suit == null || rank == null) return null;
 
-    try {
-      return new Tile(suit, rank);
-    } catch (err) {
-      if (err instanceof TypeError) {
-        return null;
-      } else {
-        throw err;
-      }
-    }
+    const tile = new Tile(suit, rank);
+    return tile.valid ? tile : null;
   }
 
   render() {

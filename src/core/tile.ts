@@ -72,27 +72,37 @@ export class Tile implements ITile {
 
   static completeToSet(a: Tile, b?: Tile): Tile[][] {
     if (b == null) {
-      const result = [[a, a]];
-
-      [
-        [-2, -1],
-        [-1, 1],
-        [1, 2],
-      ]
-        .map((rankDeltas) => {
-          try {
-            return rankDeltas
-              .map((delta) => a.rank + delta)
-              .map((rank) => new Tile(a.suit, rank));
-          } catch (err) {
-            return null;
-          }
-        })
-        .forEach((tiles) => {
-          if (tiles != null) result.push(tiles);
-        });
-
-      return result;
+      return (
+        a.numeric || a.suit === TileSuit.Wind
+          ? [
+              [0, 0],
+              [-2, -1],
+              [-1, 1],
+              [1, 2],
+            ]
+          : a.suit === TileSuit.Dragon
+            ? [
+                [0, 0],
+                [1, 2],
+              ]
+            : []
+      )
+        .map((deltas) =>
+          deltas.map(
+            (delta) =>
+              new Tile(
+                a.suit,
+                a.numeric
+                  ? a.rank + delta
+                  : a.suit === TileSuit.Wind
+                    ? (a.rank + delta + 4) % 4
+                    : a.suit === TileSuit.Dragon
+                      ? (a.rank + delta + 3) % 3
+                      : 0
+              )
+          )
+        )
+        .filter((tiles) => tiles.every((tile) => tile.valid));
     } else {
       if (Tile.equal(a, b)) return [[a]];
       if (a.suit !== b.suit) return [];
@@ -119,6 +129,10 @@ export class Tile implements ITile {
     }
 
     return [];
+  }
+
+  static isClustered(a: Tile, b: Tile): boolean {
+    return a.numeric ? Tile.isAlmostSet(a, b) : Tile.equal(a, b);
   }
 
   static isChaotic(tiles: Tile[]): boolean {
@@ -263,7 +277,7 @@ export class Tile implements ITile {
     const rank = parseInt(tile.slice(1), 10);
 
     if (suit == null) {
-      throw new TypeError("Invalid tile");
+      throw new Error("Invalid tile");
     }
 
     return new Tile(suit, rank);
@@ -272,20 +286,15 @@ export class Tile implements ITile {
   constructor(
     public readonly suit: TileSuit,
     public readonly rank: number
-  ) {
-    if (
-      isNaN(rank) ||
-      rank <= 0 ||
-      rank > 9 ||
-      (suit === TileSuit.Wind && rank > 4) ||
-      (suit === TileSuit.Dragon && rank > 3)
-    ) {
-      throw new TypeError("Invalid rank");
-    }
+  ) {}
 
-    if (!Object.keys(TileSuit).some((key) => key.toLowerCase() === suit)) {
-      throw new TypeError("Invalid suit");
-    }
+  get valid(): boolean {
+    return !(
+      this.rank <= 0 ||
+      this.rank > 9 ||
+      (this.suit === TileSuit.Wind && this.rank > 4) ||
+      (this.suit === TileSuit.Dragon && this.rank > 3)
+    );
   }
 
   get honor(): boolean {
