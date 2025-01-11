@@ -562,45 +562,54 @@ class DefaultStrategy implements Strategy {
     };
   }
 
-  *listBestPartitionStrategies(
+  listBestPartitionStrategies(
     state: AiGameState,
     hand: Tile[],
     sets: number,
     pairs: number
-  ): Generator<{
+  ): {
     best: PartitionEntryStrategy[] | null;
-    steps: number;
     probability: number;
-  }> {
-    let bestSteps = Infinity;
-    let bestProbability = 0;
+  }[] {
+    function* inner(this: DefaultStrategy): Generator<{
+      best: PartitionEntryStrategy[] | null;
+      probability: number;
+    }> {
+      let maxSteps = 0;
+      let bestProbability = 0;
 
-    for (const partition of this.listPartitions(state, hand)) {
-      for (const goal of this.listPartitionGoals(partition, sets, pairs)) {
-        const partitionStrategy = this.getPartitionStrategy(
-          state,
-          partition,
-          goal
-        );
-        if (partitionStrategy == null) continue;
+      for (const partition of this.listPartitions(state, hand)) {
+        for (const goal of this.listPartitionGoals(partition, sets, pairs)) {
+          const partitionStrategy = this.getPartitionStrategy(
+            state,
+            partition,
+            goal
+          );
+          if (partitionStrategy == null) continue;
 
-        const { best, steps, probability } = this.evaluatePartitionStrategy(
-          state,
-          partitionStrategy
-        );
+          const { best, steps, probability } = this.evaluatePartitionStrategy(
+            state,
+            partitionStrategy
+          );
 
-        if (
-          best != null &&
-          steps <= bestSteps &&
-          probability >= bestProbability
-        ) {
-          yield { best, steps, probability };
+          maxSteps = Math.max(maxSteps, steps);
 
-          bestSteps = Math.min(bestSteps, steps);
-          bestProbability = Math.max(bestProbability, probability);
+          const transformedProbability =
+            probability *
+            (maxSteps === 0 ? 1 : Math.exp((Math.log(0.5) * steps) / maxSteps));
+
+          if (best != null && transformedProbability >= bestProbability) {
+            yield { best, probability: transformedProbability };
+
+            bestProbability = Math.max(bestProbability, transformedProbability);
+          }
         }
       }
     }
+
+    return [...inner.call(this)].filter(
+      (entry, _, arr) => entry.probability >= arr[arr.length - 1].probability
+    );
   }
 }
 
@@ -624,15 +633,11 @@ const state = new AiGameState().declareKnownTiles(hand);
 state.jokers = hand.slice(0, 2);
 const strategy = new DefaultStrategy();
 
-const sets = 4;
-const pairs = 1;
+const sets = 0;
+const pairs = 7;
 
 console.log(
-  JSON.stringify(
-    [...strategy.listBestPartitionStrategies(state, hand, sets, pairs)].slice(
-      -1
-    )[0]
-  )
+  JSON.stringify(strategy.listBestPartitionStrategies(state, hand, sets, pairs))
 );
 
 setTimeout(() => {}, 1000000000);
