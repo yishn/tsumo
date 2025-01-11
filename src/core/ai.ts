@@ -91,6 +91,7 @@ type AllTilesPlaceholder = typeof AllTilesPlaceholder;
 interface PartitionEntryStrategy {
   discards: Tile[];
   completion: (Tile | AllTilesPlaceholder)[][];
+  missing?: number;
 }
 
 function factorial(n: number): number {
@@ -341,8 +342,12 @@ class DefaultStrategy implements Strategy {
       hasDiscards: boolean
     ): Generator<PartitionEntryGoal[]> {
       if (pivotIndex < 0) {
-        if (sets + pairs === 0 || !hasDiscards) {
+        if (sets + pairs === 0) {
           yield [];
+        } else if (!hasDiscards) {
+          yield Array(sets)
+            .fill(PartitionEntryGoal.Set)
+            .concat(Array(pairs).fill(PartitionEntryGoal.Pair));
         }
         return;
       }
@@ -447,8 +452,19 @@ class DefaultStrategy implements Strategy {
     partition: PartitionEntry[],
     goal: PartitionEntryGoal[]
   ): PartitionEntryStrategy[] | undefined {
-    const result = partition.map((entry, i) =>
-      this.getPartitionEntryStrategy(state, entry, goal[i])
+    const result = goal.map((goal, i) =>
+      partition[i] != null
+        ? this.getPartitionEntryStrategy(state, partition[i], goal)
+        : ({
+            discards: [],
+            completion: [[]],
+            missing:
+              goal === PartitionEntryGoal.Pair
+                ? 2
+                : goal === PartitionEntryGoal.Set
+                  ? 3
+                  : 0,
+          } satisfies PartitionEntryStrategy)
     );
 
     if (!result.includes(undefined)) {
@@ -521,7 +537,9 @@ class DefaultStrategy implements Strategy {
     const steps = strategy
       .map(
         (strategy) =>
-          strategy.discards.length + (strategy.completion[0]?.length ?? 0)
+          strategy.discards.length +
+          (strategy.missing ?? 0) +
+          (strategy.completion[0]?.length ?? 0)
       )
       .reduce((a, b) => a + b, 0);
 
