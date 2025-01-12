@@ -1,6 +1,12 @@
 import { OtherPlayer } from "./player.ts";
 import { ITile, Tile, TileSuit } from "./tile.ts";
 
+const ALL_TILES = TileSuit.list().flatMap((suit) =>
+  [...Array(suit === TileSuit.Wind ? 4 : suit === TileSuit.Dragon ? 3 : 9)].map(
+    (_, i) => new Tile(suit, i + 1)
+  )
+);
+
 export class AiGameState {
   unknownTiles: Record<string, number> = {};
   otherPlayers: OtherPlayer[] = [];
@@ -267,11 +273,7 @@ class DefaultStrategy implements Strategy {
   }
 
   private listAllNonJokers(state: AiGameState): Tile[] {
-    return TileSuit.list().flatMap((suit) =>
-      [...Array(suit === TileSuit.Wind ? 4 : suit === TileSuit.Dragon ? 3 : 9)]
-        .map((_, i) => new Tile(suit, i + 1))
-        .filter((tile) => !state.isJoker(tile))
-    );
+    return ALL_TILES.filter((tile) => !state.isJoker(tile));
   }
 
   private completeTilesToSet(
@@ -356,7 +358,11 @@ class DefaultStrategy implements Strategy {
 
       const pivot = partition[pivotIndex];
 
-      if (sets > 0 && (pivot.pair == null || pairs === 0)) {
+      if (
+        sets > 0 &&
+        (pivot.pair == null || pairs === 0) &&
+        pivot.single == null
+      ) {
         for (const strategy of inner.call(
           this,
           sets - 1,
@@ -369,7 +375,12 @@ class DefaultStrategy implements Strategy {
         }
       }
 
-      if (pairs > 0 && (pivot.sequence == null || sets === 0)) {
+      if (
+        pairs > 0 &&
+        (pivot.sequence == null || sets === 0) &&
+        pivot.almostSequence == null &&
+        pivot.sequence == null
+      ) {
         for (const strategy of inner.call(
           this,
           sets,
@@ -569,9 +580,9 @@ class DefaultStrategy implements Strategy {
     hand: Tile[],
     sets: number,
     pairs: number
-  ): PartitionEntryStrategy[][] {
+  ): [PartitionEntryStrategy[][], number] {
     function* inner(this: DefaultStrategy): Generator<{
-      best: PartitionEntryStrategy[] | null;
+      strategy: PartitionEntryStrategy[];
       probability: number;
     }> {
       let maxSteps = 0;
@@ -598,7 +609,7 @@ class DefaultStrategy implements Strategy {
             (maxSteps === 0 ? 1 : Math.exp((Math.log(0.5) * steps) / maxSteps));
 
           if (best != null && transformedProbability >= bestProbability) {
-            yield { best, probability: transformedProbability };
+            yield { strategy: best, probability: transformedProbability };
 
             bestProbability = Math.max(bestProbability, transformedProbability);
           }
@@ -606,16 +617,14 @@ class DefaultStrategy implements Strategy {
       }
     }
 
-    return [...inner.call(this)]
-      .filter(
-        (entry, _, arr) =>
-          entry.best != null &&
-          entry.probability >= arr[arr.length - 1].probability
-      )
-      .map((entry) => entry.best!);
+    const result = [...inner.call(this)].filter(
+      (entry, _, arr) => entry.probability >= arr[arr.length - 1].probability
+    );
+
+    return [result.map((entry) => entry.strategy), result[0]?.probability ?? 0];
   }
 
-  evaluateDiscardProbability(
+  private evaluateDiscardProbability(
     state: AiGameState,
     discard: Tile,
     weight?: number
@@ -648,7 +657,7 @@ class DefaultStrategy implements Strategy {
     );
   }
 
-  evaluateDiscardStrategyProbability(
+  private evaluateDiscardStrategyProbability(
     state: AiGameState,
     discards: Tile[]
   ): number {
@@ -670,10 +679,10 @@ class DefaultStrategy implements Strategy {
       .reduce((a, b) => a * b, 1);
   }
 
-  getBestDiscardStrategy(
+  getBestDiscard(
     state: AiGameState,
     strategies: PartitionEntryStrategy[][]
-  ): [Tile[], Tile?] | undefined {
+  ): Tile | undefined {
     const discardStrategies = strategies.map((strategy) =>
       strategy.flatMap((entry) => entry.discards)
     );
@@ -706,7 +715,7 @@ class DefaultStrategy implements Strategy {
         }
       }
 
-      return [bestStrategy, bestDiscard];
+      return bestDiscard;
     }
   }
 }
@@ -731,19 +740,29 @@ const state = new AiGameState().declareKnownTiles(hand);
 state.jokers = hand.slice(0, 2);
 const strategy = new DefaultStrategy();
 
-const sets = 4;
-const pairs = 1;
-
 state.discards.push(new Tile(TileSuit.Circle, 2));
 state.allDiscards.push(new Tile(TileSuit.Circle, 2));
 
+const bestStandardStrategy = strategy.listBestPartitionStrategies(
+  state,
+  hand,
+  4,
+  1
+);
+const bestSevenPairsStrategy = strategy.listBestPartitionStrategies(
+  state,
+  hand,
+  0,
+  7
+);
+
 console.log(
-  // JSON.stringify(
-  strategy.getBestDiscardStrategy(
+  strategy.getBestDiscard(
     state,
-    strategy.listBestPartitionStrategies(state, hand, sets, pairs)
+    bestSevenPairsStrategy[1] > bestStandardStrategy[1]
+      ? bestSevenPairsStrategy[0]
+      : bestStandardStrategy[0]
   )
-  // )
 );
 
 setTimeout(() => {}, 1000000000);
