@@ -8,7 +8,9 @@ export class AiGameState {
   discard: Tile | undefined;
 
   hand: Tile[] = [];
+  discards: Tile[] = [];
   melds: Tile[][] = [];
+  allDiscards: Tile[] = [];
 
   constructor() {
     this.unknownTiles = Object.fromEntries(
@@ -567,10 +569,7 @@ class DefaultStrategy implements Strategy {
     hand: Tile[],
     sets: number,
     pairs: number
-  ): {
-    best: PartitionEntryStrategy[] | null;
-    probability: number;
-  }[] {
+  ): PartitionEntryStrategy[][] {
     function* inner(this: DefaultStrategy): Generator<{
       best: PartitionEntryStrategy[] | null;
       probability: number;
@@ -607,9 +606,108 @@ class DefaultStrategy implements Strategy {
       }
     }
 
-    return [...inner.call(this)].filter(
-      (entry, _, arr) => entry.probability >= arr[arr.length - 1].probability
+    return [...inner.call(this)]
+      .filter(
+        (entry, _, arr) =>
+          entry.best != null &&
+          entry.probability >= arr[arr.length - 1].probability
+      )
+      .map((entry) => entry.best!);
+  }
+
+  evaluateDiscardProbability(
+    state: AiGameState,
+    discard: Tile,
+    weight?: number
+  ): number {
+    const historicalIndex = state.allDiscards.findIndex((tile) =>
+      Tile.equal(tile, discard)
     );
+
+    if (weight == null) {
+      weight =
+        historicalIndex < 0 || state.allDiscards.length === 0
+          ? 1
+          : state.allDiscards.length === 1
+            ? 1 - +Tile.equal(state.allDiscards[0], discard)
+            : 1 -
+              Math.exp(
+                (-Math.log(0.5) *
+                  (historicalIndex - state.allDiscards.length + 1)) /
+                  (state.allDiscards.length - 1)
+              );
+    }
+
+    return (
+      1 -
+      weight *
+        this.calculateCompletionProbability(
+          state,
+          this.completeTilesToSet(state, discard)
+        )
+    );
+  }
+
+  evaluateDiscardStrategyProbability(
+    state: AiGameState,
+    discards: Tile[]
+  ): number {
+    const weights = state.allDiscards.map((_, i, arr) =>
+      arr.length <= 1
+        ? 0
+        : 1 -
+          Math.exp((-Math.log(0.5) * (i - arr.length + 1)) / (arr.length - 1))
+    );
+
+    return discards
+      .map((discard) =>
+        this.evaluateDiscardProbability(
+          state,
+          discard,
+          weights.find((_, i) => Tile.equal(discard, state.allDiscards[i])) ?? 1
+        )
+      )
+      .reduce((a, b) => a * b, 1);
+  }
+
+  getBestDiscardStrategy(
+    state: AiGameState,
+    strategies: PartitionEntryStrategy[][]
+  ): [Tile[], Tile?] | undefined {
+    const discardStrategies = strategies.map((strategy) =>
+      strategy.flatMap((entry) => entry.discards)
+    );
+
+    let bestProbability = 0;
+    let bestStrategy: Tile[] | undefined;
+
+    for (const discards of discardStrategies) {
+      const probability = this.evaluateDiscardStrategyProbability(
+        state,
+        discards
+      );
+
+      if (bestStrategy == null || probability > bestProbability) {
+        bestStrategy = discards;
+        bestProbability = probability;
+      }
+    }
+
+    if (bestStrategy != null) {
+      let bestProbability = 0;
+      let bestDiscard: Tile | undefined;
+
+      for (const discard of bestStrategy) {
+        const probability = this.evaluateDiscardProbability(state, discard);
+
+        if (bestDiscard == null || probability > bestProbability) {
+          bestDiscard = discard;
+          bestProbability = probability;
+        }
+      }
+
+      return [bestStrategy, bestDiscard];
+    }
   }
 }
 
@@ -633,11 +731,19 @@ const state = new AiGameState().declareKnownTiles(hand);
 state.jokers = hand.slice(0, 2);
 const strategy = new DefaultStrategy();
 
-const sets = 0;
-const pairs = 7;
+const sets = 4;
+const pairs = 1;
+
+state.discards.push(new Tile(TileSuit.Circle, 2));
+state.allDiscards.push(new Tile(TileSuit.Circle, 2));
 
 console.log(
-  JSON.stringify(strategy.listBestPartitionStrategies(state, hand, sets, pairs))
+  // JSON.stringify(
+  strategy.getBestDiscardStrategy(
+    state,
+    strategy.listBestPartitionStrategies(state, hand, sets, pairs)
+  )
+  // )
 );
 
 setTimeout(() => {}, 1000000000);
