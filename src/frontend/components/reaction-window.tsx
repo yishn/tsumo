@@ -5,6 +5,7 @@ import {
   defineComponents,
   prop,
   useEffect,
+  useMemo,
   useSignal,
 } from "sinho";
 import { ActionBar } from "./action-bar.tsx";
@@ -22,14 +23,15 @@ export class ReactionWindow extends Component("reaction-window", {
   static leaveDuration = 200;
 
   render() {
+    const timeout = useMemo(this.props.timeout);
     const [showTile, setShowTile] = useSignal(false);
-    const [progress, setProgress] = useSignal(this.props.timeout());
+    const [progress, setProgress] = useSignal(timeout());
 
     setTimeout(() => setShowTile(true), 500);
 
     useEffect(() => {
       setTimeout(() => {
-        setProgress(Math.max(this.props.timeout() - 1000, 0));
+        setProgress(Math.max(timeout() - 1000, 0));
       }, 10);
 
       const intervalId = setInterval(() => {
@@ -38,7 +40,7 @@ export class ReactionWindow extends Component("reaction-window", {
       }, 1000);
 
       return () => clearInterval(intervalId);
-    }, [this.props.timeout]);
+    }, [timeout]);
 
     return (
       <>
@@ -52,11 +54,11 @@ export class ReactionWindow extends Component("reaction-window", {
                 cy={0}
                 r={18}
                 fill="none"
-                pathLength={() => this.props.timeout()}
+                pathLength={timeout}
                 stroke="rgba(255, 163, 130, .5)"
                 stroke-width={4}
-                stroke-dasharray={() => this.props.timeout()}
-                stroke-dashoffset={() => this.props.timeout() - progress()}
+                stroke-dasharray={timeout}
+                stroke-dashoffset={() => timeout() - progress()}
                 transform="rotate(-90)"
               />
             </svg>
@@ -106,8 +108,7 @@ export class ReactionWindow extends Component("reaction-window", {
               100% var(--clip-cutoff-size),
               calc(100% - var(--clip-cutoff-size)) 0
             );
-            animation: ${ReactionWindow.showDuration}ms backwards enter
-              0.2s;
+            animation: ${ReactionWindow.showDuration}ms backwards enter 0.2s;
           }
           @keyframes leave {
             to {

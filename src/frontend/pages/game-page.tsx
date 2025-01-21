@@ -324,7 +324,7 @@ export class GamePage extends Component("game-page", {
                 class={() => clsx({ leave: leave() })}
                 suit={() => value()?.suit}
                 rank={() => value()?.rank}
-                timeout={this.props.gameInfo()?.reactionTimeout}
+                timeout={() => this.props.gameInfo()?.reactionTimeout ?? 0}
               >
                 <ActionBarButton
                   slot="action"
