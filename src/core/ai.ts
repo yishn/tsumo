@@ -583,10 +583,11 @@ class DefaultStrategy implements Strategy {
   ): [PartitionEntryStrategy[][], number] {
     function* inner(this: DefaultStrategy): Generator<{
       strategy: PartitionEntryStrategy[];
+      steps: number;
       probability: number;
     }> {
-      let maxSteps = 0;
       let bestProbability = 0;
+      let bestSteps = Infinity;
 
       for (const partition of this.listPartitions(state, hand)) {
         for (const goal of this.listPartitionGoals(partition, sets, pairs)) {
@@ -602,26 +603,35 @@ class DefaultStrategy implements Strategy {
             partitionStrategy
           );
 
-          maxSteps = Math.max(maxSteps, steps);
+          if (best != null) {
+            if (steps < bestSteps) {
+              bestProbability = 0;
+            }
 
-          const transformedProbability =
-            probability *
-            (maxSteps === 0 ? 1 : Math.exp((Math.log(0.5) * steps) / maxSteps));
-
-          if (best != null && transformedProbability >= bestProbability) {
-            yield { strategy: best, probability: transformedProbability };
-
-            bestProbability = Math.max(bestProbability, transformedProbability);
+            if (probability >= bestProbability && steps <= bestSteps) {
+              yield {
+                strategy: best,
+                probability,
+                steps,
+              };
+            }
           }
+
+          bestProbability = Math.max(bestProbability, probability);
+          bestSteps = Math.min(bestSteps, steps);
         }
       }
     }
 
-    const result = [...inner.call(this)].filter(
-      (entry, _, arr) => entry.probability >= arr[arr.length - 1].probability
+    const result = [...inner.call(this)];
+    const minSteps = Math.min(...result.map((strategy) => strategy.steps));
+    const best = result.filter(
+      (entry, _, arr) =>
+        entry.steps === minSteps &&
+        entry.probability >= arr[arr.length - 1].probability
     );
 
-    return [result.map((entry) => entry.strategy), result[0]?.probability ?? 0];
+    return [best.map((entry) => entry.strategy), best[0]?.probability ?? 0];
   }
 
   private evaluateDiscardProbability(
@@ -757,6 +767,7 @@ const bestSevenPairsStrategy = strategy.listBestPartitionStrategies(
 );
 
 console.log(
+  JSON.stringify(bestSevenPairsStrategy),
   strategy.getBestDiscard(
     state,
     bestSevenPairsStrategy[1] > bestStandardStrategy[1]
