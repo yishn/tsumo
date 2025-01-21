@@ -17,6 +17,7 @@ const avatarData: Record<Avatar, { top: number }> = {
   tiger: { top: 47 },
   rabbit: { top: 56 },
   dragon: { top: 48 },
+  snake: { top: 48 },
   monkey: { top: 53 },
   rooster: { top: 40 },
   dog: { top: 44 },
