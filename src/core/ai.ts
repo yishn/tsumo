@@ -77,7 +77,7 @@ export interface Strategy {
   playDiscard(state: AiGameState): number;
 }
 
-enum PartitionEntryType {
+enum PartitionBlockType {
   Pong = "pong",
   Sequence = "sequence",
   Pair = "pair",
@@ -85,9 +85,9 @@ enum PartitionEntryType {
   Single = "single",
 }
 
-type PartitionEntry = Partial<Record<PartitionEntryType, Tile[]>>;
+type PartitionBlock = Partial<Record<PartitionBlockType, Tile[]>>;
 
-enum PartitionEntryGoal {
+enum PartitionBlockGoal {
   Set = "set",
   Pair = "pair",
   Discard = "discard",
@@ -96,7 +96,7 @@ enum PartitionEntryGoal {
 const AllTilesPlaceholder = Symbol();
 type AllTilesPlaceholder = typeof AllTilesPlaceholder;
 
-interface PartitionEntryStrategy {
+interface PartitionBlockStrategy {
   discards: Tile[];
   completion: (Tile | AllTilesPlaceholder)[][];
   missing?: number;
@@ -130,15 +130,15 @@ class DefaultStrategy implements Strategy {
   private *listPartitions(
     state: AiGameState,
     tiles: Tile[]
-  ): Generator<PartitionEntry[]> {
+  ): Generator<PartitionBlock[]> {
     function* inner(
       this: DefaultStrategy,
       tiles: Tile[]
-    ): Generator<PartitionEntry[]> {
+    ): Generator<PartitionBlock[]> {
       if (tiles.length <= 1) {
         yield* [
           tiles.map((tile) => ({
-            [PartitionEntryType.Single]: [tile],
+            [PartitionBlockType.Single]: [tile],
           })),
         ];
       }
@@ -168,8 +168,8 @@ class DefaultStrategy implements Strategy {
                 ...partition,
                 {
                   [Tile.equal(pivot, a)
-                    ? PartitionEntryType.Pong
-                    : PartitionEntryType.Sequence]: [pivot, a, b],
+                    ? PartitionBlockType.Pong
+                    : PartitionBlockType.Sequence]: [pivot, a, b],
                 },
               ];
             }
@@ -186,8 +186,8 @@ class DefaultStrategy implements Strategy {
               ...partition,
               {
                 [Tile.equal(pivot, a)
-                  ? PartitionEntryType.Pair
-                  : PartitionEntryType.AlmostSequence]: [pivot, a],
+                  ? PartitionBlockType.Pair
+                  : PartitionBlockType.AlmostSequence]: [pivot, a],
               },
             ];
           }
@@ -203,8 +203,8 @@ class DefaultStrategy implements Strategy {
                 ...partition,
                 {
                   [Tile.equal(pivot, a)
-                    ? PartitionEntryType.Pong
-                    : PartitionEntryType.Sequence]: [pivot, a, jokers[0]],
+                    ? PartitionBlockType.Pong
+                    : PartitionBlockType.Sequence]: [pivot, a, jokers[0]],
                 },
               ];
             }
@@ -221,8 +221,8 @@ class DefaultStrategy implements Strategy {
           yield [
             ...partition,
             pivot != null
-              ? { [PartitionEntryType.Pong]: [pivot, ...jokers.slice(0, 2)] }
-              : { [PartitionEntryType.Pair]: jokers.slice(0, 2) },
+              ? { [PartitionBlockType.Pong]: [pivot, ...jokers.slice(0, 2)] }
+              : { [PartitionBlockType.Pair]: jokers.slice(0, 2) },
           ];
         }
       }
@@ -233,7 +233,7 @@ class DefaultStrategy implements Strategy {
         for (const partition of subresult) {
           yield [
             ...partition,
-            { [PartitionEntryType.Pair]: [pivot, jokers[0]] },
+            { [PartitionBlockType.Pair]: [pivot, jokers[0]] },
           ];
         }
       }
@@ -242,18 +242,18 @@ class DefaultStrategy implements Strategy {
         const subresult = inner.call(this, [...residue, ...jokers]);
 
         for (const partition of subresult) {
-          yield [...partition, { [PartitionEntryType.Single]: [pivot] }];
+          yield [...partition, { [PartitionBlockType.Single]: [pivot] }];
         }
       }
     }
 
-    function genPartitionHash(partition: PartitionEntry[]) {
+    function genPartitionHash(partition: PartitionBlock[]) {
       return partition
         .map(
-          (entry) =>
-            Object.keys(entry)[0] +
+          (block) =>
+            Object.keys(block)[0] +
             ":" +
-            Object.values(entry)[0]
+            Object.values(block)[0]
               .map((tile) => tile.toString())
               .join(",")
         )
@@ -334,24 +334,24 @@ class DefaultStrategy implements Strategy {
   }
 
   private *listPartitionGoals(
-    partition: PartitionEntry[],
+    partition: PartitionBlock[],
     sets: number,
     pairs: number
-  ): Generator<PartitionEntryGoal[]> {
+  ): Generator<PartitionBlockGoal[]> {
     function* inner(
       this: DefaultStrategy,
       sets: number,
       pairs: number,
       pivotIndex: number,
       hasDiscards: boolean
-    ): Generator<PartitionEntryGoal[]> {
+    ): Generator<PartitionBlockGoal[]> {
       if (pivotIndex < 0) {
         if (sets + pairs === 0) {
           yield [];
         } else if (!hasDiscards) {
           yield Array(sets)
-            .fill(PartitionEntryGoal.Set)
-            .concat(Array(pairs).fill(PartitionEntryGoal.Pair));
+            .fill(PartitionBlockGoal.Set)
+            .concat(Array(pairs).fill(PartitionBlockGoal.Pair));
         }
         return;
       }
@@ -370,7 +370,7 @@ class DefaultStrategy implements Strategy {
           pivotIndex - 1,
           hasDiscards
         )) {
-          strategy.push(PartitionEntryGoal.Set);
+          strategy.push(PartitionBlockGoal.Set);
           yield strategy;
         }
       }
@@ -388,13 +388,13 @@ class DefaultStrategy implements Strategy {
           pivotIndex - 1,
           hasDiscards
         )) {
-          strategy.push(PartitionEntryGoal.Pair);
+          strategy.push(PartitionBlockGoal.Pair);
           yield strategy;
         }
       }
 
       if (sets + pairs === 0) {
-        yield [...Array(pivotIndex + 1)].map((_) => PartitionEntryGoal.Discard);
+        yield [...Array(pivotIndex + 1)].map((_) => PartitionBlockGoal.Discard);
       } else {
         for (const strategy of inner.call(
           this,
@@ -403,7 +403,7 @@ class DefaultStrategy implements Strategy {
           pivotIndex - 1,
           true
         )) {
-          strategy.push(PartitionEntryGoal.Discard);
+          strategy.push(PartitionBlockGoal.Discard);
           yield strategy;
         }
       }
@@ -412,49 +412,49 @@ class DefaultStrategy implements Strategy {
     yield* inner.call(this, sets, pairs, partition.length - 1, false);
   }
 
-  private getPartitionEntryStrategy(
+  private getPartitionBlockStrategy(
     state: AiGameState,
-    partitionEntry: PartitionEntry,
-    goal: PartitionEntryGoal
-  ): PartitionEntryStrategy | undefined {
-    const entryType = Object.keys(partitionEntry)[0] as PartitionEntryType;
-    const entryTiles = partitionEntry[entryType] as Tile[];
+    block: PartitionBlock,
+    goal: PartitionBlockGoal
+  ): PartitionBlockStrategy | undefined {
+    const blockType = Object.keys(block)[0] as PartitionBlockType;
+    const blockTiles = block[blockType] as Tile[];
 
-    if (goal === PartitionEntryGoal.Discard) {
+    if (goal === PartitionBlockGoal.Discard) {
       return {
-        discards: entryTiles,
+        discards: blockTiles,
         completion: [[]],
       };
-    } else if (goal === PartitionEntryGoal.Set) {
-      if (entryTiles.length === 3) {
+    } else if (goal === PartitionBlockGoal.Set) {
+      if (blockTiles.length === 3) {
         return {
           discards: [],
           completion: [[]],
         };
-      } else if (entryTiles.length === 2) {
+      } else if (blockTiles.length === 2) {
         return {
           discards: [],
           completion: this.completeTilesToSet(
             state,
-            ...(entryTiles as [Tile, Tile?])
+            ...(blockTiles as [Tile, Tile?])
           ),
         };
       }
-    } else if (goal === PartitionEntryGoal.Pair) {
-      if (entryType === PartitionEntryType.Pair) {
+    } else if (goal === PartitionBlockGoal.Pair) {
+      if (blockType === PartitionBlockType.Pair) {
         return {
           discards: [],
           completion: [[]],
         };
-      } else if (entryType === PartitionEntryType.Pong) {
+      } else if (blockType === PartitionBlockType.Pong) {
         return {
-          discards: [entryTiles[0]],
+          discards: [blockTiles[0]],
           completion: [[]],
         };
-      } else if (entryType === PartitionEntryType.Single) {
+      } else if (blockType === PartitionBlockType.Single) {
         return {
           discards: [],
-          completion: this.completeTilesToPair(state, entryTiles[0]),
+          completion: this.completeTilesToPair(state, blockTiles[0]),
         };
       }
     }
@@ -462,31 +462,31 @@ class DefaultStrategy implements Strategy {
 
   private getPartitionStrategy(
     state: AiGameState,
-    partition: PartitionEntry[],
-    goal: PartitionEntryGoal[]
-  ): PartitionEntryStrategy[] | undefined {
+    partition: PartitionBlock[],
+    goal: PartitionBlockGoal[]
+  ): PartitionBlockStrategy[] | undefined {
     const result = goal.map((goal, i) =>
       partition[i] != null
-        ? this.getPartitionEntryStrategy(state, partition[i], goal)
+        ? this.getPartitionBlockStrategy(state, partition[i], goal)
         : ({
             discards: [],
             completion: [[]],
             missing:
-              goal === PartitionEntryGoal.Pair
+              goal === PartitionBlockGoal.Pair
                 ? 2
-                : goal === PartitionEntryGoal.Set
+                : goal === PartitionBlockGoal.Set
                   ? 3
                   : 0,
-          } satisfies PartitionEntryStrategy)
+          } satisfies PartitionBlockStrategy)
     );
 
     if (!result.includes(undefined)) {
-      return result as PartitionEntryStrategy[];
+      return result as PartitionBlockStrategy[];
     }
   }
 
   private *listPartitionStrategyCompletions(
-    partition: PartitionEntryStrategy[]
+    partition: PartitionBlockStrategy[]
   ): Generator<(Tile | AllTilesPlaceholder)[]> {
     function* inner(
       this: DefaultStrategy,
@@ -541,9 +541,9 @@ class DefaultStrategy implements Strategy {
 
   private evaluatePartitionStrategy(
     state: AiGameState,
-    strategy: PartitionEntryStrategy[]
+    strategy: PartitionBlockStrategy[]
   ): {
-    best: PartitionEntryStrategy[] | null;
+    best: PartitionBlockStrategy[] | null;
     steps: number;
     probability: number;
   } {
@@ -580,9 +580,9 @@ class DefaultStrategy implements Strategy {
     hand: Tile[],
     sets: number,
     pairs: number
-  ): [PartitionEntryStrategy[][], number] {
+  ): [PartitionBlockStrategy[][], number] {
     function* inner(this: DefaultStrategy): Generator<{
-      strategy: PartitionEntryStrategy[];
+      strategy: PartitionBlockStrategy[];
       steps: number;
       probability: number;
     }> {
@@ -691,7 +691,7 @@ class DefaultStrategy implements Strategy {
 
   getBestDiscard(
     state: AiGameState,
-    strategies: PartitionEntryStrategy[][]
+    strategies: PartitionBlockStrategy[][]
   ): Tile | undefined {
     const discardStrategies = strategies.map((strategy) =>
       strategy.flatMap((entry) => entry.discards)
