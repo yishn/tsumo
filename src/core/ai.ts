@@ -1,3 +1,4 @@
+import type { PullPhase, PushPhase } from "./game-state.ts";
 import { OtherPlayer } from "./player.ts";
 import { ITile, Tile, TileSuit } from "./tile.ts";
 
@@ -68,13 +69,16 @@ export class AiGameState {
   }
 }
 
+export type ClassToAction<T> = {
+  [K in keyof T]: T[K] extends (...args: infer P) => any ? [K, ...P] : never;
+}[Exclude<keyof T, "nextPhase" | "next">];
+
 export interface Strategy {
-  playReaction(
+  generatePull(state: AiGameState): ClassToAction<PullPhase>;
+  generatePush(state: AiGameState): ClassToAction<PushPhase>;
+  generateReaction(
     state: AiGameState
   ): "pong" | "kong" | "win" | null | undefined | void;
-  playEat(state: AiGameState): [number, number] | null;
-  playKong(state: AiGameState): boolean;
-  playDiscard(state: AiGameState): number;
 }
 
 enum PartitionBlockType {
@@ -107,23 +111,17 @@ function factorial(n: number): number {
 }
 
 class DefaultStrategy implements Strategy {
-  playReaction(
+  generatePull(state: AiGameState): ClassToAction<PullPhase> {
+    throw new Error("Method not implemented.");
+  }
+
+  generatePush(state: AiGameState): ClassToAction<PushPhase> {
+    throw new Error("Method not implemented.");
+  }
+
+  generateReaction(
     state: AiGameState
   ): "pong" | "kong" | "win" | null | undefined | void {
-    throw new Error("Method not implemented.");
-  }
-
-  playEat(state: AiGameState): [number, number] | null {
-    throw new Error("Method not implemented.");
-  }
-
-  playKong(state: AiGameState): boolean {
-    throw new Error("Method not implemented.");
-  }
-
-  playDiscard(state: AiGameState): number {
-    const partitions = this.listPartitions(state, state.hand);
-
     throw new Error("Method not implemented.");
   }
 
