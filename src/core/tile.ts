@@ -95,9 +95,9 @@ export class Tile implements ITile {
                 a.numeric
                   ? a.rank + delta
                   : a.suit === TileSuit.Wind
-                    ? (a.rank + delta + 4) % 4
+                    ? ((a.rank - 1 + delta + 4) % 4) + 1
                     : a.suit === TileSuit.Dragon
-                      ? (a.rank + delta + 3) % 3
+                      ? ((a.rank - 1 + delta + 3) % 3) + 1
                       : 0
               )
           )
