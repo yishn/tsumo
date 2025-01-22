@@ -193,19 +193,6 @@ class DefaultStrategy implements Strategy {
         ? 0
         : state.hand.findIndex((tile) => Tile.equal(tile, discard));
 
-    const afterHand = state.hand.filter((_, i) => i !== discardIndex);
-    const afterStrategy =
-      optimalStrategy === chaoticThirteenStrategy
-        ? this.getChaoticThirteenStrategy(state, afterHand)
-        : optimalStrategy === bestStandardStrategies
-          ? this.listBestPartitionStrategies(
-              state,
-              afterHand,
-              4 - state.melds.length,
-              1
-            )
-          : this.listBestPartitionStrategies(state, afterHand, 0, 7);
-
     // Look for kongs
 
     const kongs = state.hand
@@ -235,13 +222,11 @@ class DefaultStrategy implements Strategy {
           ] as const
       )
       .filter(([_, altStandardStrategy]) =>
-        altStandardStrategy.steps < afterStrategy.steps
+        altStandardStrategy.steps < optimalStrategy.steps - 1
           ? true
-          : optimalStrategy === chaoticThirteenStrategy &&
-              afterStrategy.steps === altStandardStrategy.steps
-            ? false
-            : altStandardStrategy.steps === afterStrategy.steps &&
-              altStandardStrategy.probability >= afterStrategy.probability!
+          : altStandardStrategy.steps === optimalStrategy.steps - 1 &&
+            altStandardStrategy.probability >=
+              (optimalStrategy.probability ?? 0)
       );
 
     if (betterKongStrategies.length > 0) {
