@@ -578,7 +578,11 @@ class DefaultStrategy implements Strategy {
     hand: Tile[],
     sets: number,
     pairs: number
-  ): [PartitionBlockStrategy[][], number] {
+  ): {
+    strategies: PartitionBlockStrategy[][];
+    probability: number;
+    steps: number;
+  } {
     function* inner(this: DefaultStrategy): Generator<{
       strategy: PartitionBlockStrategy[];
       steps: number;
@@ -629,19 +633,26 @@ class DefaultStrategy implements Strategy {
         entry.probability >= arr[arr.length - 1].probability
     );
 
-    return [best.map((entry) => entry.strategy), best[0]?.probability ?? 0];
+    return {
+      strategies: best.map((entry) => entry.strategy),
+      probability: best[0]?.probability ?? 0,
+      steps: minSteps,
+    };
   }
 
   private evaluateDiscardProbability(
     state: AiGameState,
     discard: Tile,
-    weight?: number
+    weights?: number[]
   ): number {
-    const historicalIndex = state.allDiscards.findIndex((tile) =>
-      Tile.equal(tile, discard)
-    );
+    let weight =
+      weights?.find((_, i) => Tile.equal(discard, state.allDiscards[i])) ?? 1;
 
     if (weight == null) {
+      const historicalIndex = state.allDiscards.findIndex((tile) =>
+        Tile.equal(tile, discard)
+      );
+
       weight =
         historicalIndex < 0 || state.allDiscards.length === 0
           ? 1
@@ -665,10 +676,7 @@ class DefaultStrategy implements Strategy {
     );
   }
 
-  private evaluateDiscardStrategyProbability(
-    state: AiGameState,
-    discards: Tile[]
-  ): number {
+  private getAllDiscardWeights(state: AiGameState): number[] {
     const weights = state.allDiscards.map((_, i, arr) =>
       arr.length <= 1
         ? 0
@@ -676,18 +684,23 @@ class DefaultStrategy implements Strategy {
           Math.exp((-Math.log(0.5) * (i - arr.length + 1)) / (arr.length - 1))
     );
 
+    return weights;
+  }
+
+  private evaluateDiscardStrategyProbability(
+    state: AiGameState,
+    discards: Tile[]
+  ): number {
+    const weights = this.getAllDiscardWeights(state);
+
     return discards
       .map((discard) =>
-        this.evaluateDiscardProbability(
-          state,
-          discard,
-          weights.find((_, i) => Tile.equal(discard, state.allDiscards[i])) ?? 1
-        )
+        this.evaluateDiscardProbability(state, discard, weights)
       )
       .reduce((a, b) => a * b, 1);
   }
 
-  getBestDiscard(
+  getBestStrategiesDiscard(
     state: AiGameState,
     strategies: PartitionBlockStrategy[][]
   ): Tile | undefined {
@@ -726,6 +739,89 @@ class DefaultStrategy implements Strategy {
       return bestDiscard;
     }
   }
+
+  private getClusters(state: AiGameState, tiles: Tile[]): Tile[][] {
+    const jokers = tiles.filter((tile) => state.isJoker(tile));
+    const nonJokers = tiles.filter((tile) => !state.isJoker(tile));
+    const visited = new Set<number>();
+
+    function inner(
+      this: DefaultStrategy,
+      tiles: Tile[],
+      pivotIndex: number,
+      result: Tile[]
+    ): void {
+      if (tiles.length === 0) return;
+
+      const pivot = tiles[pivotIndex];
+      result.push(pivot);
+      visited.add(pivotIndex);
+
+      for (let i = 0; i < tiles.length; i++) {
+        if (Tile.isClustered(pivot, tiles[i]) && !visited.has(i)) {
+          inner.call(this, tiles, i, result);
+        }
+      }
+    }
+
+    const result = jokers.map((tile) => [tile]);
+
+    while (true) {
+      const pivotIndex = nonJokers.findIndex((_, i) => !visited.has(i));
+      if (pivotIndex < 0) break;
+
+      const cluster: Tile[] = [];
+      inner.call(this, nonJokers, pivotIndex, cluster);
+      if (cluster.length > 0) result.push(cluster);
+    }
+
+    return result;
+  }
+
+  getChaoticThirteenStrategy(
+    state: AiGameState,
+    tiles: Tile[]
+  ): {
+    steps: number;
+    discards: Tile[];
+  } {
+    const clusters = this.getClusters(state, tiles);
+    const discardsCount = clusters
+      .map((cluster) => cluster.length - 1)
+      .reduce((a, b) => a + b, 0);
+    const completions = 14 - clusters.length;
+    const discards = clusters.filter((cluster) => cluster.length > 1).flat();
+
+    return {
+      steps: discardsCount + completions,
+      discards,
+    };
+  }
+
+  getBestChaoticThirteenDiscard(
+    state: AiGameState,
+    discards: Tile[]
+  ): Tile | undefined {
+    const weights = this.getAllDiscardWeights(state);
+
+    let bestProbability = 0;
+    let bestDiscard: Tile | undefined;
+
+    for (const discard of discards) {
+      const probability = this.evaluateDiscardProbability(
+        state,
+        discard,
+        weights
+      );
+
+      if (bestDiscard == null || probability > bestProbability) {
+        bestDiscard = discard;
+        bestProbability = probability;
+      }
+    }
+
+    return bestDiscard;
+  }
 }
 
 const hand = [
@@ -748,30 +844,44 @@ const state = new AiGameState().declareKnownTiles(hand);
 state.jokers = hand.slice(0, 2);
 const strategy = new DefaultStrategy();
 
-state.discards.push(new Tile(TileSuit.Circle, 2));
-state.allDiscards.push(new Tile(TileSuit.Circle, 2));
+state.discards.push(new Tile(TileSuit.Myriad, 4));
+state.allDiscards.push(new Tile(TileSuit.Myriad, 4));
 
-const bestStandardStrategy = strategy.listBestPartitionStrategies(
+const bestStandardStrategies = strategy.listBestPartitionStrategies(
   state,
   hand,
   4,
   1
 );
-const bestSevenPairsStrategy = strategy.listBestPartitionStrategies(
+const bestSevenPairsStrategies = strategy.listBestPartitionStrategies(
   state,
   hand,
   0,
   7
 );
+const chaoticThirteenStrategy = strategy.getChaoticThirteenStrategy(
+  state,
+  hand
+);
 
 console.log(
-  JSON.stringify(bestSevenPairsStrategy),
-  strategy.getBestDiscard(
-    state,
-    bestSevenPairsStrategy[1] > bestStandardStrategy[1]
-      ? bestSevenPairsStrategy[0]
-      : bestStandardStrategy[0]
-  )
+  chaoticThirteenStrategy.steps >
+    Math.max(bestStandardStrategies.steps, bestSevenPairsStrategies.steps)
+    ? strategy.getBestStrategiesDiscard(
+        state,
+        bestSevenPairsStrategies.steps < bestStandardStrategies.steps
+          ? bestSevenPairsStrategies.strategies
+          : bestSevenPairsStrategies.steps > bestStandardStrategies.steps
+            ? bestStandardStrategies.strategies
+            : bestSevenPairsStrategies.probability <=
+                bestStandardStrategies.probability
+              ? bestSevenPairsStrategies.strategies
+              : bestStandardStrategies.strategies
+      )
+    : strategy.getBestChaoticThirteenDiscard(
+        state,
+        chaoticThirteenStrategy.discards
+      )
 );
 
 setTimeout(() => {}, 1000000000);
