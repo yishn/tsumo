@@ -12,7 +12,7 @@ export class AiGameState {
   unknownTiles: Record<string, number> = {};
   otherPlayers: OtherPlayer[] = [];
   jokers: Tile[] = [];
-  discard: Tile | undefined;
+  lastDiscard: Tile | undefined;
 
   hand: Tile[] = [];
   discards: Tile[] = [];
@@ -78,7 +78,7 @@ export interface Strategy {
   generatePush(state: AiGameState): ClassToAction<PushPhase>;
   generateReaction(
     state: AiGameState
-  ): "pong" | "kong" | "win" | null | undefined | void;
+  ): "pong" | "kong" | "win" | null | undefined;
 }
 
 enum PartitionBlockType {
@@ -112,7 +112,124 @@ function factorial(n: number): number {
 
 class DefaultStrategy implements Strategy {
   generatePull(state: AiGameState): ClassToAction<PullPhase> {
-    return ["draw"];
+    if (
+      state.lastDiscard != null &&
+      Tile.isWinningHand(
+        [...state.hand, state.lastDiscard],
+        state.jokers,
+        state.melds.length
+      ) != null
+    ) {
+      return ["win"];
+    }
+
+    const bestStandardStrategies = this.listBestPartitionStrategies(
+      state,
+      state.hand,
+      4 - state.melds.length,
+      1
+    );
+
+    const bestSevenPairsStrategies =
+      state.melds.length === 0
+        ? null
+        : this.listBestPartitionStrategies(state, state.hand, 0, 7);
+
+    const chaoticThirteenStrategy =
+      state.melds.length === 0
+        ? null
+        : this.getChaoticThirteenStrategy(state, state.hand);
+
+    let optimalStrategy = this.chooseOptimalStrategy(
+      bestStandardStrategies,
+      bestSevenPairsStrategies,
+      chaoticThirteenStrategy
+    );
+
+    let result: ClassToAction<PullPhase> = ["draw"];
+
+    // Look for kongs
+
+    if (
+      state.lastDiscard != null &&
+      state.hand.filter((tile) => Tile.equal(tile, state.lastDiscard!))
+        .length >= 3
+    ) {
+      const altStandardStrategy = this.listBestPartitionStrategies(
+        state,
+        state.hand.filter((tile) => !Tile.equal(tile, state.lastDiscard!)),
+        3 - state.melds.length,
+        1
+      );
+
+      if (
+        altStandardStrategy.steps < optimalStrategy.steps ||
+        (altStandardStrategy.steps === optimalStrategy.steps &&
+          altStandardStrategy.probability > (optimalStrategy.probability ?? 0))
+      ) {
+        result = [
+          "kong",
+          ...(state.hand
+            .map((tile, i) => (Tile.equal(tile, state.lastDiscard!) ? i : -1))
+            .filter((i) => i >= 0) as [number, number, number]),
+        ];
+        optimalStrategy = altStandardStrategy;
+      }
+    }
+
+    // Look for eats
+
+    if (state.lastDiscard != null) {
+      const completions = Tile.completeToSet(state.lastDiscard)
+        .map((completion) =>
+          !Tile.equal(completion[0], completion[1])
+            ? completion
+                .map((tile) => state.hand.findIndex((t) => Tile.equal(t, tile)))
+                .filter((i) => i >= 0)
+            : state.hand
+                .map((_, i) => i)
+                .filter((i) => Tile.equal(state.hand[i], completion[0]))
+                .slice(0, 2)
+        )
+        .filter((completion) => completion.length === 2);
+
+      const betterStrategies = completions
+        .map(
+          (completion) =>
+            [
+              completion,
+              this.listBestPartitionStrategies(
+                state,
+                state.hand.filter((_, i) => !completion.includes(i)),
+                3 - state.melds.length,
+                1
+              ),
+            ] as const
+        )
+        .filter(([_, altStandardStrategy]) =>
+          altStandardStrategy.steps < optimalStrategy.steps - 1
+            ? true
+            : altStandardStrategy.steps === optimalStrategy.steps - 1 &&
+              altStandardStrategy.probability >=
+                (optimalStrategy.probability ?? 0)
+        );
+
+      if (betterStrategies.length > 0) {
+        const [completion, betterStrategy] = betterStrategies.reduce(
+          ([bestCompletion, bestStrategy], [completion, strategy]) =>
+            strategy.steps < bestStrategy.steps ||
+            (strategy.steps === bestStrategy.steps &&
+              strategy.probability > bestStrategy.probability)
+              ? [completion, strategy]
+              : [bestCompletion, bestStrategy]
+        );
+
+        result = ["eat", ...(completion as [number, number])];
+        optimalStrategy = betterStrategy;
+      }
+    }
+
+    return result;
   }
 
   private chooseOptimalStrategy(
@@ -245,6 +362,51 @@ class DefaultStrategy implements Strategy {
       ];
     }
 
+    const kongMelds = state.melds.filter(
+      (meld) =>
+        meld.length === 3 &&
+        Tile.isPongKong(...(meld as [Tile, Tile, Tile])) &&
+        state.hand.some((tile) => Tile.equal(tile, meld[0]))
+    );
+
+    const betterMeldKongStrategies = kongMelds
+      .map(
+        (kong) =>
+          [
+            kong[0],
+            this.listBestPartitionStrategies(
+              state,
+              state.hand.filter((tile) => !Tile.equal(tile, kong[0])),
+              4 - state.melds.length,
+              1
+            ),
+          ] as const
+      )
+      .filter(([_, altStandardStrategy]) =>
+        altStandardStrategy.steps < optimalStrategy.steps - 1
+          ? true
+          : altStandardStrategy.steps === optimalStrategy.steps - 1 &&
+            altStandardStrategy.probability >=
+              (optimalStrategy.probability ?? 0)
+      );
+
+    if (betterMeldKongStrategies.length > 0) {
+      const [kongTile] = betterMeldKongStrategies.reduce(
+        ([bestKongTile, bestStrategy], [kongTile, strategy]) =>
+          strategy.steps < bestStrategy.steps ||
+          (strategy.steps === bestStrategy.steps &&
+            strategy.probability > bestStrategy.probability)
+            ? [kongTile, strategy]
+            : [bestKongTile, bestStrategy]
+      );
+
+      return [
+        "meldKong",
+        state.hand.findIndex((tile) => Tile.equal(tile, kongTile)),
+        state.melds.findIndex((meld) => Tile.equal(meld[0], kongTile)),
+      ];
+    }
+
     // Discard
 
     return ["discard", discardIndex];
@@ -252,8 +414,8 @@ class DefaultStrategy implements Strategy {
 
   generateReaction(
     state: AiGameState
-  ): "pong" | "kong" | "win" | null | undefined | void {
-    throw new Error("Method not implemented.");
+  ): "pong" | "kong" | "win" | null | undefined {
+    return;
   }
 
   private *listPartitions(
