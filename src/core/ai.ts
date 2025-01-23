@@ -111,7 +111,10 @@ function factorial(n: number): number {
 }
 
 class DefaultStrategy implements Strategy {
-  generatePull(state: AiGameState): ClassToAction<PullPhase> {
+  generatePull(
+    state: AiGameState,
+    doNotEatSequences: boolean = false
+  ): ClassToAction<PullPhase> {
     if (
       state.lastDiscard != null &&
       Tile.isWinningHand(
@@ -181,6 +184,9 @@ class DefaultStrategy implements Strategy {
 
     if (state.lastDiscard != null) {
       const completions = Tile.completeToSet(state.lastDiscard)
+        .filter((completion) =>
+          !doNotEatSequences ? true : Tile.equal(completion[0], completion[1])
+        )
         .map((completion) =>
           !Tile.equal(completion[0], completion[1])
             ? completion
@@ -412,7 +418,15 @@ class DefaultStrategy implements Strategy {
   generateReaction(
     state: AiGameState
   ): "pong" | "kong" | "win" | null | undefined {
-    return;
+    if (state.lastDiscard == null) return;
+
+    const [pullAction] = this.generatePull(state, true);
+
+    return pullAction === "win" || pullAction === "kong"
+      ? pullAction
+      : pullAction === "eat"
+        ? "pong"
+        : null;
   }
 
   private *listPartitions(
