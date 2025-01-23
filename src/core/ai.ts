@@ -296,13 +296,10 @@ class DefaultStrategy implements Strategy {
 
     const discard =
       optimalStrategy === chaoticThirteenStrategy
-        ? strategy.getBestChaoticThirteenDiscard(
-            state,
-            optimalStrategy.discards
-          )
+        ? this.getBestChaoticThirteenDiscard(state, optimalStrategy.discards)
         : optimalStrategy === bestStandardStrategies ||
             optimalStrategy === bestSevenPairsStrategies
-          ? strategy.getBestStrategiesDiscard(state, optimalStrategy.strategies)
+          ? this.getBestStrategiesDiscard(state, optimalStrategy.strategies)
           : undefined;
 
     const discardIndex =
@@ -1105,31 +1102,3 @@ class DefaultStrategy implements Strategy {
     return bestDiscard;
   }
 }
-
-const hand = [
-  "d2",
-  "d2",
-  "b6",
-  "b7",
-  "b9",
-  "c2",
-  "c8",
-  "m1",
-  "m3",
-  "m4",
-  "m7",
-  "m9",
-  "d3",
-].map(Tile.fromString);
-
-const state = new AiGameState().declareKnownTiles(hand);
-state.jokers = hand.slice(0, 2);
-const strategy = new DefaultStrategy();
-
-state.discards.push(new Tile(TileSuit.Circle, 2));
-state.allDiscards.push(new Tile(TileSuit.Circle, 2));
-state.hand = hand;
-
-console.log(strategy.generatePush(state));
-
-setTimeout(() => {}, 1000000000);
