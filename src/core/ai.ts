@@ -51,21 +51,6 @@ export class AiGameState {
     return result;
   }
 
-  constructor() {
-    this.unknownTiles = Object.fromEntries(
-      TileSuit.list()
-        .map((suit) =>
-          [
-            ...Array(
-              suit === TileSuit.Wind ? 4 : suit === TileSuit.Dragon ? 3 : 9
-            ),
-          ].map((_, i) => new Tile(suit, i + 1))
-        )
-        .flat()
-        .map((tile) => [tile.toString(), 4])
-    );
-  }
-
   get nextPlayer(): OtherPlayer | undefined {
     return this.otherPlayers[0];
   }
@@ -78,20 +63,19 @@ export class AiGameState {
     for (const tile of tiles) {
       const key = tile.toString();
 
-      if (this.unknownTiles[key] != null) {
-        this.unknownTiles[key] = Math.max(this.unknownTiles[key] - 1, 0);
-      }
+      this.unknownTiles[key] ??= 4;
+      this.unknownTiles[key] = Math.max(this.unknownTiles[key] - 1, 0);
     }
 
     return this;
   }
 
   countUnknown(tile: Tile, usedTiles?: Map<string, number>): number {
-    if (this.isJoker(tile)) return 0;
+    if (this.isJoker(tile) || !tile.valid) return 0;
 
     return Math.max(
       0,
-      (this.unknownTiles[tile.toString()] ?? 0) -
+      (this.unknownTiles[tile.toString()] ?? 4) -
         (usedTiles?.get(tile.toString()) ?? 0)
     );
   }
