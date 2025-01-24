@@ -227,6 +227,7 @@ export class PushPhase extends PhaseBase(Phase.Push) {
       this.state.currentPlayerIndex,
       player.discards.length - 1,
     ];
+    this.state.allDiscards.push([...this.state.lastDiscardInfo]);
 
     return this.nextPhase(ReactionPhase);
   }
@@ -819,16 +820,20 @@ export class EndPhase extends PhaseBase(Phase.End) {
 }
 
 export class GameState<P extends PhaseBase = PhaseBase> {
+  maxRotation: number = 4;
+  reactionTimeout: number = 5000;
+
   phase: P;
   turn: number = 1;
   rotation: number = 1;
-  maxRotation: number = 4;
-  reactionTimeout: number = 5000;
+  primaryJoker: Tile = new Tile(TileSuit.Bamboo, 1);
+
   drawPile: Tile[] = [];
   players: Player[] = [...Array(4)].map(() => new Player());
   currentPlayerIndex: number = 0;
   dealerIndex: number = 0;
-  primaryJoker: Tile = new Tile(TileSuit.Bamboo, 1);
+
+  allDiscards: [playerIndex: number, discardIndex: number][] = [];
   lastDiscardInfo?: [playerIndex: number, discardIndex: number];
   kongDiscardInfo?: [playerIndex: number, tileIndex: number, meldIndex: number];
 

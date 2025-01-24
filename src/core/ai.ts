@@ -1,4 +1,4 @@
-import type { PullPhase, PushPhase } from "./game-state.ts";
+import type { GameState, PullPhase, PushPhase } from "./game-state.ts";
 import { OtherPlayer } from "./player.ts";
 import { ITile, Tile, TileSuit } from "./tile.ts";
 
@@ -13,11 +13,43 @@ export class AiGameState {
   otherPlayers: OtherPlayer[] = [];
   jokers: Tile[] = [];
   lastDiscard: Tile | undefined;
+  allDiscards: Tile[] = [];
 
   hand: Tile[] = [];
   discards: Tile[] = [];
   melds: Tile[][] = [];
-  allDiscards: Tile[] = [];
+
+  static fromGameState(state: GameState, playerIndex: number): AiGameState {
+    const result = new AiGameState();
+
+    result.otherPlayers = [
+      ...state.players.slice(playerIndex + 1),
+      ...state.players.slice(0, playerIndex),
+    ].map((player) => player.toOtherPlayer());
+    result.jokers = [state.primaryJoker, state.secondaryJoker];
+    result.lastDiscard = state.lastDiscard;
+    result.allDiscards = state.allDiscards.map(
+      ([i, j]) => state.getPlayer(i).discards[j]
+    );
+
+    const player = state.getPlayer(playerIndex);
+    result.hand = player.tiles;
+    result.discards = player.discards;
+    result.melds = player.melds;
+
+    result.declareKnownTiles(result.hand);
+    result.declareKnownTiles(result.melds.flat());
+    result.declareKnownTiles(result.allDiscards);
+    result.declareKnownTiles([state.primaryJoker]);
+
+    for (const player of result.otherPlayers) {
+      result.declareKnownTiles(
+        player.melds.flat().map((tile) => Tile.fromJSON(tile))
+      );
+    }
+
+    return result;
+  }
 
   constructor() {
     this.unknownTiles = Object.fromEntries(
@@ -110,7 +142,7 @@ function factorial(n: number): number {
   return n <= 1 ? 1 : n * factorial(n - 1);
 }
 
-class DefaultStrategy implements Strategy {
+export class DefaultStrategy implements Strategy {
   generatePull(
     state: AiGameState,
     doNotEatSequences: boolean = false
