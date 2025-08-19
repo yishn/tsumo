@@ -2,7 +2,7 @@ import { LazyCell } from "../shared/utils.ts";
 
 const audioContext = new LazyCell(async () => new AudioContext());
 
-export function prepareAudio(url: string): () => void {
+function prepareSound(url: string): () => void {
   const buffer = fetch(url).then((res) => res.arrayBuffer());
   const audioBuffer = audioContext
     .get(false)
@@ -24,26 +24,64 @@ export function prepareAudio(url: string): () => void {
   };
 }
 
-export const playPlaceSound = prepareAudio("./assets/sounds/place.mp3");
+function prepareMusic(
+  url: string,
+  loopStart: number = 0,
+  loopEnd?: number
+): { start(): void; stop(): void } {
+  const buffer = fetch(url).then((res) => res.arrayBuffer());
+  const audioBuffer = audioContext
+    .get(false)
+    .then((ctx) => buffer.then((buffer) => ctx.decodeAudioData(buffer)));
 
-export const playDiceSound = prepareAudio("./assets/sounds/dice.mp3");
+  let source: AudioBufferSourceNode | undefined;
 
-export const playShuffleSound = prepareAudio("./assets/sounds/shuffle.mp3");
+  return {
+    async start() {
+      if (source != null) return;
 
-export const playPopSound = prepareAudio("./assets/sounds/pop.mp3");
+      const ctx = await audioContext.get();
+      source = ctx.createBufferSource();
+      source.buffer = await audioBuffer;
+      source.loopStart = loopStart;
+      source.loopEnd = loopEnd ?? source.buffer.duration;
+      source.loop = true;
+      source.connect(ctx.destination);
+      source.start();
+    },
+    async stop() {
+      source?.stop();
+      source = undefined;
+    },
+  };
+}
 
-export const playCoinSound = prepareAudio("./assets/sounds/coin.mp3");
+export const playPlaceSound = prepareSound("./assets/sounds/place.mp3");
 
-export const playClackSound = prepareAudio("./assets/sounds/clack.mp3");
+export const playDiceSound = prepareSound("./assets/sounds/dice.mp3");
 
-export const playWhooshSound = prepareAudio("./assets/sounds/whoosh.mp3");
+export const playShuffleSound = prepareSound("./assets/sounds/shuffle.mp3");
 
-export const playStampSound = prepareAudio("./assets/sounds/stamp.mp3");
+export const playPopSound = prepareSound("./assets/sounds/pop.mp3");
 
-export const playTurnSound = prepareAudio("./assets/sounds/turn.mp3");
+export const playCoinSound = prepareSound("./assets/sounds/coin.mp3");
 
-export const playRevealSound = prepareAudio("./assets/sounds/reveal.mp3");
+export const playClackSound = prepareSound("./assets/sounds/clack.mp3");
 
-export const playScrollSound = prepareAudio("./assets/sounds/scroll.mp3")
+export const playWhooshSound = prepareSound("./assets/sounds/whoosh.mp3");
 
-export const playDingSound = prepareAudio("./assets/sounds/ding.mp3")
+export const playStampSound = prepareSound("./assets/sounds/stamp.mp3");
+
+export const playTurnSound = prepareSound("./assets/sounds/turn.mp3");
+
+export const playRevealSound = prepareSound("./assets/sounds/reveal.mp3");
+
+export const playScrollSound = prepareSound("./assets/sounds/scroll.mp3");
+
+export const playDingSound = prepareSound("./assets/sounds/ding.mp3");
+
+const backgroundMusic = prepareMusic("./assets/sounds/bg.mp3", 10.7567);
+
+export const playBackgroundMusic = backgroundMusic.start;
+
+export const stopBackgroundMusic = backgroundMusic.stop;
