@@ -85,3 +85,9 @@ const backgroundMusic = prepareMusic("./assets/sounds/bg.mp3", 10.7567);
 export const playBackgroundMusic = backgroundMusic.start;
 
 export const stopBackgroundMusic = backgroundMusic.stop;
+
+const fanfareMusic = prepareMusic("./assets/sounds/fanfare.mp3", 6.67002);
+
+export const playFanfareMusic = fanfareMusic.start;
+
+export const stopFanfareMusic = fanfareMusic.stop;

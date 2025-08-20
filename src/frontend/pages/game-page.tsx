@@ -30,10 +30,12 @@ import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
 import {
   playBackgroundMusic,
+  playFanfareMusic,
   playPopSound,
   playShuffleSound,
   playTurnSound,
   stopBackgroundMusic,
+  stopFanfareMusic,
 } from "../sounds.ts";
 import {
   ITile,
@@ -213,10 +215,15 @@ export class GamePage extends Component("game-page", {
       // Music control
 
       if (this.props.scoreInfo() != null) {
-        stopBackgroundMusic();
+        playFanfareMusic();
       } else {
         playBackgroundMusic();
       }
+
+      return () => {
+        stopBackgroundMusic();
+        stopFanfareMusic();
+      };
     });
 
     return (
