@@ -40,7 +40,6 @@ import { uuid } from "../../shared/utils.ts";
 import { FormRow } from "../components/form-row.tsx";
 import { NumberStepper } from "../components/number-stepper.tsx";
 import { GameSettings } from "../../shared/message.ts";
-import { playBackgroundMusic } from "../sounds.ts";
 
 export class LobbyPage extends Component("lobby-page", {
   players: prop<
@@ -325,10 +324,6 @@ export class LobbyPage extends Component("lobby-page", {
                 if (canRollInitiative()) {
                   setReady(true);
                 }
-
-                setTimeout(() => {
-                  playBackgroundMusic();
-                }, 1000);
               }}
             >
               <SubmitIcon fill="#12bb25" />

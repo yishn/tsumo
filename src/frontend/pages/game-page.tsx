@@ -28,7 +28,13 @@ import { ActionBar, ActionBarButton } from "../components/action-bar.tsx";
 import { PlayerRow } from "../components/player-row.tsx";
 import { Tile } from "../components/tile.tsx";
 import { TileRow } from "../components/tile-row.tsx";
-import { playPopSound, playShuffleSound, playTurnSound } from "../sounds.ts";
+import {
+  playBackgroundMusic,
+  playPopSound,
+  playShuffleSound,
+  playTurnSound,
+  stopBackgroundMusic,
+} from "../sounds.ts";
 import {
   ITile,
   Phase,
@@ -201,6 +207,16 @@ export class GamePage extends Component("game-page", {
       return () => {
         clearTimeout(timeoutId);
       };
+    });
+
+    useEffect(() => {
+      // Music control
+
+      if (this.props.scoreInfo() != null) {
+        stopBackgroundMusic();
+      } else {
+        playBackgroundMusic();
+      }
     });
 
     return (
